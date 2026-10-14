@@ -28,9 +28,10 @@ why, and where to pick up. The task list itself lives in `ROADMAP.md` →
 | Native name | **rifacha** < *rifatia (confirmed) | Gives the engine one more rule-1 test case |
 | Question words | who `ifa`, what `itu`, where `iba` exist; when/why/how **not coined yet** | Coining words is the user's call |
 
-### Open questions (carried over)
-
-- Coin when / why / how (question words share an initial `i-`).
+- Later in the session the user asked Claude to coin when/why/how starting
+  with `cu-`: **cuda** < *cutan, **cuxa** < *cusia, **cupe** < *cuppe
+  (104 entries). This creates a second question-word series: `i-` for
+  participants and places, `cu-` for circumstances.
 
 ### Start next session here
 

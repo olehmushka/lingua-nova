@@ -84,6 +84,33 @@
   definition: "Where? (question word, goes first in the sentence)"
   notes: "*ipa → iba (rule 2: p > b / V_V) Question words share an initial i-, like English wh-."
 
+# The cu- series asks about circumstances (time, manner, reason); the i- series
+# above asks about participants and places. Like English how next to the wh- words.
+
+- id: when
+  proto: cutan
+  modern: cuda
+  pos: adverb
+  gloss: when
+  definition: "When? (question word, goes first in the sentence)"
+  notes: "*cutan → cuda (rule 2: t > d / V_V; rule 4: n > ∅ / _#)"
+
+- id: how
+  proto: cusia
+  modern: cuxa
+  pos: adverb
+  gloss: how
+  definition: "How? In what way? (question word, goes first in the sentence)"
+  notes: "*cusia → cuxa (rule 1: si > x / _V)"
+
+- id: why
+  proto: cuppe
+  modern: cupe
+  pos: adverb
+  gloss: why
+  definition: "Why? (question word, goes first in the sentence)"
+  notes: "*cuppe → cupe (rule 3: pp > p). Not *cube: rule 2 can't voice a p inside pp, because neither p sits between vowels."
+
 - id: nothing
   proto: zuniu
   modern: zunhu

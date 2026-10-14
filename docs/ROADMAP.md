@@ -35,7 +35,7 @@ Files in `language/`.
   - "Didst thou see the woman's dog?" (question, past, possession)
 - [x] Settle the open points:
   - `phonology.md`: word-final `h` is allowed in all words.
-  - `grammar.md`: polite plural is `selah` (3pl verb); `chuh` is informal only. Question words: who/what/where exist; when/why/how not coined yet.
+  - `grammar.md`: polite plural is `selah` (3pl verb); `chuh` is informal only. Question words: `i-` series (who/what/where) + `cu-` series (when `cuda`, how `cuxa`, why `cupe`).
   - Extra tenses (perfect, conditional, subjunctive): postponed until after Phase 4.
 - [x] Commit.
 

@@ -30,7 +30,7 @@ writes them.
 - `phonology.md`: sounds, spelling, phonotactics, stress
 - `grammar.md`: morphology and syntax; **(draft)** marks unsettled forms
 - `sound-changes.txt`: ordered rules, proto → modern
-- `lexicon/*.yaml`: 101 entries; format in `language/README.md`
+- `lexicon/*.yaml`: 104 entries; format in `language/README.md`
 
 Rules:
 
