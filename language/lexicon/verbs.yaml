@@ -1,0 +1,126 @@
+# Verbs, listed by their proto infinitive. The class comes from the theme
+# vowel: -ar = I, -er = II, -ir = III (see grammar.md).
+
+- id: see
+  proto: narar
+  modern: narar
+  pos: verb
+  gloss: see
+  definition: "To see."
+
+- id: eat
+  proto: baucir
+  modern: baugir
+  pos: verb
+  gloss: eat
+  definition: "To eat."
+  notes: "*baucir → baugir (rule 2: c > g / V_V)"
+
+- id: sleep
+  proto: silir
+  modern: silir
+  pos: verb
+  gloss: sleep
+  definition: "To sleep."
+
+- id: drink
+  proto: pulvar
+  modern: pulvar
+  pos: verb
+  gloss: drink
+  definition: "To drink."
+
+- id: go
+  proto: houtar
+  modern: houdar
+  pos: verb
+  gloss: go
+  definition: "To go."
+  notes: "*houtar → houdar (rule 2: t > d / V_V)"
+
+- id: come
+  proto: ledir
+  modern: ledir
+  pos: verb
+  gloss: come
+  definition: "To come."
+
+- id: give
+  proto: hibar
+  modern: hibar
+  pos: verb
+  gloss: give
+  definition: "To give."
+
+- id: take
+  proto: sodir
+  modern: sodir
+  pos: verb
+  gloss: take
+  definition: "To take, to grab."
+
+- id: say
+  proto: meuder
+  modern: meuder
+  pos: verb
+  gloss: say
+  definition: "To say, to tell."
+
+- id: know
+  proto: gilver
+  modern: gilver
+  pos: verb
+  gloss: know
+  definition: "To know (a fact, how to do something)."
+
+- id: hear
+  proto: tuilar
+  modern: tuilar
+  pos: verb
+  gloss: hear
+  definition: "To hear, to listen."
+
+- id: live
+  proto: vatar
+  modern: vadar
+  pos: verb
+  gloss: live
+  definition: "To live, to be alive; to dwell."
+  notes: "*vatar → vadar (rule 2: t > d / V_V)"
+
+- id: die
+  proto: zatier
+  modern: zacher
+  pos: verb
+  gloss: die
+  definition: "To die."
+  notes: "*zatier → zacher (rule 1: ti > ch / _V)"
+
+- id: love
+  proto: teuvar
+  modern: teuvar
+  pos: verb
+  gloss: love
+  definition: "To love."
+
+- id: make
+  proto: ruccar
+  modern: rucar
+  pos: verb
+  gloss: make
+  definition: "To make, to do."
+  notes: "*ruccar → rucar (rule 3: cc > c)"
+
+- id: have
+  proto: sauler
+  modern: sauler
+  pos: verb
+  gloss: have
+  definition: "To have, to own."
+
+- id: be
+  proto: ihar
+  modern: ihar
+  pos: verb
+  gloss: be
+  definition: "To be."

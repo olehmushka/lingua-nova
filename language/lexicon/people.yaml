@@ -1,0 +1,92 @@
+# People, family and the household.
+
+- id: woman
+  proto: mena
+  modern: mena
+  pos: noun
+  gender: f
+  gloss: woman
+  definition: "Woman."
+
+- id: man
+  proto: dubro
+  modern: dubro
+  pos: noun
+  gender: m
+  gloss: man
+  definition: "Man (adult male)."
+
+- id: child
+  proto: orlo
+  modern: orlo
+  pos: noun
+  gender: m
+  gloss: child
+  definition: "Child (any gender; the noun itself is masculine)."
+
+- id: mother
+  proto: eila
+  modern: eila
+  pos: noun
+  gender: f
+  gloss: mother
+  definition: "Mother."
+
+- id: father
+  proto: gudo
+  modern: gudo
+  pos: noun
+  gender: m
+  gloss: father
+  definition: "Father."
+
+- id: friend
+  proto: meisa
+  modern: meisa
+  pos: noun
+  gender: f
+  gloss: friend
+  definition: "Friend (any gender; the noun itself is feminine)."
+
+- id: name
+  proto: hulen
+  modern: hule
+  pos: noun
+  gender: m
+  gloss: name
+  definition: "Name."
+  notes: "*hulen → hule (rule 4: n > ∅ / _#) Gender listed: -e is unmarked."
+
+- id: house
+  proto: hoita
+  modern: hoida
+  pos: noun
+  gender: f
+  gloss: house
+  definition: "House, home."
+  notes: "*hoita → hoida (rule 2: t > d / V_V)"
+
+- id: lord
+  proto: garso
+  modern: garso
+  pos: noun
+  gender: m
+  gloss: lord
+  definition: "Lord, master; head of a household."
+
+- id: person
+  proto: ezo
+  modern: ezo
+  pos: noun
+  gender: m
+  gloss: person
+  definition: "Person, human being (any gender)."
+
+- id: rifatian
+  proto: rifatia
+  modern: rifacha
+  pos: noun
+  gender: f
+  gloss: Rifatian
+  definition: "The Rifatian language (native name)."
+  notes: "*rifatia → rifacha (rule 1: ti > ch / _V)"

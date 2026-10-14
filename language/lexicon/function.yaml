@@ -1,0 +1,60 @@
+# Articles, the negation particle, conjunctions and prepositions.
+
+- id: the
+  proto: lu
+  modern: lu
+  pos: article
+  gloss: the
+  definition: "Definite article. Invariable, comes before the noun."
+
+- id: a
+  proto: ne
+  modern: ne
+  pos: article
+  gloss: a
+  definition: "Indefinite article, singular only. Invariable."
+
+- id: not
+  proto: na
+  modern: na
+  pos: particle
+  gloss: NEG
+  definition: "Negation; goes directly before the verb. Also 'no' as an answer."
+
+- id: and
+  proto: vo
+  modern: vo
+  pos: conjunction
+  gloss: and
+  definition: "And."
+
+- id: or
+  proto: vei
+  modern: vei
+  pos: conjunction
+  gloss: or
+  definition: "Or."
+
+- id: in
+  proto: bim
+  modern: bi
+  pos: preposition
+  gloss: in
+  definition: "In, inside; at."
+  notes: "*bim → bi (rule 4: m > ∅ / _#)"
+
+- id: with
+  proto: gum
+  modern: gu
+  pos: preposition
+  gloss: with
+  definition: "With, together with."
+  notes: "*gum → gu (rule 4: m > ∅ / _#)"
+
+- id: to
+  proto: eppe
+  modern: epe
+  pos: preposition
+  gloss: to
+  definition: "To, toward (direction)."
+  notes: "*eppe → epe (rule 3: pp > p)"

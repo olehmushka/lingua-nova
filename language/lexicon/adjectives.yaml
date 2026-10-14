@@ -1,0 +1,76 @@
+# Adjectives. They come after the noun and never change.
+
+- id: white
+  proto: lirma
+  modern: lirma
+  pos: adjective
+  gloss: white
+  definition: "White."
+
+- id: black
+  proto: buzio
+  modern: bujo
+  pos: adjective
+  gloss: black
+  definition: "Black, dark."
+  notes: "*buzio → bujo (rule 1: zi > j / _V)"
+
+- id: red
+  proto: heuzio
+  modern: heujo
+  pos: adjective
+  gloss: red
+  definition: "Red."
+  notes: "*heuzio → heujo (rule 1: zi > j / _V)"
+
+- id: big
+  proto: gumo
+  modern: gumo
+  pos: adjective
+  gloss: big
+  definition: "Big, large."
+
+- id: small
+  proto: pippo
+  modern: pipo
+  pos: adjective
+  gloss: small
+  definition: "Small, little."
+  notes: "*pippo → pipo (rule 3: pp > p)"
+
+- id: good
+  proto: saivo
+  modern: saivo
+  pos: adjective
+  gloss: good
+  definition: "Good."
+
+- id: bad
+  proto: vurdo
+  modern: vurdo
+  pos: adjective
+  gloss: bad
+  definition: "Bad."
+
+- id: new
+  proto: frela
+  modern: frela
+  pos: adjective
+  gloss: new
+  definition: "New."
+
+- id: old
+  proto: hausio
+  modern: hauxo
+  pos: adjective
+  gloss: old
+  definition: "Old (of things and people)."
+  notes: "*hausio → hauxo (rule 1: si > x / _V)"
+
+- id: cold
+  proto: greppo
+  modern: grepo
+  pos: adjective
+  gloss: cold
+  definition: "Cold."
+  notes: "*greppo → grepo (rule 3: pp > p)"

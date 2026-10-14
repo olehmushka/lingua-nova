@@ -1,0 +1,93 @@
+# Pronouns, demonstratives and question words. Only the singular subject
+# form is listed; object, possessive and plural forms are in grammar.md.
+
+- id: i
+  proto: mu
+  modern: mu
+  pos: pronoun
+  gloss: I
+  definition: "I (1st person singular subject). Object mi, possessive me."
+
+- id: thou
+  proto: tiu
+  modern: chu
+  pos: pronoun
+  gloss: thou
+  definition: "You (informal singular), like Portuguese tu. Object chi, possessive che."
+  notes: "*tiu → chu (rule 1: ti > ch / _V)"
+
+- id: you_polite
+  proto: sela
+  modern: sela
+  pos: pronoun
+  gender: f
+  gloss: you.POL
+  definition: "You (polite), like Portuguese você. Takes 3sg verbs; possessive selas."
+  notes: "Originally a noun meaning 'honour', the way você comes from vossa mercê 'your grace'."
+
+- id: he
+  proto: hono
+  modern: hono
+  pos: pronoun
+  gloss: he
+  definition: "He. Object honi, possessive hone."
+
+- id: she
+  proto: hana
+  modern: hana
+  pos: pronoun
+  gloss: she
+  definition: "She. Object hani, possessive hane."
+
+- id: it
+  proto: hunu
+  modern: hunu
+  pos: pronoun
+  gloss: it
+  definition: "It. Object huni, possessive hune."
+
+- id: this
+  proto: zei
+  modern: zei
+  pos: determiner
+  gloss: this
+  definition: "This (near the speaker); also used alone: 'this one'."
+  notes: "Pairs with zou 'that': the vowel shows distance."
+
+- id: that
+  proto: zou
+  modern: zou
+  pos: determiner
+  gloss: that
+  definition: "That (away from the speaker); also used alone: 'that one'."
+
+- id: who
+  proto: ifa
+  modern: ifa
+  pos: pronoun
+  gloss: who
+  definition: "Who? (question word, goes first in the sentence)"
+
+- id: what
+  proto: ittun
+  modern: itu
+  pos: pronoun
+  gloss: what
+  definition: "What? (question word, goes first in the sentence)"
+  notes: "*ittun → itu (rule 3: tt > t; rule 4: n > ∅ / _#)"
+
+- id: where
+  proto: ipa
+  modern: iba
+  pos: adverb
+  gloss: where
+  definition: "Where? (question word, goes first in the sentence)"
+  notes: "*ipa → iba (rule 2: p > b / V_V) Question words share an initial i-, like English wh-."
+
+- id: nothing
+  proto: zuniu
+  modern: zunhu
+  pos: pronoun
+  gloss: nothing
+  definition: "Nothing. Requires na before the verb (double negation)."
+  notes: "*zuniu → zunhu (rule 1: ni > nh / _V)"

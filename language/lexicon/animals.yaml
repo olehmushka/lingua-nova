@@ -1,0 +1,53 @@
+# Animals.
+
+- id: dog
+  proto: huro
+  modern: huro
+  pos: noun
+  gender: m
+  gloss: dog
+  definition: "Dog."
+
+- id: bird
+  proto: frinia
+  modern: frinha
+  pos: noun
+  gender: f
+  gloss: bird
+  definition: "Bird."
+  notes: "*frinia → frinha (rule 1: ni > nh / _V)"
+
+- id: fish
+  proto: nauca
+  modern: nauga
+  pos: noun
+  gender: f
+  gloss: fish
+  definition: "Fish."
+  notes: "*nauca → nauga (rule 2: c > g / V_V)"
+
+- id: horse
+  proto: brecco
+  modern: breco
+  pos: noun
+  gender: m
+  gloss: horse
+  definition: "Horse."
+  notes: "*brecco → breco (rule 3: cc > c)"
+
+- id: snake
+  proto: sizio
+  modern: sijo
+  pos: noun
+  gender: m
+  gloss: snake
+  definition: "Snake."
+  notes: "*sizio → sijo (rule 1: zi > j / _V)"
+
+- id: cow
+  proto: ulda
+  modern: ulda
+  pos: noun
+  gender: f
+  gloss: cow
+  definition: "Cow."

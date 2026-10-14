@@ -1,0 +1,158 @@
+# Nature, sky and weather, time of day.
+
+- id: sun
+  proto: eiro
+  modern: eiro
+  pos: noun
+  gender: m
+  gloss: sun
+  definition: "Sun."
+
+- id: moon
+  proto: voisia
+  modern: voixa
+  pos: noun
+  gender: f
+  gloss: moon
+  definition: "Moon."
+  notes: "*voisia → voixa (rule 1: si > x / _V)"
+
+- id: star
+  proto: bilsa
+  modern: bilsa
+  pos: noun
+  gender: f
+  gloss: star
+  definition: "Star."
+
+- id: sky
+  proto: tavu
+  modern: tavu
+  pos: noun
+  gender: m
+  gloss: sky
+  definition: "Sky."
+  notes: "Gender listed: -u is unmarked."
+
+- id: water
+  proto: esia
+  modern: exa
+  pos: noun
+  gender: f
+  gloss: water
+  definition: "Water; any liquid in general."
+  notes: "*esia → exa (rule 1: si > x / _V)"
+
+- id: river
+  proto: trupo
+  modern: trubo
+  pos: noun
+  gender: m
+  gloss: river
+  definition: "River."
+  notes: "*trupo → trubo (rule 2: p > b / V_V)"
+  examples:
+    - text: "Lu mena nara lu trubo."
+      translation: "The woman sees the river."
+
+- id: sea
+  proto: zahor
+  modern: zahor
+  pos: noun
+  gender: m
+  gloss: sea
+  definition: "Sea."
+
+- id: rain
+  proto: taucia
+  modern: taucha
+  pos: noun
+  gender: f
+  gloss: rain
+  definition: "Rain."
+  notes: "*taucia → taucha (rule 1: ci > ch / _V)"
+
+- id: fire
+  proto: ihitu
+  modern: ihidu
+  pos: noun
+  gender: m
+  gloss: fire
+  definition: "Fire."
+  notes: "*ihitu → ihidu (rule 2: t > d / V_V) Gender listed: -u is unmarked."
+
+- id: earth
+  proto: bauna
+  modern: bauna
+  pos: noun
+  gender: f
+  gloss: earth
+  definition: "Earth, soil, land."
+
+- id: stone
+  proto: crotta
+  modern: crota
+  pos: noun
+  gender: f
+  gloss: stone
+  definition: "Stone, rock."
+  notes: "*crotta → crota (rule 3: tt > t)"
+
+- id: mountain
+  proto: velda
+  modern: velda
+  pos: noun
+  gender: f
+  gloss: mountain
+  definition: "Mountain."
+
+- id: tree
+  proto: zeppo
+  modern: zepo
+  pos: noun
+  gender: m
+  gloss: tree
+  definition: "Tree."
+  notes: "*zeppo → zepo (rule 3: pp > p)"
+
+- id: leaf
+  proto: teula
+  modern: teula
+  pos: noun
+  gender: f
+  gloss: leaf
+  definition: "Leaf."
+
+- id: wind
+  proto: fuvo
+  modern: fuvo
+  pos: noun
+  gender: m
+  gloss: wind
+  definition: "Wind, breeze."
+
+- id: night
+  proto: ilma
+  modern: ilma
+  pos: noun
+  gender: f
+  gloss: night
+  definition: "Night."
+
+- id: day
+  proto: seida
+  modern: seida
+  pos: noun
+  gender: m
+  gloss: day
+  definition: "Day."
+  notes: "Masculine despite -a, like Portuguese o dia."
+
+- id: colour
+  proto: tilio
+  modern: tilho
+  pos: noun
+  gender: m
+  gloss: colour
+  definition: "Colour."
+  notes: "*tilio → tilho (rule 1: li > lh / _V)"

@@ -1,0 +1,40 @@
+# Sound changes: proto-language → modern language.
+# Rules apply top to bottom; order matters.
+#
+# Draft syntax (the Phase 2 engine will parse this):
+#   target > replacement / environment
+#   _   the position of the target
+#   #   word boundary
+#   V   any vowel, C any consonant (categories defined in phonology.md)
+#   ∅   nothing (deletion)
+#
+# Rules use the romanized spelling. Digraphs (lh, nh, ch) count as ONE sound.
+#
+# STARTER RULES (draft, expect to tune them as the lexicon grows)
+
+# 1. Palatalization: consonant + i before a vowel merges into a palatal.
+#    proto *falia → falha, *sunio → sunho
+li > lh / _V
+ni > nh / _V
+si > x  / _V
+zi > j  / _V
+ti > ch / _V
+ci > ch / _V
+
+# 2. Intervocalic voicing (the hallmark of Western Romance: Latin vita → Portuguese vida).
+#    proto *pata → pada
+p > b / V_V
+t > d / V_V
+c > g / V_V
+
+# 3. Degemination: double consonants become single.
+#    Must come AFTER rule 2, so *patta → pata (the t stays voiceless).
+#    Swap the order and every tt would become d. This is why order matters.
+pp > p
+tt > t
+cc > c
+
+# 4. Final nasals are lost (no nasal endings in the modern language).
+#    proto *saman → sama
+n > ∅ / _#
+m > ∅ / _#

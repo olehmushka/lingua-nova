@@ -1,0 +1,120 @@
+# Body parts.
+
+- id: head
+  proto: gucio
+  modern: gucho
+  pos: noun
+  gender: m
+  gloss: head
+  definition: "Head."
+  notes: "*gucio → gucho (rule 1: ci > ch / _V)"
+
+- id: eye
+  proto: zulia
+  modern: zulha
+  pos: noun
+  gender: f
+  gloss: eye
+  definition: "Eye."
+  notes: "*zulia → zulha (rule 1: li > lh / _V)"
+
+- id: ear
+  proto: gaiba
+  modern: gaiba
+  pos: noun
+  gender: f
+  gloss: ear
+  definition: "Ear."
+
+- id: mouth
+  proto: haupa
+  modern: hauba
+  pos: noun
+  gender: f
+  gloss: mouth
+  definition: "Mouth."
+  notes: "*haupa → hauba (rule 2: p > b / V_V)"
+
+- id: nose
+  proto: firo
+  modern: firo
+  pos: noun
+  gender: m
+  gloss: nose
+  definition: "Nose."
+
+- id: tooth
+  proto: gruha
+  modern: gruha
+  pos: noun
+  gender: f
+  gloss: tooth
+  definition: "Tooth."
+
+- id: tongue
+  proto: drelia
+  modern: drelha
+  pos: noun
+  gender: f
+  gloss: tongue
+  definition: "Tongue; also 'language'."
+  notes: "*drelia → drelha (rule 1: li > lh / _V)"
+
+- id: hand
+  proto: zaipo
+  modern: zaibo
+  pos: noun
+  gender: m
+  gloss: hand
+  definition: "Hand."
+  notes: "*zaipo → zaibo (rule 2: p > b / V_V)"
+
+- id: foot
+  proto: gilo
+  modern: gilo
+  pos: noun
+  gender: m
+  gloss: foot
+  definition: "Foot."
+
+- id: heart
+  proto: olutio
+  modern: olucho
+  pos: noun
+  gender: m
+  gloss: heart
+  definition: "Heart."
+  notes: "*olutio → olucho (rule 1: ti > ch / _V)"
+
+- id: blood
+  proto: ruva
+  modern: ruva
+  pos: noun
+  gender: f
+  gloss: blood
+  definition: "Blood."
+
+- id: bone
+  proto: daufo
+  modern: daufo
+  pos: noun
+  gender: m
+  gloss: bone
+  definition: "Bone."
+
+- id: skin
+  proto: hesto
+  modern: hesto
+  pos: noun
+  gender: m
+  gloss: skin
+  definition: "Skin; hide."
+
+- id: hair
+  proto: esulia
+  modern: esulha
+  pos: noun
+  gender: f
+  gloss: hair
+  definition: "Hair (of the head; collective)."
+  notes: "*esulia → esulha (rule 1: li > lh / _V)"

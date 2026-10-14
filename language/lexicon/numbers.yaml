@@ -1,0 +1,40 @@
+# Numbers one to five.
+
+- id: one
+  proto: usia
+  modern: uxa
+  pos: numeral
+  gloss: one
+  definition: "One."
+  notes: "*usia → uxa (rule 1: si > x / _V)"
+
+- id: two
+  proto: reba
+  modern: reba
+  pos: numeral
+  gloss: two
+  definition: "Two."
+
+- id: three
+  proto: hupe
+  modern: hube
+  pos: numeral
+  gloss: three
+  definition: "Three."
+  notes: "*hupe → hube (rule 2: p > b / V_V)"
+
+- id: four
+  proto: clotto
+  modern: cloto
+  pos: numeral
+  gloss: four
+  definition: "Four."
+  notes: "*clotto → cloto (rule 3: tt > t)"
+
+- id: five
+  proto: zoltie
+  modern: zolche
+  pos: numeral
+  gloss: five
+  definition: "Five."
+  notes: "*zoltie → zolche (rule 1: ti > ch / _V)"
