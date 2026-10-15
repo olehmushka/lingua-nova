@@ -14,9 +14,9 @@ type Violation struct {
 func (v Violation) Error() string  { return v.Msg }
 func (v Violation) String() string { return v.Msg }
 
-// matches reports whether a pattern item (a segment spelling or a category
+// Matches reports whether a pattern item (a segment spelling or a category
 // name) matches the segment spelled spell.
-func (inv *Inventory) matches(item, spell string) bool {
+func (inv *Inventory) Matches(item, spell string) bool {
 	if set, ok := inv.catSet[item]; ok {
 		return set[spell]
 	}
@@ -32,7 +32,7 @@ func (inv *Inventory) CheckForbidden(segs []Segment) []Violation {
 		for i := 0; i+len(pat) <= len(segs); i++ {
 			ok := true
 			for j, item := range pat {
-				if !inv.matches(item, segs[i+j].Spell) {
+				if !inv.Matches(item, segs[i+j].Spell) {
 					ok = false
 					break
 				}

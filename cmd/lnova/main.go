@@ -12,6 +12,7 @@ import (
 
 	"github.com/olehmushka/lingua-nova/internal/lexicon"
 	"github.com/olehmushka/lingua-nova/internal/phon"
+	"github.com/olehmushka/lingua-nova/internal/sound"
 )
 
 const usage = `usage: lnova [-lang dir] <command> [args]
@@ -19,6 +20,7 @@ const usage = `usage: lnova [-lang dir] <command> [args]
 commands:
   ipa <word>...   show segments and IPA with syllables and stress
   validate        check the lexicon against the phonology and entry format
+  rules           parse sound-changes.txt and list the rules with line numbers
 `
 
 func main() {
@@ -44,6 +46,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return cmdIPA(*langDir, rest, stdout, stderr)
 	case "validate":
 		return cmdValidate(*langDir, rest, stdout, stderr)
+	case "rules":
+		return cmdRules(*langDir, rest, stdout, stderr)
 	default:
 		fmt.Fprintf(stderr, "lnova: unknown command %q\n%s", cmd, usage)
 		return 2
@@ -120,5 +124,34 @@ func cmdValidate(langDir string, args []string, stdout, stderr io.Writer) int {
 	if len(probs) > 0 {
 		return 1
 	}
+	return 0
+}
+
+// cmdRules parses the sound changes and prints each rule with its line
+// number, the id used in derivation traces:
+//
+//	26   li > lh / _V
+//
+// Parse errors are printed like compiler errors, and the exit code is 1.
+func cmdRules(langDir string, args []string, stdout, stderr io.Writer) int {
+	if len(args) > 0 {
+		fmt.Fprintln(stderr, "usage: lnova rules")
+		return 2
+	}
+	inv, err := phon.Load(filepath.Join(langDir, "phonology.yaml"))
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	rules, err := sound.Load(filepath.Join(langDir, "sound-changes.txt"), inv)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	tw := tabwriter.NewWriter(stdout, 0, 0, 3, ' ', 0)
+	for _, r := range rules {
+		fmt.Fprintf(tw, "%d\t%s\n", r.Line, r)
+	}
+	tw.Flush()
 	return 0
 }

@@ -7,11 +7,12 @@ previous one is "done", even if done means small.
 
 _Keep this section current: it's where every new session starts._
 
-1. **Phase 2, step 2.4**: sound change rule parser. Start by reading
-   `sound-changes.txt` together and deciding the application semantics
-   (simultaneous vs. iterative) before writing the parser.
-2. Then 2.5 (rule engine + `lnova evolve`).
-3. Before 2.6 (generator): decide the **proto phonotactics**. Today proto
+1. **Phase 2, step 2.5**: rule engine + `lnova evolve`. `internal/sound`
+   already has `Rule.Apply` (one rule, simultaneous). Next comes ordered
+   application of all rules, the derivation trace, the CLI, and the whole
+   lexicon as a table test. Every mismatch with `modern` gets reported to the
+   user, never "fixed" silently.
+2. Before 2.6 (generator): decide the **proto phonotactics**. Today proto
    forms are only checked for proto-only sounds and `forbidden`, because
    proto has geminates (`*pippo`) that modern codas don't allow.
 
@@ -87,12 +88,15 @@ sounds, and spelling is just one way of writing them.
 
 ### 2.4 Sound change rule parser
 
-- [ ] Parse `sound-changes.txt` into an AST: target, replacement, environment
+- [x] Parse `sound-changes.txt` into an AST: target, replacement, environment
   (`_`, `#`, categories, `∅`), with line numbers for errors.
-- [ ] Decide and document the **application semantics** before coding.
+- [x] Decide and document the **application semantics** before coding.
   Does a rule match against the original form (simultaneous application) or
   against the form as it's being rewritten (iterative)? Real sound-change
   tools differ here. Write a test that shows the difference.
+  → **Simultaneous**, documented in the header of `sound-changes.txt`;
+  `TestApplySimultaneous` (`a > e / e_`: `eaaa` → `eeaa`, not `eeee`).
+- [x] `lnova rules` lists the parsed rules with their line numbers.
 
 *Concept to learn:* rule ordering. Rules can **feed** each other (one creates
 the input for the next) or **bleed** each other (one removes it). Rules 2 and 3
@@ -104,7 +108,8 @@ in `sound-changes.txt` are a bleeding example.
   (which rule changed what).
 - [ ] `lnova evolve`: run every lexicon `proto` and compare with `modern`;
   print mismatches; exit non-zero on any mismatch (CI-friendly).
-- [ ] `lnova evolve --trace <id>`: `*esia → exa  (rule 1: si > x / _V)`.
+- [ ] `lnova evolve --trace <id>`: `*esia → exa  (line 28: si > x / _V)`.
+  Rules are identified by line number (decided in 2.4).
 - [ ] A test that runs the whole lexicon as a table-driven test.
 
 ### 2.6 Word generator

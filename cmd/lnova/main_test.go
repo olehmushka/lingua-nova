@@ -23,6 +23,8 @@ func TestRun(t *testing.T) {
 		{"ipa no words", []string{"ipa"}, 2, "", "usage: lnova ipa"},
 		{"validate", []string{"validate"}, 0, "entries, 0 problems", ""},
 		{"validate extra args", []string{"validate", "x"}, 2, "", "usage: lnova validate"},
+		{"rules", []string{"rules"}, 0, "28   si > x / _V\n", ""},
+		{"rules extra args", []string{"rules", "x"}, 2, "", "usage: lnova rules"},
 		{"no command", nil, 2, "", "usage: lnova"},
 		{"unknown command", []string{"nope"}, 2, "", `unknown command "nope"`},
 		{"bad lang dir", []string{"-lang", "/nonexistent", "ipa", "lu"}, 1, "", "no such file"},
@@ -77,5 +79,30 @@ func TestValidateBroken(t *testing.T) {
 `
 	if stdout.String() != want {
 		t.Errorf("stdout:\n%s\nwant:\n%s", stdout.String(), want)
+	}
+}
+
+// TestRulesBroken runs rules on a copy of the phonology with a bad rule file.
+func TestRulesBroken(t *testing.T) {
+	dir := t.TempDir()
+	phonology, err := os.ReadFile("../../language/phonology.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "phonology.yaml"), phonology, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	file := filepath.Join(dir, "sound-changes.txt")
+	if err := os.WriteFile(file, []byte("# rules\np > b / V_V\nk > g\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	var stdout, stderr bytes.Buffer
+	if code := run([]string{"-lang", dir, "rules"}, &stdout, &stderr); code != 1 {
+		t.Errorf("exit code = %d, want 1", code)
+	}
+	want := file + `:3: target: unknown segment or category at "k"` + "\n"
+	if stderr.String() != want {
+		t.Errorf("stderr:\n%s\nwant:\n%s", stderr.String(), want)
 	}
 }

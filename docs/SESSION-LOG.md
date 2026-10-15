@@ -6,6 +6,40 @@ why, and where to pick up. The task list itself lives in `ROADMAP.md` →
 
 ---
 
+## 2026-10-15 (night): Phase 2, step 2.4, sound change rule parser
+
+### Done
+
+- `internal/sound`: `Parse`/`Load` turn `sound-changes.txt` into `[]Rule`
+  (target, replacement, left/right environment, line, source text). Items
+  are tokenized by greedy longest match over segment spellings and category
+  names, so `V_V` and `_#` need no spaces. Every bad line is reported as
+  `file:line: message` (an `ErrorList`); good lines still parse.
+- `Rule.Apply(inv, word)`: one rule, simultaneous application. Ordered
+  application of all rules and tracing come in 2.5.
+- `phon.Matches` exported (was `matches`) for category matching.
+- `lnova rules` lists the 14 rules with line numbers; exit 1 on parse errors.
+- `sound-changes.txt`: only the header comment changed (settled syntax and
+  semantics); the rules are untouched.
+- Tests: parse table, one error case per check, error collection, the real
+  file (14 rules, line numbers), an apply table, the semantics test, and the CLI.
+
+### Key decisions (the user's choices)
+
+| Area | Decision | Why |
+|---|---|---|
+| Application | **Simultaneous**: match against the form as it was before the rule, non-overlapping, left to right | Standard (SPE) model, predictable; an iterative flag can be added if a spreading rule (harmony) ever needs it. No current word differs between the two |
+| Rule identity | **Line number + text**; `# 1.` headings stay plain comments | No format change. Cost: editing the header shifts the numbers (it did this session, 17 → 26), so tests that pin line numbers need updating |
+| Syntax | Only what the file uses: segments, categories, `_`, `#`, `∅`, optional environment | Add sets `{p,t,c}` or optional `(C)` when a real rule needs them |
+| Comments | Full-line only; a line starting with `#` is a comment | `#` inside a rule is the word boundary. Side effect: a rule can't start with `#`, which is fine because targets never contain `#` |
+
+### Start next session here
+
+1. `ROADMAP.md` → "▶ Next up": step 2.5, rule engine + `lnova evolve`.
+2. Step 2.4 is **not committed yet** (2.1–2.3 are, in `b7eae8e`).
+
+---
+
 ## 2026-10-15 (evening): Phase 2, step 2.3, lexicon validator
 
 ### Done

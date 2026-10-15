@@ -1,14 +1,23 @@
 # Sound changes: proto-language → modern language.
 # Rules apply top to bottom; order matters.
 #
-# Draft syntax (the Phase 2 engine will parse this):
+# Syntax (parsed by internal/sound; `lnova rules` lists what it read):
 #   target > replacement / environment
 #   _   the position of the target
-#   #   word boundary
-#   V   any vowel, C any consonant (categories defined in phonology.md)
+#   #   word boundary (only at the outer edge of the environment)
+#   V   any vowel, C any consonant (categories from phonology.yaml)
 #   ∅   nothing (deletion)
+# The "/ environment" part is optional (rule 3 has none).
+# A line starting with # is a comment. There are no comments after a rule,
+# because # inside a rule means the word boundary.
 #
 # Rules use the romanized spelling. Digraphs (lh, nh, ch) count as ONE sound.
+# Each line is one rule; traces identify it by its line number.
+#
+# Application is SIMULTANEOUS: a rule finds all its matches in the word as it
+# was before the rule ran, then rewrites them all at once. A change can't
+# create a new match for the same rule: a > e / e_ turns eaaa into eeaa,
+# not eeee. Matches don't overlap.
 #
 # STARTER RULES (draft, expect to tune them as the lexicon grows)
 
