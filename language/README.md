@@ -9,6 +9,7 @@ these files, and you edit them by hand.
 | File | Contents |
 |---|---|
 | `phonology.md` | Sounds, syllable structure, stress, romanization |
+| `phonology.yaml` | The same inventory as data, for the Go tools (keep in sync with `phonology.md`) |
 | `sound-changes.txt` | Ordered historical rules: proto → modern |
 | `grammar.md` | Word order, morphology, syntax |
 | `lexicon/*.yaml` | Dictionary entries, grouped by topic |
@@ -37,6 +38,12 @@ The modern word is normally *derived* by running `proto` through
 Phase 2's `lnova evolve` checks every entry against it, so the lexicon
 doubles as the sound-change engine's test table. If you change a rule,
 expect some `modern` values to need updating too.
+
+Run `go run ./cmd/lnova validate` after editing. It checks required fields
+(`id proto modern pos gloss definition`), duplicate ids, `pos` (one of
+adjective, adverb, article, conjunction, determiner, noun, numeral, particle,
+preposition, pronoun, verb), `gender` (`m`/`f`; required on nouns, optional
+on pronouns), verb endings, proto sounds, and modern phonotactics.
 
 Verbs are listed by their proto infinitive (`narar`); the class follows from
 the theme vowel. Pronouns list only the singular subject form; the rest of

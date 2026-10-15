@@ -83,6 +83,9 @@ Syllable shape: **(C)(C)V(C)**, with open syllables (CV) by far the most common.
   final `-h` is not always a plural, just as English final *-s* isn't (*bus*).
   The analyzer has to check the lexicon.
 - No double consonants in modern words.
+- **No three vowels in a row.** A vowel pair is either a diphthong (`hoi.da`)
+  or two syllables (`di.a`), never part of a longer run. The validator
+  enforces it.
 - **`l`, `n`, `c` are never followed by `h`**, in proto or modern words.
   `lh nh ch` are digraphs, so l+/x/ would be spelled the same as /ʎ/
   (`bilha`: bi-lha or bil-ha?). Banning the sequence keeps every spelling
@@ -98,3 +101,7 @@ There are no accent marks, so stress has to be predictable: no exceptions.
     hoida  → HOI-da
     naraxu → na-RA-xu
     hoidah → HOI-dah    (adding -h does not add a syllable)
+
+In IPA the stress mark `ˈ` goes before the stressed syllable, in place of
+the syllable dot: `naraxu` /naˈɾa.ʃu/. One-syllable words get no mark (`lu`
+/lu/), because a mark would tell you nothing.

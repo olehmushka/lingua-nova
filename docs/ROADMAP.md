@@ -7,9 +7,13 @@ previous one is "done", even if done means small.
 
 _Keep this section current: it's where every new session starts._
 
-1. **Phase 2, step 2.1**: write `language/phonology.yaml` and the tokenizer
-   (`internal/phon`), then `lnova ipa`.
-2. Then 2.2 (syllabification and stress).
+1. **Phase 2, step 2.4**: sound change rule parser. Start by reading
+   `sound-changes.txt` together and deciding the application semantics
+   (simultaneous vs. iterative) before writing the parser.
+2. Then 2.5 (rule engine + `lnova evolve`).
+3. Before 2.6 (generator): decide the **proto phonotactics**. Today proto
+   forms are only checked for proto-only sounds and `forbidden`, because
+   proto has geminates (`*pippo`) that modern codas don't allow.
 
 ## Phase 0 — Learn the basics (reading, ~1–2 weeks alongside Phase 1)
 
@@ -48,37 +52,38 @@ Build in this order; each step is usable on its own. Every step ends with
 
 ### 2.1 Machine-readable phonology + tokenizer
 
-- [ ] `language/phonology.yaml`: the inventory that `phonology.md` describes
+- [x] `language/phonology.yaml`: the inventory that `phonology.md` describes
   in prose, as data. It holds segments (spelling, IPA, consonant/vowel,
   proto-or-modern-only), categories (`V`, `C`, and later finer ones like
   stops), diphthongs, onset clusters, allowed codas and word-finals, and
   forbidden sequences (`l/n/c + h`).
   *Why a file and not Go constants:* the validator, generator and engine all
   share it, and a second daughter language later only needs a new file.
-- [ ] `internal/phon`: load it, plus a **tokenizer** that splits spelling into
+- [x] `internal/phon`: load it, plus a **tokenizer** that splits spelling into
   segments with greedy longest match (`folha` → `f o lh a`, not `f o l h a`).
-- [ ] `lnova ipa <word>` → `folha` → /ˈfo.ʎa/ (needs 2.2 for the dot and stress mark).
+- [x] `lnova ipa <word>` → `folha   f·o·lh·a   /ˈfo.ʎa/` (dots and stress since 2.2).
 
 *Concept to learn:* **segments vs. letters.** All the linguistic logic works on
 sounds, and spelling is just one way of writing them.
 
 ### 2.2 Syllabification and stress
 
-- [ ] Syllabifier using the **maximal onset principle**: a consonant between
+- [x] Syllabifier using the **maximal onset principle**: a consonant between
   vowels joins the *following* syllable when the result is a legal onset
   (`pa.tra`, not `pat.ra`).
-- [ ] Diphthongs as one nucleus; other vowel pairs split (`di.a`).
-- [ ] Stress on the penultimate syllable.
+- [x] Diphthongs as one nucleus; other vowel pairs split (`di.a`).
+- [x] Stress on the penultimate syllable.
 
 ### 2.3 Lexicon loader + `lnova validate`
 
-- [ ] `internal/lexicon`: load all `lexicon/*.yaml`.
-- [ ] Checks:
+- [x] `internal/lexicon`: load all `lexicon/*.yaml`.
+- [x] Checks:
   - duplicate ids; required fields; `gender` on nouns.
   - verbs end in `-ar/-er/-ir`.
   - `proto` uses only proto segments (no palatals).
   - `modern` obeys the phonotactics (onsets, codas, word-final, forbidden sequences).
-- [ ] Error messages include file and line, like a compiler.
+- [x] Error messages include file and line, like a compiler.
+- [x] `lnova validate` prints `104 entries, 0 problems`; exits 1 on any problem.
 
 ### 2.4 Sound change rule parser
 

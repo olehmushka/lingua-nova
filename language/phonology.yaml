@@ -1,0 +1,80 @@
+# Machine-readable phonology. phonology.md describes the same inventory in
+# prose; keep the two in sync. The Go tools (internal/phon) load this file.
+#
+# Sequences (diphthongs, onsets, forbidden) are lists of segment spellings,
+# not strings: [l, h] is l followed by /x/, while "lh" would be the single
+# segment /ʎ/.
+
+# modern_only: the segment doesn't exist in the proto-language. These are the
+# palatals created by sound change rule 1.
+consonants:
+  - {spell: p,  ipa: p}
+  - {spell: b,  ipa: b}
+  - {spell: t,  ipa: t}
+  - {spell: d,  ipa: d}
+  - {spell: c,  ipa: k}
+  - {spell: g,  ipa: g}
+  - {spell: f,  ipa: f}
+  - {spell: v,  ipa: v}
+  - {spell: s,  ipa: s}
+  - {spell: z,  ipa: z}
+  - {spell: h,  ipa: x}
+  - {spell: m,  ipa: m}
+  - {spell: n,  ipa: n}
+  - {spell: l,  ipa: l}
+  - {spell: r,  ipa: ɾ}
+  - {spell: lh, ipa: ʎ,  modern_only: true}
+  - {spell: nh, ipa: ɲ,  modern_only: true}
+  - {spell: x,  ipa: ʃ,  modern_only: true}
+  - {spell: j,  ipa: ʒ,  modern_only: true}
+  - {spell: ch, ipa: tʃ, modern_only: true}
+
+vowels:
+  - {spell: a, ipa: a}
+  - {spell: e, ipa: e}
+  - {spell: i, ipa: i}
+  - {spell: o, ipa: o}
+  - {spell: u, ipa: u}
+
+# Categories V (all vowels) and C (all consonants) are built automatically.
+# Add finer ones here when a sound change rule needs them, e.g.
+#   Stop: [p, b, t, d, c, g]
+categories: {}
+
+# Vowel pairs that form one syllable nucleus. Any other pair is two syllables.
+diphthongs:
+  - [a, i]
+  - [e, i]
+  - [o, i]
+  - [a, u]
+  - [e, u]
+  - [o, u]
+
+# Two-consonant onsets: stop or f + r/l. Any single consonant is a legal onset.
+onsets:
+  - [p, r]
+  - [b, r]
+  - [t, r]
+  - [d, r]
+  - [c, r]
+  - [g, r]
+  - [f, r]
+  - [p, l]
+  - [b, l]
+  - [c, l]
+  - [g, l]
+  - [f, l]
+
+# Consonants allowed at the end of a syllable.
+codas: [r, l, s, h]
+
+# Consonants allowed at the end of a word. A word may always end in a vowel.
+finals: [r, l, s, h]
+
+# Sequences that never occur, in proto or modern words. An item is a segment
+# spelling or a category name (categories start with an uppercase letter).
+forbidden:
+  - [l, h]
+  - [n, h]
+  - [c, h]
+  - [V, V, V]   # no three vowels in a row

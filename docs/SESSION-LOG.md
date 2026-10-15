@@ -6,6 +6,68 @@ why, and where to pick up. The task list itself lives in `ROADMAP.md` →
 
 ---
 
+## 2026-10-15 (evening): Phase 2, step 2.3, lexicon validator
+
+### Done
+
+- `internal/phon/phonotactics.go`: `CheckPhonotactics` (per-syllable onset
+  and coda checks, word-final codas from `finals`) and `CheckForbidden` (a
+  flat scan, because forbidden sequences cross syllable boundaries; category
+  items like `[V, V, V]` work).
+- `internal/lexicon`: `Load` decodes through `yaml.Node` to keep line
+  numbers; unknown keys are reported. `Validate` collects every problem,
+  sorted by file and line, in the format `file:line: id: message`.
+- `lnova validate` → `104 entries, 0 problems`, exit 1 on any problem.
+- Tests: phonotactics table, one validator case per rule, parse errors, the
+  real lexicon validates clean, and the CLI on a broken temp lexicon.
+
+### Key decisions
+
+| Area | Decision | Why |
+|---|---|---|
+| Gender | Required on nouns, **optional on pronouns**, an error elsewhere | User's choice: `sela` keeps `gender: f` from the noun "honour" it came from |
+| Proto checks | Proto-only sounds + `forbidden` only, no onset/coda check | Proto has geminates (`*pippo`, `*ruccar`, `*cuppe`); real proto phonotactics is still to be designed (before 2.6) |
+| `pos` | Closed list of the 11 values in use | Typos (`nown`) are caught; add a value to `lexicon.PartsOfSpeech` when needed |
+| Verb endings | Checked on both proto and modern | Both are infinitives |
+
+### Start next session here
+
+1. `ROADMAP.md` → "▶ Next up": step 2.4, sound change rule parser.
+2. Steps 2.1–2.3 are **not committed yet**, unless the user committed at the
+   end of this session.
+
+---
+
+## 2026-10-15 (later): Phase 2, step 2.2, syllables and stress
+
+### Done
+
+- `internal/phon/syllable.go`: `Syllabify` (onset/nucleus/coda),
+  `Stress` (penultimate), `SyllableIPA` (`naˈɾa.ʃu`), `SyllableSpelling`
+  (`na.ra.xu`).
+- `lnova ipa folha` now prints `folha   f·o·lh·a   /ˈfo.ʎa/`. A word with no
+  vowel is an error.
+- `forbidden` in `phonology.yaml` may now contain category names. Category
+  names must start with an uppercase letter so they can't clash with a
+  segment spelling.
+- Tests: syllabification table, no-vowel error, and every lexicon form
+  syllabifies and joins back to the original word.
+
+### Key decisions (with the user's reasons)
+
+| Area | Decision | Why |
+|---|---|---|
+| V-V-V | **Banned** (new phonotactic rule, `forbidden: [V, V, V]`) | Simplest option: no rule needed for how `aia` splits, and the generator drops such words. No current word has one |
+| Monosyllables | No stress mark in IPA (`/lu/`) | Usual dictionary practice; the mark tells you nothing |
+| Syllabifier scope | Structural parser only; illegal codas (`*cuppe` → `cup.pe`) are split anyway | Checking legality is the validator's job (2.3), the same split as parse vs. type-check |
+
+### Start next session here
+
+1. `ROADMAP.md` → "▶ Next up": step 2.3, lexicon loader + `lnova validate`.
+2. Steps 2.1 and 2.2 are **not committed yet**.
+
+---
+
 ## 2026-10-15: Phase 1 finished
 
 ### Done
@@ -33,10 +95,26 @@ why, and where to pick up. The task list itself lives in `ROADMAP.md` →
   (104 entries). This creates a second question-word series: `i-` for
   participants and places, `cu-` for circumstances.
 
+### Phase 2, step 2.1 (same session)
+
+- `language/phonology.yaml`: segments (`modern_only` marks the palatals),
+  diphthongs, onset clusters, codas, finals, forbidden sequences. V and C
+  categories are built automatically; finer ones go under `categories:`.
+  Sequences are YAML lists (`[l, h]`), not strings, because `"lh"` would
+  tokenize as the single segment /ʎ/.
+- `internal/phon`: `Load`/`Parse` with validation (unknown or mis-kinded
+  segments in sequences, duplicates, unknown YAML fields). `Tokenize` uses
+  greedy longest match and returns `*UnknownLetterError` with a byte position.
+  Empty codas/finals are allowed (a pure-CV language is valid).
+- `lnova [-lang dir] ipa <word>...` prints `folha   f·o·lh·a   /foʎa/`. A
+  leading `*` is accepted.
+- Dependency: `go.yaml.in/yaml/v3` (maintained fork of `gopkg.in/yaml.v3`).
+- Tests: tokenizer table, error positions, parse errors, the CLI, and every
+  lexicon `proto`/`modern` form tokenizes.
+
 ### Start next session here
 
-1. `ROADMAP.md` → "▶ Next up": Phase 2, step 2.1, `language/phonology.yaml` +
-   tokenizer in `internal/phon` + `lnova ipa`.
+1. `ROADMAP.md` → "▶ Next up": Phase 2, step 2.2, syllabifier + stress.
 
 ---
 

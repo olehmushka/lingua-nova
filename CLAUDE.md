@@ -28,6 +28,7 @@ Hand-edited files that define the language. The Go code reads them and never
 writes them.
 
 - `phonology.md`: sounds, spelling, phonotactics, stress
+- `phonology.yaml`: the same inventory as data (read by `internal/phon`)
 - `grammar.md`: morphology and syntax; **(draft)** marks unsettled forms
 - `sound-changes.txt`: ordered rules, proto → modern
 - `lexicon/*.yaml`: 104 entries; format in `language/README.md`
