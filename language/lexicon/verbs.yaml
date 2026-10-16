@@ -238,3 +238,184 @@
   pos: verb
   gloss: build
   definition: "To build, to put together a structure: a house, a wall, a city."
+
+- id: walk
+  proto: trelar
+  modern: trelar
+  pos: verb
+  gloss: walk
+  definition: "To walk."
+
+- id: run
+  proto: besir
+  modern: besir
+  pos: verb
+  gloss: run
+  definition: "To run."
+
+- id: swim
+  proto: nolver
+  modern: nolver
+  pos: verb
+  gloss: swim
+  definition: "To swim."
+
+- id: fly
+  proto: lettar
+  modern: letar
+  pos: verb
+  gloss: fly
+  definition: "To fly."
+  notes: "*lettar → letar (rule 3: tt > t)"
+
+- id: fall
+  proto: zuvir
+  modern: zuvir
+  pos: verb
+  gloss: fall
+  definition: "To fall."
+
+- id: sit
+  proto: ostir
+  modern: ostir
+  pos: verb
+  gloss: sit
+  definition: "To sit, to sit down."
+
+- id: stand
+  proto: duscar
+  modern: duscar
+  pos: verb
+  gloss: stand
+  definition: "To stand, to stand up."
+
+- id: lie
+  proto: gaulir
+  modern: gaulir
+  pos: verb
+  gloss: lie.down
+  definition: "To lie down, to lie (be lying)."
+
+- id: carry
+  proto: bostar
+  modern: bostar
+  pos: verb
+  gloss: carry
+  definition: "To carry, to bear."
+
+- id: throw
+  proto: frusar
+  modern: frusar
+  pos: verb
+  gloss: throw
+  definition: "To throw."
+
+- id: push
+  proto: pilcar
+  modern: pilcar
+  pos: verb
+  gloss: push
+  definition: "To push."
+
+- id: pull
+  proto: meccir
+  modern: mecir
+  pos: verb
+  gloss: pull
+  definition: "To pull, to drag."
+  notes: "*meccir → mecir (rule 3: cc > c)"
+
+- id: hold
+  proto: ulmer
+  modern: ulmer
+  pos: verb
+  gloss: hold
+  definition: "To hold, to keep in the hand."
+
+- id: cut
+  proto: zacir
+  modern: zagir
+  pos: verb
+  gloss: cut
+  definition: "To cut."
+  notes: "*zacir → zagir (rule 2: c > g / V_V)"
+
+- id: burn
+  proto: irzar
+  modern: irzar
+  pos: verb
+  gloss: burn
+  definition: "To burn (fire burns; to burn something)."
+
+- id: wash
+  proto: pruvir
+  modern: pruvir
+  pos: verb
+  gloss: wash
+  definition: "To wash."
+
+- id: breathe
+  proto: fauler
+  modern: fauler
+  pos: verb
+  gloss: breathe
+  definition: "To breathe."
+
+- id: laugh
+  proto: gilcar
+  modern: gilcar
+  pos: verb
+  gloss: laugh
+  definition: "To laugh."
+
+- id: weep
+  proto: dunier
+  modern: dunher
+  pos: verb
+  gloss: weep
+  definition: "To weep, to cry."
+  notes: "*dunier → dunher (rule 1: ni > nh / _V)"
+
+- id: sing
+  proto: eulir
+  modern: eulir
+  pos: verb
+  gloss: sing
+  definition: "To sing."
+  notes: "Echoes eurir 'create from nothing', one sound apart: creation as song."
+
+- id: dance
+  proto: bralar
+  modern: bralar
+  pos: verb
+  gloss: dance
+  definition: "To dance."
+
+- id: play
+  proto: teiler
+  modern: teiler
+  pos: verb
+  gloss: play
+  definition: "To play (a game)."
+
+- id: smell
+  proto: nusar
+  modern: nusar
+  pos: verb
+  gloss: smell
+  definition: "To smell (sense or give off a smell)."
+
+- id: touch
+  proto: cermir
+  modern: cermir
+  pos: verb
+  gloss: touch
+  definition: "To touch."
+
+- id: feel
+  proto: pertiar
+  modern: perchar
+  pos: verb
+  gloss: feel
+  definition: "To feel (with the senses or the heart)."
+  notes: "*pertiar → perchar (rule 1: ti > ch / _V)"
