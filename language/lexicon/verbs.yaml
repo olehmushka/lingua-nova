@@ -419,3 +419,167 @@
   gloss: feel
   definition: "To feel (with the senses or the heart)."
   notes: "*pertiar → perchar (rule 1: ti > ch / _V)"
+
+- id: think
+  proto: sozer
+  modern: sozer
+  pos: verb
+  gloss: think
+  definition: "To think."
+
+- id: believe
+  proto: haumer
+  modern: haumer
+  pos: verb
+  gloss: believe
+  definition: "To believe; to trust."
+
+- id: want
+  proto: zaurar
+  modern: zaurar
+  pos: verb
+  gloss: want
+  definition: "To want, to wish."
+
+- id: fear
+  proto: trevier
+  modern: trevier
+  pos: verb
+  gloss: fear
+  definition: "To fear, to be afraid of."
+
+- id: hope
+  proto: lurir
+  modern: lurir
+  pos: verb
+  gloss: hope
+  definition: "To hope."
+
+- id: remember
+  proto: selmar
+  modern: selmar
+  pos: verb
+  gloss: remember
+  definition: "To remember."
+
+- id: forget
+  proto: aucer
+  modern: auger
+  pos: verb
+  gloss: forget
+  definition: "To forget."
+  notes: "*aucer → auger (rule 2: c > g / V_V)"
+
+- id: learn
+  proto: giscar
+  modern: giscar
+  pos: verb
+  gloss: learn
+  definition: "To learn."
+
+- id: teach
+  proto: pratir
+  modern: pradir
+  pos: verb
+  gloss: teach
+  definition: "To teach."
+  notes: "*pratir → pradir (rule 2: t > d / V_V)"
+
+- id: understand
+  proto: curvir
+  modern: curvir
+  pos: verb
+  gloss: understand
+  definition: "To understand."
+
+- id: ask
+  proto: demir
+  modern: demir
+  pos: verb
+  gloss: ask
+  definition: "To ask (a question or for something)."
+
+- id: answer
+  proto: zolcir
+  modern: zolcir
+  pos: verb
+  gloss: answer
+  definition: "To answer."
+
+- id: call
+  proto: tauder
+  modern: tauder
+  pos: verb
+  gloss: call
+  definition: "To call; to call by name."
+
+- id: pray
+  proto: ormir
+  modern: ormir
+  pos: verb
+  gloss: pray
+  definition: "To pray."
+
+- id: bless
+  proto: aldar
+  modern: aldar
+  pos: verb
+  gloss: bless
+  definition: "To bless."
+
+- id: curse
+  proto: zertir
+  modern: zertir
+  pos: verb
+  gloss: curse
+  definition: "To curse."
+
+- id: help
+  proto: hilvar
+  modern: hilvar
+  pos: verb
+  gloss: help
+  definition: "To help."
+
+- id: work
+  proto: dolver
+  modern: dolver
+  pos: verb
+  gloss: work
+  definition: "To work, to labour."
+
+- id: buy
+  proto: paccar
+  modern: pacar
+  pos: verb
+  gloss: buy
+  definition: "To buy."
+  notes: "*paccar → pacar (rule 3: cc > c)"
+
+- id: sell
+  proto: trauzir
+  modern: trauzir
+  pos: verb
+  gloss: sell
+  definition: "To sell."
+
+- id: open
+  proto: ilvar
+  modern: ilvar
+  pos: verb
+  gloss: open
+  definition: "To open."
+
+- id: close
+  proto: torsir
+  modern: torsir
+  pos: verb
+  gloss: close
+  definition: "To close, to shut."
+
+- id: find
+  proto: beuzer
+  modern: beuzer
+  pos: verb
+  gloss: find
+  definition: "To find."
