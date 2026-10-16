@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{block "title" .}}Rifatian dictionary{{end}}</title>
+<title>{{block "title" .Data}}Rifatian dictionary{{end}}</title>
 <style>
   body { font: 16px/1.5 system-ui, sans-serif; max-width: 52rem; margin: 0 auto; padding: 1rem; color: #222; background: #fff; }
   a { color: #1a5fb4; }
@@ -19,10 +19,19 @@
   dl { display: grid; grid-template-columns: max-content 1fr; gap: .25rem 1rem; }
   dt { color: #666; }
   dd { margin: 0; }
+  .banner { padding: .5rem .8rem; margin-bottom: 1rem; border-left: 4px solid; }
+  .banner pre { margin: .3rem 0 0; white-space: pre-wrap; font-size: 14px; }
+  .banner-error { background: #fdecea; border-color: #b00; }
+  .banner-warn { background: #fff6d9; border-color: #c90; }
 </style>
 </head>
 <body>
 <header><a href="/">rifacha</a><span class="muted">Rifatian dictionary</span></header>
-{{template "content" .}}
+{{with .Err}}<div class="banner banner-error"><strong>The last edit doesn't load</strong>; showing the data from before it.
+<pre>{{.}}</pre></div>{{end}}
+{{with .Problems}}<div class="banner banner-warn"><strong>lnova validate</strong> finds problems:
+<pre>{{range .}}{{.}}
+{{end}}{{with $.More}}and {{.}} more{{end}}</pre></div>{{end}}
+{{template "content" .Data}}
 </body>
 </html>{{end}}

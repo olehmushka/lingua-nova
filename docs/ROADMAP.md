@@ -7,13 +7,9 @@ previous one is "done", even if done means small.
 
 _Keep this section current: it's where every new session starts._
 
-1. **Phase 3, hot reload**: watch `language/` and reload the server's data
-   when a file changes (stdlib only: poll mtimes, or decide on
-   `fsnotify`). A file with errors should keep the old data and show the
-   problem, like `lnova validate`.
-2. **Phase 3, htmx**: live search as you type (`hx-get` on the input,
+1. **Phase 3, htmx**: live search as you type (`hx-get` on the input,
    the server returns just the results table).
-3. Then decide Phase 3 is "done" (you prefer the app over grepping YAML),
+2. Then decide Phase 3 is "done" (you prefer the app over grepping YAML),
    or what's missing.
 
 ## Phase 0 — Learn the basics (reading, ~1–2 weeks alongside Phase 1)
@@ -142,7 +138,10 @@ the derivation.
   exact > word > prefix > substring, then by field.
 - [x] Entry page: meaning, part of speech, examples, derivation history.
   → IPA, derivation table, mismatch warning, homophones, source file:line.
-- [ ] Hot-reload `language/` files while you edit them.
+- [x] Hot-reload `language/` files while you edit them.
+  → polls size + mtime every 500ms (`-poll`); a load error keeps the old
+  data under a red banner, validate problems show the new data under a
+  yellow one.
 
 **Done when:** you prefer using the app over grepping YAML.
 

@@ -6,6 +6,47 @@ why, and where to pick up. The task list itself lives in `ROADMAP.md` →
 
 ---
 
+## 2026-10-17: Phase 3 hot reload
+
+### Done
+
+- **`cmd/server` reloads `language/`** when a file changes. A goroutine
+  stats `phonology.yaml`, `sound-changes.txt` and `lexicon/*.yaml` every
+  500ms (`-poll`, 0 = off) and compares size + mtime; a new or deleted
+  lexicon file counts as a change too.
+- **Two error levels**, shown as a banner on every page:
+  - the files don't load (bad YAML, a rule that won't parse): the old data
+    stays, red banner with the error;
+  - they load but `lexicon.Validate` finds problems: the new data is used,
+    yellow banner with the first 10 problems in `lnova validate` format.
+- `load(langDir)` split out of `newHandler`; `base.html` wraps every page
+  (`{{template "content" .Data}}`), so the page templates didn't change.
+- Tests: `TestReload` (add, break, fix, validate problem, on a temp copy
+  of `language/`), `TestStamps`. Passes under `go test -race`.
+
+### Key decisions (the user's choices)
+
+| Area | Decision | Why |
+|---|---|---|
+| Watching | **Poll mtimes**, stdlib | ~17 files, a few stat calls per tick; works the same whether an editor writes in place or renames a temp file over the original (fsnotify needs special handling for that) |
+| Errors | **Two levels**: load error keeps old data, validate problems don't block | One typo in a new word shouldn't hide every other edit |
+| Concurrency | Immutable snapshot + `atomic.Pointer` swap | A request reads the pointer once and sees one consistent state; readers never wait on a lock |
+
+### Concepts
+
+- **Polling vs. events**: polling asks "did anything change?" on a timer;
+  events (inotify, behind fsnotify) have the OS push a notice. Events are
+  instant but tied to how files are written; polling costs a little lag.
+- **Read-copy-update**: never change shared data in place. Build a new
+  copy and swap one pointer. Old readers finish with the old copy and the
+  GC frees it.
+
+### Start next session here
+
+1. `ROADMAP.md` → "▶ Next up": htmx live search.
+
+---
+
 ## 2026-10-16 (late night): generator re-seed, Phase 3 search + entry page
 
 ### Done
