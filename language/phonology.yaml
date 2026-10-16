@@ -87,6 +87,10 @@ proto:
   codas: [r, l, s]
   finals: [r, n, m]
   geminates: [p, t, c]
+  # Hiatus (two vowels in separate syllables, u.si.a) only after these
+  # vowels: the -ia/-io endings, which rule 1 mostly turns into a palatal.
+  # Leave it out to allow hiatus after any vowel, as in modern words (di.a).
+  hiatus_after: [i]
 
   # Word generator (lnova gen). A word is a syllable count, then one template
   # per syllable from the list for its position; weights are relative. In a

@@ -130,6 +130,7 @@ vowels:
 		{"forbidden single", "forbidden: [[p]]\n", "2 or more"},
 		{"proto coda vowel", "proto: {codas: [a]}\n", "is a vowel"},
 		{"proto geminate unknown", "proto: {geminates: [t]}\n", `unknown segment "t"`},
+		{"proto hiatus consonant", "proto: {hiatus_after: [p]}\n", `"p" is a consonant, want vowel`},
 		{"generator no syllables", "proto: {generator: {final: {CV: 1}}}\n", "syllables is empty"},
 		{"generator zero count", "proto: {generator: {syllables: {0: 1}}}\n", "want 1 or more"},
 		{"generator zero weight", "proto: {generator: {syllables: {1: 0}}}\n", "weight 0"},

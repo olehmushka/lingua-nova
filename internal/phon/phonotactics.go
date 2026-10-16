@@ -59,19 +59,32 @@ func (inv *Inventory) CheckForbidden(segs []Segment) []Violation {
 // allowed here?" depends on its position. Forbidden sequences are checked on
 // the flat segment list, because they cross syllable boundaries.
 func (inv *Inventory) CheckPhonotactics(segs []Segment) []Violation {
-	return inv.check(segs, inv.Codas, inv.Finals, nil)
+	return inv.check(segs, rules{codas: inv.Codas, finals: inv.Finals})
 }
 
 // CheckProtoPhonotactics is CheckPhonotactics with the proto-language codas
 // and finals, plus geminates: a double consonant is legal when it is in
 // Geminates (*cup.pe), even if it isn't a legal coda. Since a coda
 // follows a nucleus and a one-consonant onset precedes one, that means
-// "only between vowels". It doesn't check for modern-only segments.
+// "only between vowels". Hiatus (a syllable starting with a vowel right
+// after a vowel) is legal only after a vowel in HiatusAfter (*u.si.a, not
+// *a.ar). It doesn't check for modern-only segments.
 func (inv *Inventory) CheckProtoPhonotactics(segs []Segment) []Violation {
-	return inv.check(segs, inv.ProtoCodas, inv.ProtoFinals, inv.Geminates)
+	return inv.check(segs, rules{
+		codas:       inv.ProtoCodas,
+		finals:      inv.ProtoFinals,
+		geminates:   inv.Geminates,
+		hiatusAfter: inv.HiatusAfter,
+	})
 }
 
-func (inv *Inventory) check(segs []Segment, codas, finals, geminates []string) []Violation {
+// rules are the sets that differ between proto and modern phonotactics.
+type rules struct {
+	codas, finals, geminates []string
+	hiatusAfter              []string // nil = hiatus after any vowel
+}
+
+func (inv *Inventory) check(segs []Segment, r rules) []Violation {
 	syls, err := inv.Syllabify(segs)
 	if err != nil {
 		return []Violation{{err.Error()}}
@@ -82,21 +95,28 @@ func (inv *Inventory) check(segs []Segment, codas, finals, geminates []string) [
 		out = append(out, Violation{fmt.Sprintf(format, args...) + " in " + word})
 	}
 	for k, s := range syls {
+		// A diphthong before the hiatus is a V V V run, reported by forbidden.
+		if r.hiatusAfter != nil && k > 0 && len(s.Onset) == 0 {
+			prev := syls[k-1]
+			if len(prev.Coda) == 0 && len(prev.Nucleus) == 1 && !slices.Contains(r.hiatusAfter, prev.Nucleus[0].Spell) {
+				bad("hiatus %q (only after %s)", prev.Nucleus[0].Spell+"."+s.Nucleus[0].Spell, strings.Join(r.hiatusAfter, " "))
+			}
+		}
 		on := Spellings(s.Onset)
 		if len(on) > 1 && !inv.onsets[seqKey(on)] {
 			bad("illegal onset %q", strings.Join(on, ""))
 		}
 		co := Spellings(s.Coda)
 		last := k == len(syls)-1
-		allowed, what := codas, "coda"
+		allowed, what := r.codas, "coda"
 		if last {
-			allowed, what = finals, "word-final consonant"
+			allowed, what = r.finals, "word-final consonant"
 		}
 		double := len(co) == 1 && !last && slices.Equal(Spellings(syls[k+1].Onset), co)
 		switch {
 		case len(co) > 1:
 			bad("%s %q has more than one consonant", what, strings.Join(co, ""))
-		case double && slices.Contains(geminates, co[0]):
+		case double && slices.Contains(r.geminates, co[0]):
 		case double:
 			bad("double consonant %q", co[0]+co[0])
 		case len(co) == 1 && !slices.Contains(allowed, co[0]):

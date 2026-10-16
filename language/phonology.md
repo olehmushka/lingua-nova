@@ -101,6 +101,7 @@ but different codas and finals:
 | Codas (inside a word) | `r l s`, plus the first half of a geminate | `r l s h` |
 | Word-final | a vowel, or `r n m` | a vowel, or `r l s h` |
 | Double consonants | `pp tt cc`, only between vowels | none |
+| Hiatus (`V.V`) | only after `i` (`*u.si.a`) | after any vowel (`di.a`) |
 
 - **Geminates** (double consonants) are only `pp tt cc`, because sound change
   rule 3 removes exactly those. A proto `*ss` would survive into the modern
@@ -110,6 +111,10 @@ but different codas and finals:
   `*patta` → `pata`, while `*pata` → `pada`.
 - **Final `n m`** exist only in proto. Rule 4 deletes them, so `*cutan` →
   `cuda` hides a nasal in its history.
+- **Hiatus only after `i`.** A syllable may start with a vowel right after
+  another vowel only when that vowel is `i`: the `-ia`/`-io` endings
+  (`*u.si.a`, `*bu.zi.o`). Rule 1 turns most of them into a palatal
+  (`*esia` → `exa`). `*a.ar`, `*nei.va.o` or `*au.mu.i` are not proto roots.
 - **No `h` coda in proto roots.** A modern coda `h` comes from a suffix
   (the `-h` plural), not from a root.
 

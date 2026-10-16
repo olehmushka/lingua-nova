@@ -26,6 +26,8 @@ func TestCheckPhonotactics(t *testing.T) {
 		{"a l h a", "forbidden sequence [l h]"},
 		{"a i a", "forbidden sequence [a i a] (matches [V V V])"},
 		{"p r", "word has no vowel"},
+		{"d i a", ""}, // modern hiatus after any vowel
+		{"a o", ""},
 	}
 	for _, tt := range tests {
 		t.Run(strings.ReplaceAll(tt.word, " ", ""), func(t *testing.T) {
@@ -58,6 +60,13 @@ func TestCheckProtoPhonotactics(t *testing.T) {
 		{"p a s", `illegal word-final consonant "s" in pas`},
 		{"t l a", `illegal onset "tl" in tla`},
 		{"a i a", "forbidden sequence [a i a]"},
+		{"u s i a", ""}, // hiatus after i
+		{"b u z i o", ""},
+		{"i e", ""},
+		{"a a r", `hiatus "a.a" (only after i) in a.ar`},
+		{"n e i v a o", `hiatus "a.o" (only after i) in nei.va.o`},
+		{"a u m u i", `hiatus "u.i" (only after i) in au.mu.i`},
+		{"t e o", `hiatus "e.o"`},
 	}
 	for _, tt := range tests {
 		t.Run(strings.ReplaceAll(tt.word, " ", ""), func(t *testing.T) {

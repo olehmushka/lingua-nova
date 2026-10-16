@@ -35,7 +35,7 @@ func TestRealLexicon(t *testing.T) {
 
 // ok is a valid noun entry; tests start from it and break one thing.
 const ok = `- id: water
-  proto: acua
+  proto: acia
   modern: agua
   pos: noun
   gender: f
@@ -85,22 +85,25 @@ func TestValidate(t *testing.T) {
 			`t.yaml:1: v: verb proto "naro" must end in -ar, -er or -ir`,
 			`t.yaml:1: v: verb modern "naro" must end in -ar, -er or -ir`,
 		}},
-		{"palatal in proto", strings.Replace(ok, "proto: acua", "proto: axua", 1), []string{
-			`t.yaml:2: water: proto *axua: "x" /ʃ/ is not a proto-language sound`,
+		{"palatal in proto", strings.Replace(ok, "proto: acia", "proto: axia", 1), []string{
+			`t.yaml:2: water: proto *axia: "x" /ʃ/ is not a proto-language sound`,
 		}},
-		{"forbidden in proto", strings.Replace(ok, "proto: acua", "proto: aiuca", 1), []string{
+		{"forbidden in proto", strings.Replace(ok, "proto: acia", "proto: aiuca", 1), []string{
 			`t.yaml:2: water: proto *aiuca: forbidden sequence [a i u] (matches [V V V])`,
 		}},
-		{"geminate allowed in proto", strings.Replace(ok, "proto: acua", "proto: accua", 1), nil},
-		{"final nasal allowed in proto", strings.Replace(ok, "proto: acua", "proto: acuan", 1), nil},
-		{"bad coda in proto", strings.Replace(ok, "proto: acua", "proto: ampua", 1), []string{
-			`t.yaml:2: water: proto *ampua: illegal coda "m" in am.pu.a`,
+		{"geminate allowed in proto", strings.Replace(ok, "proto: acia", "proto: accia", 1), nil},
+		{"final nasal allowed in proto", strings.Replace(ok, "proto: acia", "proto: acian", 1), nil},
+		{"bad coda in proto", strings.Replace(ok, "proto: acia", "proto: ampia", 1), []string{
+			`t.yaml:2: water: proto *ampia: illegal coda "m" in am.pi.a`,
 		}},
-		{"bad geminate in proto", strings.Replace(ok, "proto: acua", "proto: assua", 1), []string{
-			`t.yaml:2: water: proto *assua: double consonant "ss" in as.su.a`,
+		{"hiatus in proto", strings.Replace(ok, "proto: acia", "proto: acua", 1), []string{
+			`t.yaml:2: water: proto *acua: hiatus "u.a" (only after i) in a.cu.a`,
 		}},
-		{"bad final in proto", strings.Replace(ok, "proto: acua", "proto: acuas", 1), []string{
-			`t.yaml:2: water: proto *acuas: illegal word-final consonant "s" in a.cu.as`,
+		{"bad geminate in proto", strings.Replace(ok, "proto: acia", "proto: assia", 1), []string{
+			`t.yaml:2: water: proto *assia: double consonant "ss" in as.si.a`,
+		}},
+		{"bad final in proto", strings.Replace(ok, "proto: acia", "proto: acias", 1), []string{
+			`t.yaml:2: water: proto *acias: illegal word-final consonant "s" in a.ci.as`,
 		}},
 		{"double consonant in modern", strings.Replace(ok, "modern: agua", "modern: aggua", 1), []string{
 			`t.yaml:3: water: modern "aggua": double consonant "gg" in ag.gu.a`,

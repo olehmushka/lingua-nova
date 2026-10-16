@@ -57,6 +57,7 @@ type Inventory struct {
 	ProtoCodas  []string
 	ProtoFinals []string
 	Geminates   []string       // consonants that may double between vowels in proto (*cup.pe)
+	HiatusAfter []string       // vowels that may precede hiatus in proto (*u.si.a); nil = any
 	Generator   *GeneratorSpec // word generator templates; nil if the file has none
 
 	bySpell    map[string]Segment
@@ -89,10 +90,11 @@ type fileYAML struct {
 }
 
 type protoYAML struct {
-	Codas     []string       `yaml:"codas"`
-	Finals    []string       `yaml:"finals"`
-	Geminates []string       `yaml:"geminates"`
-	Generator *generatorYAML `yaml:"generator"`
+	Codas       []string       `yaml:"codas"`
+	Finals      []string       `yaml:"finals"`
+	Geminates   []string       `yaml:"geminates"`
+	HiatusAfter []string       `yaml:"hiatus_after"`
+	Generator   *generatorYAML `yaml:"generator"`
 }
 
 // Load reads and validates a phonology file.
@@ -127,6 +129,7 @@ func Parse(data []byte) (*Inventory, error) {
 		ProtoCodas:  f.Proto.Codas,
 		ProtoFinals: f.Proto.Finals,
 		Geminates:   f.Proto.Geminates,
+		HiatusAfter: f.Proto.HiatusAfter,
 		bySpell:     map[string]Segment{},
 		diphthongs:  map[[2]string]bool{},
 		onsets:      map[string]bool{},
@@ -225,6 +228,9 @@ func Parse(data []byte) (*Inventory, error) {
 				return nil, fmt.Errorf("%s %v: %q is not a proto-language sound", p.what, p.spells, sp)
 			}
 		}
+	}
+	if err := inv.checkSeq("proto hiatus_after", inv.HiatusAfter, Vowel); err != nil {
+		return nil, err
 	}
 	for _, s := range inv.Forbidden {
 		if err := inv.checkPattern("forbidden", s); err != nil {
