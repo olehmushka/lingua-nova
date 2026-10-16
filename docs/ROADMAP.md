@@ -7,12 +7,12 @@ previous one is "done", even if done means small.
 
 _Keep this section current: it's where every new session starts._
 
-1. **Phase 2 wrap-up**: check the "Done when" line of Phase 2 (all done:
-   `evolve` 104/104 with traces). Try `lnova gen` on a few batches, tune the
-   weights in `phonology.yaml` if words look off, and maybe add a few
-   generated roots to the lexicon.
-2. **Phase 3**: dictionary web app. Start with `net/http` + `html/template`
-   and a search page over `internal/lexicon`.
+1. **Phase 3**: dictionary web app. Start with `net/http` + `html/template`
+   and a search page over `internal/lexicon` (323 entries now, so search
+   is worth having).
+2. Open question for the user: re-seed the generator's template weights in
+   `phonology.yaml` (`proto: generator:`) from the 323 roots? They still
+   hold the counts from the first 104.
 
 ## Phase 0 — Learn the basics (reading, ~1–2 weeks alongside Phase 1)
 
@@ -122,6 +122,10 @@ in `sound-changes.txt` are a bleeding example.
   → position-aware templates in `phonology.yaml` → `proto: generator:`,
   sounds weighted by lexicon frequency per slot, `internal/gen`;
   homophones marked (`*ciu → chu = thou`); `-seed` reproduces a batch.
+
+- [x] Wrap-up: proto hiatus only after `i`; sound change rules 5–6 fix two
+  palatalization side effects found by the generator; lexicon grown to 323
+  roots (special families: kill, love, create, god).
 
 **Done when:** `lnova evolve` reproduces all 100 `modern` forms (or every
 mismatch has been explained and fixed in the data or the rules) and can print

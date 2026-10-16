@@ -6,6 +6,63 @@ why, and where to pick up. The task list itself lives in `ROADMAP.md` →
 
 ---
 
+## 2026-10-16 (night): Phase 2 wrap-up, lexicon 104 → 323
+
+### Done
+
+- **Proto hiatus only after `i`** (`phonology.yaml` → `proto: hiatus_after`).
+  The generator was making `*a.ar`, `*nei.va.o`; the roots only have hiatus
+  in the `-ia/-io` endings. `*tuilar` 'hear' broke the rule and became
+  `*tuliar` → `tulhar`. Modern hiatus stays free (`di.a`).
+- **219 new roots** in 10 reviewed batches (special families + 200 core
+  content words): body, nature, time, numbers 6–1000, animals, plants
+  (new `plants.yaml`), people, home/food/objects (new `things.yaml`),
+  religion (new `religion.yaml`), verbs, adjectives. All invented: the
+  source languages (PT, FR, UA) steer only the sound, no borrowed shapes.
+- **Sound change rules 5 and 6**, both found by `lnova gen` after the
+  lexicon grew (more sound variety in the weights):
+  - rule 5, `t c > ∅ / _ch`: `*pattia` → `patcha` → `pacha`. Rule 1 takes
+    the second half of the geminate and **bleeds** rule 3.
+  - rule 6, `p b c g f > ∅ / _lh`: `*plia` → `plha` → `lha`.
+  A sweep of 877k legal generated proto words now gives 0 illegal modern
+  words. No lexicon word changed.
+- The `lnova gen` CLI test no longer pins exact words (they depend on the
+  lexicon); `TestGen` still checks seed reproducibility.
+
+### Key decisions (the user's choices)
+
+| Area | Decision | Why |
+|---|---|---|
+| Hiatus | Proto: only after `i` | Matches the roots; rule 1 eats most of them |
+| Inspiration | Sound flavour only | Keeps the a priori style of the first 104 roots |
+| Sense families | Separate, unrelated roots | No derivational morphology until Phase 4 |
+| Kill (6) | `hecar` kill, `grujer` murder, `talvir` execute, `sutar` slaughter/sacrifice, `lobiar` kill by accident, `zalder` kill in blood vengeance | Hebrew-style distinctions by intent and legality |
+| Love (5 + 1) | `eluvir` agape, `ferzar` eros, `solhar` philia, `noidar` storge, `bauzer` love doing; `teuvar` now 'like' (things, not people) | Greek-style kinds of love |
+| Create (4) | `eurir` from nothing (God only), `plodar` form/shape, `tecir` craft, `brener` build; `rucar` stays 'make/do' | Hebrew bara / yatsar / asah |
+| God (4) | `Ouri` God (title noun with `lu`, capitalized in text), `nija` false god (f, 'a nothing'), `gulvo` idol, `zevo` deity | |
+| Soul / spirit | `emia` soul (self), `ilso` spirit (life-breath, God's Spirit) | Hebrew nefesh / ruach |
+| Kin pairs | Siblings and children share a root: `tirmo/tirma`, `nauso/nausa`; husband/wife separate | Romance -o/-a pairs |
+| Modern `-ía` | Keep the stressed `-ía` (`ulvia`, `davia`), at most ~1 per batch | A flavour, not a pattern |
+| Glosses | Multi-word glosses use Leipzig dots (`kill.by.accident`, `spring.water`) | Keeps interlinear glosses aligned |
+| Near pairs | `eulir` 'sing' / `eurir` 'create' kept on purpose | Creation as song |
+| Rules 5–6 | Repair rules at the end of the file, not reordering | Keeps earlier line numbers; later simplification is natural |
+
+### Notes
+
+- Rule hits over the 323 entries: rule 1 (palatals) 51, rule 2 (voicing)
+  30, rule 3 (degemination) 27, rule 4 (final nasal) 9; 205 entries
+  unchanged.
+- The `-auja` trio `auja` morning, `lauja` illness, `gauja` beautiful is a
+  side effect of `zi > j`; kept.
+
+### Start next session here
+
+1. `ROADMAP.md` → "▶ Next up": Phase 3, the dictionary web app.
+2. Open question: re-seed the generator template weights from 323 roots?
+3. Committed.
+
+---
+
 ## 2026-10-16 (evening): Phase 2, step 2.6, word generator
 
 ### Done
