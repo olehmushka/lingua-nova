@@ -7,14 +7,12 @@ previous one is "done", even if done means small.
 
 _Keep this section current: it's where every new session starts._
 
-1. **Phase 2, step 2.5**: rule engine + `lnova evolve`. `internal/sound`
-   already has `Rule.Apply` (one rule, simultaneous). Next comes ordered
-   application of all rules, the derivation trace, the CLI, and the whole
-   lexicon as a table test. Every mismatch with `modern` gets reported to the
-   user, never "fixed" silently.
-2. Before 2.6 (generator): decide the **proto phonotactics**. Today proto
-   forms are only checked for proto-only sounds and `forbidden`, because
-   proto has geminates (`*pippo`) that modern codas don't allow.
+1. **Decide the proto phonotactics** (before 2.6, the generator). Today
+   proto forms are only checked for proto-only sounds and `forbidden`,
+   because proto has geminates (`*pippo`) that modern codas don't allow.
+   The generator needs real proto onsets/codas/templates to build roots from.
+2. **Phase 2, step 2.6**: `lnova gen -n 20`. `sound.Evolve` (2.5) gives
+   each candidate's modern form; the 2.3 validator filters it.
 
 ## Phase 0 — Learn the basics (reading, ~1–2 weeks alongside Phase 1)
 
@@ -104,13 +102,14 @@ in `sound-changes.txt` are a bleeding example.
 
 ### 2.5 Rule engine + `lnova evolve`
 
-- [ ] Apply rules in order to segment slices and record a **derivation trace**
+- [x] Apply rules in order to segment slices and record a **derivation trace**
   (which rule changed what).
-- [ ] `lnova evolve`: run every lexicon `proto` and compare with `modern`;
+- [x] `lnova evolve`: run every lexicon `proto` and compare with `modern`;
   print mismatches; exit non-zero on any mismatch (CI-friendly).
-- [ ] `lnova evolve --trace <id>`: `*esia → exa  (line 28: si > x / _V)`.
+- [x] `lnova evolve --trace <id>`: `*esia → exa  (line 28: si > x / _V)`.
   Rules are identified by line number (decided in 2.4).
-- [ ] A test that runs the whole lexicon as a table-driven test.
+- [x] A test that runs the whole lexicon as a table-driven test.
+  → `sound.Evolve` + `TestLexiconEvolves`; 104/104 entries match `modern`.
 
 ### 2.6 Word generator
 

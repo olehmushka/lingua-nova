@@ -21,6 +21,10 @@ commands:
   ipa <word>...   show segments and IPA with syllables and stress
   validate        check the lexicon against the phonology and entry format
   rules           parse sound-changes.txt and list the rules with line numbers
+  evolve          run every proto form through the sound changes and compare
+                  with modern
+  evolve -trace <id|*proto>...
+                  show the derivation of lexicon entries or ad-hoc proto forms
 `
 
 func main() {
@@ -48,6 +52,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return cmdValidate(*langDir, rest, stdout, stderr)
 	case "rules":
 		return cmdRules(*langDir, rest, stdout, stderr)
+	case "evolve":
+		return cmdEvolve(*langDir, rest, stdout, stderr)
 	default:
 		fmt.Fprintf(stderr, "lnova: unknown command %q\n%s", cmd, usage)
 		return 2
@@ -155,3 +161,122 @@ func cmdRules(langDir string, args []string, stdout, stderr io.Writer) int {
 	tw.Flush()
 	return 0
 }
+
+// cmdEvolve runs every lexicon proto form through the sound changes and
+// prints the entries whose result differs from modern, then a summary:
+//
+//	language/lexicon/nature.yaml:39: water: *esia → esa, want exa
+//	104 entries, 1 mismatch
+//
+// It exits 1 on any mismatch. With -trace it prints derivations instead.
+func cmdEvolve(langDir string, args []string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet("evolve", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	traceMode := fs.Bool("trace", false, "print the derivation of each argument")
+	fs.Usage = func() { fmt.Fprintln(stderr, "usage: lnova evolve [-trace <id|*proto>...]") }
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
+	if *traceMode != (fs.NArg() > 0) {
+		fs.Usage()
+		return 2
+	}
+
+	inv, err := phon.Load(filepath.Join(langDir, "phonology.yaml"))
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	rules, err := sound.Load(filepath.Join(langDir, "sound-changes.txt"), inv)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	lex, err := lexicon.Load(filepath.Join(langDir, "lexicon"))
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	if *traceMode {
+		return traceWords(inv, rules, lex, fs.Args(), stdout, stderr)
+	}
+
+	bad := 0
+	for _, e := range lex.Entries {
+		segs, err := inv.Tokenize(strings.TrimPrefix(e.Proto, "*"))
+		if err != nil {
+			fmt.Fprintf(stdout, "%s:%d: %s: proto *%s: %v\n", e.File, e.LineOf("proto"), e.ID, e.Proto, err)
+			bad++
+			continue
+		}
+		out, _ := sound.Evolve(inv, rules, segs)
+		if got := spell(out); got != e.Modern {
+			fmt.Fprintf(stdout, "%s:%d: %s: *%s → %s, want %s\n", e.File, e.LineOf("modern"), e.ID, e.Proto, got, e.Modern)
+			bad++
+		}
+	}
+	noun := "mismatches"
+	if bad == 1 {
+		noun = "mismatch"
+	}
+	fmt.Fprintf(stdout, "%d entries, %d %s\n", len(lex.Entries), bad, noun)
+	if bad > 0 {
+		return 1
+	}
+	return 0
+}
+
+// traceWords prints a derivation for each argument, a lexicon id or a proto
+// form written with a leading *. One line per rule that changed the word:
+//
+//	water: *esia → exa
+//	  28   si > x / _V   esia → exa
+//
+// A lexicon entry whose result isn't its modern form gets a "want" line,
+// and the exit code is 1.
+func traceWords(inv *phon.Inventory, rules []sound.Rule, lex *lexicon.Lexicon, args []string, stdout, stderr io.Writer) int {
+	byID := make(map[string]*lexicon.Entry, len(lex.Entries))
+	for _, e := range lex.Entries {
+		byID[e.ID] = e
+	}
+	status := 0
+	for i, arg := range args {
+		var entry *lexicon.Entry
+		proto, label := strings.TrimPrefix(arg, "*"), ""
+		if !strings.HasPrefix(arg, "*") {
+			entry = byID[arg]
+			if entry == nil {
+				fmt.Fprintf(stderr, "lnova: no lexicon entry %q (write *%s for a proto form)\n", arg, arg)
+				status = 1
+				continue
+			}
+			proto, label = strings.TrimPrefix(entry.Proto, "*"), entry.ID+": "
+		}
+		segs, err := inv.Tokenize(proto)
+		if err != nil {
+			fmt.Fprintf(stderr, "lnova: %v\n", err)
+			status = 1
+			continue
+		}
+		out, steps := sound.Evolve(inv, rules, segs)
+		if i > 0 {
+			fmt.Fprintln(stdout)
+		}
+		fmt.Fprintf(stdout, "%s*%s → %s\n", label, proto, spell(out))
+		tw := tabwriter.NewWriter(stdout, 0, 0, 3, ' ', 0)
+		for _, s := range steps {
+			fmt.Fprintf(tw, "  %d\t%s\t%s → %s\n", s.Rule.Line, s.Rule, spell(s.Before), spell(s.After))
+		}
+		if len(steps) == 0 {
+			fmt.Fprintln(tw, "  (no rule applies)")
+		}
+		tw.Flush()
+		if entry != nil && spell(out) != entry.Modern {
+			fmt.Fprintf(stdout, "  want %s\n", entry.Modern)
+			status = 1
+		}
+	}
+	return status
+}
+
+func spell(segs []phon.Segment) string { return strings.Join(phon.Spellings(segs), "") }

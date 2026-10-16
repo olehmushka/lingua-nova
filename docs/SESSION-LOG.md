@@ -6,6 +6,51 @@ why, and where to pick up. The task list itself lives in `ROADMAP.md` →
 
 ---
 
+## 2026-10-16: Phase 2, step 2.5, rule engine + `lnova evolve`
+
+### Done
+
+- `internal/sound/evolve.go`: `Evolve(inv, rules, word)` runs the rules in
+  file order, each on the previous output, and returns the final form plus
+  a `[]Step{Rule, Before, After}` derivation. Only rules that changed the
+  word leave a step.
+- `lnova evolve`: every proto form against `modern`, compiler-style
+  mismatch lines (`file:line: id: *proto → got, want modern`), summary
+  `104 entries, 0 mismatches`, exit 1 on any mismatch.
+- `lnova evolve -trace <id|*proto>...`: one line per rule that fired
+  (`28   si > x / _V   esia → exa`). A `*` argument is an ad-hoc proto form
+  not in the lexicon; a lexicon entry that doesn't reach `modern` gets a
+  `want` line and exit 1.
+- Tests: an `Evolve` table (feeding and bleeding cases), the ordering test
+  (`patta` → `pata` vs. `pada`), the whole lexicon as a table test
+  (`TestLexiconEvolves`, one subtest per id), and CLI tests, including a
+  temp lexicon with a wrong `modern`.
+
+### Result
+
+**104/104 entries match.** The engine and the hand-written `modern` forms
+agree, so no data or rule disagreements came up.
+
+Experiment (temp copy, `language/` untouched): swapping rule groups 2
+(voicing) and 3 (degemination) breaks 10 words, e.g. `*pippo` → `pibo`,
+`*crotta` → `croda`, `*ruccar` → `rugar`. That's degemination *feeding*
+voicing, the reason the file orders them the way it does.
+
+### Key decisions
+
+| Area | Decision | Why |
+|---|---|---|
+| Trace content | Only rules that changed the word | A trace of 14 lines with 13 no-ops hides the story; `lnova rules` lists all of them |
+| Ad-hoc forms | `-trace '*form'` evolves any proto string | Lets you try a word before adding it, and is what 2.6 needs |
+| Mismatch line | Points at the `modern:` line | That's the line you'd edit if the data is wrong |
+
+### Start next session here
+
+1. `ROADMAP.md` → "▶ Next up": decide the proto phonotactics, then 2.6.
+2. Step 2.5 is **not committed yet**.
+
+---
+
 ## 2026-10-15 (night): Phase 2, step 2.4, sound change rule parser
 
 ### Done

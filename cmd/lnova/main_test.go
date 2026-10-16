@@ -25,6 +25,14 @@ func TestRun(t *testing.T) {
 		{"validate extra args", []string{"validate", "x"}, 2, "", "usage: lnova validate"},
 		{"rules", []string{"rules"}, 0, "28   si > x / _V\n", ""},
 		{"rules extra args", []string{"rules", "x"}, 2, "", "usage: lnova rules"},
+		{"evolve", []string{"evolve"}, 0, "entries, 0 mismatches\n", ""},
+		{"evolve extra args", []string{"evolve", "water"}, 2, "", "usage: lnova evolve"},
+		{"evolve trace no args", []string{"evolve", "-trace"}, 2, "", "usage: lnova evolve"},
+		{"evolve trace id", []string{"evolve", "--trace", "water"}, 0, "water: *esia → exa\n  28   si > x / _V   esia → exa\n", ""},
+		{"evolve trace proto", []string{"evolve", "-trace", "*patta"}, 0, "*patta → pata\n  43   tt > t   patta → pata\n", ""},
+		{"evolve trace no change", []string{"evolve", "-trace", "*lirma"}, 0, "*lirma → lirma\n  (no rule applies)\n", ""},
+		{"evolve trace unknown id", []string{"evolve", "-trace", "nope", "*lirma"}, 1, "*lirma → lirma", `no lexicon entry "nope"`},
+		{"evolve trace bad letter", []string{"evolve", "-trace", "*kato"}, 1, "", `unknown letter 'k'`},
 		{"no command", nil, 2, "", "usage: lnova"},
 		{"unknown command", []string{"nope"}, 2, "", `unknown command "nope"`},
 		{"bad lang dir", []string{"-lang", "/nonexistent", "ipa", "lu"}, 1, "", "no such file"},
@@ -104,5 +112,46 @@ func TestRulesBroken(t *testing.T) {
 	want := file + `:3: target: unknown segment or category at "k"` + "\n"
 	if stderr.String() != want {
 		t.Errorf("stderr:\n%s\nwant:\n%s", stderr.String(), want)
+	}
+}
+
+// TestEvolveBroken runs evolve on a copy of the phonology and rules with a
+// lexicon entry whose modern form the rules don't produce.
+func TestEvolveBroken(t *testing.T) {
+	dir := t.TempDir()
+	for _, name := range []string{"phonology.yaml", "sound-changes.txt"} {
+		data, err := os.ReadFile(filepath.Join("../../language", name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, name), data, 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.Mkdir(filepath.Join(dir, "lexicon"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	lex := "- id: water\n  proto: esia\n  modern: esa\n  pos: noun\n  gender: f\n  gloss: water\n  definition: Water.\n" +
+		"- id: white\n  proto: lirma\n  modern: lirma\n  pos: adjective\n  gloss: white\n  definition: White.\n"
+	file := filepath.Join(dir, "lexicon", "words.yaml")
+	if err := os.WriteFile(file, []byte(lex), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	var stdout, stderr bytes.Buffer
+	if code := run([]string{"-lang", dir, "evolve"}, &stdout, &stderr); code != 1 {
+		t.Errorf("exit code = %d, want 1 (stderr: %s)", code, stderr.String())
+	}
+	want := file + ":3: water: *esia → exa, want esa\n2 entries, 1 mismatch\n"
+	if stdout.String() != want {
+		t.Errorf("stdout:\n%s\nwant:\n%s", stdout.String(), want)
+	}
+
+	stdout.Reset()
+	if code := run([]string{"-lang", dir, "evolve", "-trace", "water"}, &stdout, &stderr); code != 1 {
+		t.Errorf("trace exit code = %d, want 1", code)
+	}
+	if !strings.HasSuffix(stdout.String(), "esia → exa\n  want esa\n") {
+		t.Errorf("trace stdout = %q, want a want line", stdout.String())
 	}
 }
