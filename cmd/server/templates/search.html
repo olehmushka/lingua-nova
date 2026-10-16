@@ -11,6 +11,10 @@
      GET, just this fragment when htmx asks (HX-Request header). */}}
 {{define "results"}}
 {{if .Query}}
+  {{range .Forms}}
+  <p>{{$.Query}} is a form of <a href="/entry/{{.ID}}">{{.Headword}}</a> ({{.POS}}, “{{.Gloss}}”):
+    {{with .Form.Label}}{{.}} {{end}}<span class="muted" title="{{.Form.Gloss}}">{{.Form.Segmented}}</span></p>
+  {{end}}
   {{if .Results}}
   <p class="muted">{{len .Results}} of {{.Total}} entries</p>
   <table>
@@ -25,7 +29,7 @@
     </tr>
     {{end}}
   </table>
-  {{else}}
+  {{else if not .Forms}}
   <p>No entries match “{{.Query}}”.</p>
   {{end}}
 {{else}}

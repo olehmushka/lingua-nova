@@ -7,9 +7,10 @@ previous one is "done", even if done means small.
 
 _Keep this section current: it's where every new session starts._
 
-1. **Phase 4 analyzer**: inflected form → root + features, reading
-   `morphology.yaml` in reverse (`naraxu` → see + PST + 1SG). Decide how to
-   handle ambiguity (one form, several analyses).
+1. **Phase 4 interlinear glossing**: a Rifatian sentence → word-by-word
+   gloss line, using the analyzer (`morph.Analyzer`). Decide what to do when a
+   word has several analyses (`sela` SBJ/OBJ): show all, or pick by
+   word order (a first, small taste of syntax).
 
 ## Phase 0 — Learn the basics (reading, ~1–2 weeks alongside Phase 1)
 
@@ -153,7 +154,11 @@ the derivation.
   → `language/morphology.yaml` (verbs, nouns, pronouns), `internal/morph`;
   `lnova inflect see PST 1SG` / `lnova inflect see` (whole paradigm);
   paradigm table on the entry page; `validate` checks every form.
-- [ ] **Analyzer**: inflected form → root + features (the reverse; harder).
+- [x] **Analyzer**: inflected form → root + features (the reverse; harder).
+  → `morph.Analyzer`: affix stripping right to left, then verification by
+  re-inflecting (analysis by synthesis); pronouns by table lookup; all
+  analyses ranked, unknown roots as `?guesses`. `lnova analyze`; search
+  shows "naraxu is a form of narar". Every paradigm cell round-trips.
 - [ ] **Interlinear glossing**: conlang sentence → word-by-word gloss line.
 - [ ] **English → conlang** for a controlled subset (simple SVO sentences): tokenize, tag, build a small tree, reorder per grammar, inflect.
 

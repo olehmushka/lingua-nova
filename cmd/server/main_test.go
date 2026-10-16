@@ -39,6 +39,10 @@ func TestPages(t *testing.T) {
 		{"/?q=water", true, 200, []string{`href="/entry/water"`, "gloss, exact"}, []string{"<!doctype", "<header>", `name="q"`}},
 		{"/?q=", true, 200, []string{"entries. Search"}, []string{"<!doctype"}},
 		{"/?q=<zzzz>", true, 200, []string{"No entries match", "&lt;zzzz&gt;"}, []string{"<zzzz>"}},
+		{"/?q=naraxu", false, 200, []string{`is a form of <a href="/entry/see">narar</a> (verb, “see”)`, "PST.1SG", "nar-a-x-u", `title="see-TH-PST-1SG"`}, []string{"No entries match"}},
+		{"/?q=naraxu", true, 200, []string{`href="/entry/see"`, "nar-a-x-u"}, []string{"<!doctype"}},
+		{"/?q=sela", false, 200, []string{"SG.SBJ", "SG.OBJ", `href="/entry/you_polite"`}, nil},
+		{"/?q=pumaxu", false, 200, []string{"No entries match"}, []string{"is a form of"}},
 		{"/static/htmx.min.js", false, 200, []string{"htmx"}, nil},
 	}
 	for _, tt := range tests {

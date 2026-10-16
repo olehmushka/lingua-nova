@@ -38,6 +38,8 @@ commands:
   gen -count      count the lexicon's syllable templates (generator weights)
   inflect <id> [features...]
                   inflect a word (see PST 1SG), or show its whole paradigm
+  analyze <word>...
+                  find the root and features of word forms (naraxu → see PST 1SG)
 `
 
 func main() {
@@ -71,6 +73,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return cmdGen(*langDir, rest, stdout, stderr)
 	case "inflect":
 		return cmdInflect(*langDir, rest, stdout, stderr)
+	case "analyze":
+		return cmdAnalyze(*langDir, rest, stdout, stderr)
 	default:
 		fmt.Fprintf(stderr, "lnova: unknown command %q\n%s", cmd, usage)
 		return 2
@@ -538,4 +542,61 @@ func ipa(inv *phon.Inventory, word string) string {
 		return "?"
 	}
 	return phon.SyllableIPA(syls, phon.Stress(syls))
+}
+
+// cmdAnalyze prints every analysis of each word, best first:
+//
+//	naraxu   see   verb I   PST.1SG   nar-a-x-u   see-TH-PST-1SG
+//	pumaxu   ?pumar   verb I   PST.1SG   pum-a-x-u   ?-TH-PST-1SG   (guess)
+//
+// A word with no analysis prints —. Exits 1 if any word has none.
+func cmdAnalyze(langDir string, args []string, stdout, stderr io.Writer) int {
+	if len(args) == 0 {
+		fmt.Fprintln(stderr, "usage: lnova analyze <word>...")
+		return 2
+	}
+	inv, err := phon.Load(filepath.Join(langDir, "phonology.yaml"))
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	rules, err := morph.Load(filepath.Join(langDir, "morphology.yaml"), inv)
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	lex, err := lexicon.Load(filepath.Join(langDir, "lexicon"))
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	a := morph.NewAnalyzer(rules, lex)
+
+	code := 0
+	tw := tabwriter.NewWriter(stdout, 0, 0, 3, ' ', 0)
+	for _, w := range args {
+		as, err := a.Analyze(w)
+		if err != nil {
+			tw.Flush()
+			fmt.Fprintf(stderr, "lnova: %v\n", err)
+			code = 1
+			continue
+		}
+		if len(as) == 0 {
+			fmt.Fprintf(tw, "%s\t—\n", w)
+			code = 1
+		}
+		for _, an := range as {
+			lemma, guess := an.Lemma, ""
+			if an.Guess() {
+				lemma, guess = "?"+lemma, "\t(guess)"
+			} else {
+				lemma = an.Entry.ID
+			}
+			pos := strings.TrimSpace(an.POS + " " + an.Class)
+			fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\t%s%s\n", w, lemma, pos, cmp.Or(an.Form.Label(), "-"), an.Form.Segmented(), an.Form.Gloss(), guess)
+		}
+	}
+	tw.Flush()
+	return code
 }

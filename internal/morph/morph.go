@@ -302,13 +302,7 @@ func (r *Rules) tenseNames() []string {
 
 func (r *Rules) verbForm(e *lexicon.Entry, t Tense, person string) (Form, error) {
 	inf := base(e)
-	var class *Class
-	for i, c := range r.Verb.Classes {
-		if len(inf) > len(c.Infinitive) && strings.HasSuffix(inf, c.Infinitive) {
-			class = &r.Verb.Classes[i]
-			break
-		}
-	}
+	class := r.classOf(inf)
 	if class == nil {
 		return Form{}, fmt.Errorf("%s: %q: %w", e.ID, inf, ErrNoClass)
 	}

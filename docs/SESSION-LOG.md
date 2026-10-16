@@ -6,6 +6,88 @@ why, and where to pick up. The task list itself lives in `ROADMAP.md` →
 
 ---
 
+## 2026-10-17: Phase 4 analyzer
+
+### Done
+
+- **`internal/morph/analyze.go`**: `NewAnalyzer(rules, lex)`,
+  `Analyze(word) → []Analysis` (entry or guess, lemma, POS, class, `Form`).
+  Steps:
+  1. bare words: adjectives, particles…, and verb infinitives (`nar-ar`,
+     `see-INF`);
+  2. pronouns: an inverted table, form → (id, number, case);
+  3. nouns: peel POSS then PL (reverse slot order), each optional, both
+     shapes;
+  4. verbs: peel person ending, tense marker, theme vowel (→ class); a
+     person with no theme vowel (PRS 1SG) tries every class;
+  5. verify each candidate by inflecting it again and comparing the
+     spelling (and that no morpheme break cuts a digraph);
+  6. only if nothing known fits: the same candidates as guesses, against a
+     made-up entry, if the lemma obeys the phonotactics and the stem has a
+     vowel.
+- **`lnova analyze <word>...`**: one line per analysis, `(guess)` marked,
+  `—` and exit 1 for a word with none.
+- **Search**: a one-word query also shows "naraxu is a form of narar
+  (verb, “see”): PST.1SG nar-a-x-u" (known roots only), in the full page
+  and the htmx fragment.
+- Tests: grammar.md forms, ambiguity, guesses, errors, CLI, pages, and a
+  **round trip**: every cell of every paradigm (2,177 forms) analyzes back
+  to its entry and features, with no guesses next to a known root.
+
+### Key decisions (the user's choices)
+
+| Area | Decision | Why |
+|---|---|---|
+| Algorithm | **Affix stripping + verification** | Real reverse parsing; the generator becomes the test oracle |
+| Unknown roots | **Reported as guesses** (`?pumar`), below known roots | Useful for checking LLM output and coining words (Phase 5) |
+| Ambiguity | **All analyses, ranked** | Choosing one needs context: that's syntax, the glosser's job |
+| Surfaces | CLI, search, bare words too | The glosser can make one call per word, whatever its part of speech |
+
+Two smaller choices made while coding (easy to change):
+- Guesses only appear when no known root fits, and the ones that explain
+  more of the word (more morphemes) rank first.
+- Infinitives are glossed `INF` (Leipzig standard). It's a display label,
+  not a change to the grammar.
+
+### Concepts
+
+- **Analysis is harder than generation.** Generation is a function (one
+  input, one output). Analysis is a relation: one word can have many
+  readings, and most stripping paths lead nowhere. Stripping guesses;
+  something has to check the guess.
+- **Analysis by synthesis**: instead of writing the reverse rules twice,
+  strip loosely (any suffix that matches as a string) and let the generator
+  confirm. Allomorph conditions (`-s` only after a vowel) and theme/class
+  pairings are then checked for free, by the code that defines them.
+- **Nondeterminism / search**: `menahes` peels three ways (`menahes`,
+  `menah+es`, `mena+h+es`); only the last is a real noun. The noun stripper
+  is a small recursive search over optional slots, the same shape as
+  backtracking parsers.
+- **Suppletion can't be stripped**: `mu/mi/me` share no stem, so pronouns
+  are a lookup table. Real analyzers mix rules and lists the same way.
+- **Morphological vs. syntactic ambiguity**: `sela` is SBJ or OBJ by its
+  form alone; the sentence decides. The analyzer's job is to list
+  readings, not to choose.
+- **Overgeneration**: unknown `pumaxu` gets 5 guesses (PST.1SG of
+  *pumar*, PRS.1SG of *pumaxar/er/ir*, noun *pumaxu*). Ranking by how much
+  of the word is explained is a simple version of what statistical
+  analyzers do with probabilities.
+- Real-world names: this is a small **two-level / finite-state morphology**
+  problem solved the simple way; tools like HFST or foma compile the same
+  tables into a transducer that runs both directions.
+
+### Bug caught on the way
+
+- Template `.Gloss` picked the form's gloss (`woman-PL-POSS`) over the
+  entry's (`woman`): Go resolves an embedded method at depth 1 before an
+  embedded field at depth 2. `form.Form` is now a named field.
+
+### Start next session here
+
+1. `ROADMAP.md` → "▶ Next up": interlinear glossing.
+
+---
+
 ## 2026-10-17: Phase 3 closed, Phase 4 morphology generator
 
 ### Done

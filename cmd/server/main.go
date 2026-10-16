@@ -117,7 +117,8 @@ type state struct {
 type data struct {
 	lex      *lexicon.Lexicon
 	info     map[string]*entryInfo // by id
-	problems []lexicon.Problem     // what lnova validate reports
+	analyzer *morph.Analyzer
+	problems []lexicon.Problem // what lnova validate reports
 }
 
 // newHandler loads the language data and returns the app's routes.
@@ -175,7 +176,7 @@ func load(langDir string) (*data, error) {
 	slices.SortStableFunc(probs, func(a, b lexicon.Problem) int {
 		return cmp.Or(cmp.Compare(a.File, b.File), cmp.Compare(a.Line, b.Line))
 	})
-	d := &data{lex: lex, info: map[string]*entryInfo{}, problems: probs}
+	d := &data{lex: lex, info: map[string]*entryInfo{}, analyzer: morph.NewAnalyzer(morphRules, lex), problems: probs}
 	byModern := map[string][]*lexicon.Entry{}
 	for _, e := range lex.Entries {
 		byModern[e.Modern] = append(byModern[e.Modern], e)
@@ -281,6 +282,12 @@ func ipa(inv *phon.Inventory, word string) string {
 	return phon.SyllableIPA(syls, phon.Stress(syls))
 }
 
+// form is a search query read as an inflected form of an entry.
+type form struct {
+	*entryInfo
+	Form morph.Form // named, so .Gloss stays the entry's gloss
+}
+
 type result struct {
 	*entryInfo
 	Field string
@@ -294,8 +301,20 @@ func (s *server) handleSearch(w http.ResponseWriter, r *http.Request) {
 	for _, h := range d.lex.Search(q) {
 		results = append(results, result{d.info[h.Entry.ID], h.Field, h.Match})
 	}
+	// A one-word query may be an inflected form: naraxu → see. Guesses
+	// about roots not in the lexicon are left to lnova analyze.
+	var forms []form
+	if w := strings.TrimSpace(q); w != "" && !strings.ContainsAny(w, " *") {
+		as, _ := d.analyzer.Analyze(w)
+		for _, a := range as {
+			if !a.Guess() {
+				forms = append(forms, form{d.info[a.Entry.ID], a.Form})
+			}
+		}
+	}
 	data := map[string]any{
 		"Query":   q,
+		"Forms":   forms,
 		"Results": results,
 		"Total":   len(d.lex.Entries),
 	}
