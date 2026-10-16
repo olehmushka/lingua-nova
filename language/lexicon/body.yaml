@@ -118,3 +118,190 @@
   gloss: hair
   definition: "Hair (of the head; collective)."
   notes: "*esulia → esulha (rule 1: li > lh / _V)"
+
+- id: neck
+  proto: colpo
+  modern: colpo
+  pos: noun
+  gender: m
+  gloss: neck
+  definition: "The neck."
+
+- id: back
+  proto: bruta
+  modern: bruda
+  pos: noun
+  gender: f
+  gloss: back
+  definition: "The back of the body."
+  notes: "*bruta → bruda (rule 2: t > d / V_V)"
+
+- id: belly
+  proto: vuzia
+  modern: vuja
+  pos: noun
+  gender: f
+  gloss: belly
+  definition: "The belly, the stomach."
+  notes: "*vuzia → vuja (rule 1: zi > j / _V)"
+
+- id: arm
+  proto: helmo
+  modern: helmo
+  pos: noun
+  gender: m
+  gloss: arm
+  definition: "The arm."
+
+- id: leg
+  proto: forvo
+  modern: forvo
+  pos: noun
+  gender: m
+  gloss: leg
+  definition: "The leg."
+
+- id: knee
+  proto: crucio
+  modern: crucho
+  pos: noun
+  gender: m
+  gloss: knee
+  definition: "The knee."
+  notes: "*crucio → crucho (rule 1: ci > ch / _V)"
+
+- id: finger
+  proto: pirtu
+  modern: pirtu
+  pos: noun
+  gender: m
+  gloss: finger
+  definition: "A finger or toe."
+  notes: "Gender listed: -u is unmarked."
+
+- id: nail
+  proto: nelia
+  modern: nelha
+  pos: noun
+  gender: f
+  gloss: nail
+  definition: "A fingernail or toenail; a claw."
+  notes: "*nelia → nelha (rule 1: li > lh / _V)"
+
+- id: shoulder
+  proto: aspo
+  modern: aspo
+  pos: noun
+  gender: m
+  gloss: shoulder
+  definition: "The shoulder."
+
+- id: breast
+  proto: blusia
+  modern: bluxa
+  pos: noun
+  gender: f
+  gloss: breast
+  definition: "The breast, the chest."
+  notes: "*blusia → bluxa (rule 1: si > x / _V)"
+
+- id: lip
+  proto: leppa
+  modern: lepa
+  pos: noun
+  gender: f
+  gloss: lip
+  definition: "The lip."
+  notes: "*leppa → lepa (rule 3: pp > p)"
+
+- id: face
+  proto: fauta
+  modern: fauda
+  pos: noun
+  gender: f
+  gloss: face
+  definition: "The face."
+  notes: "*fauta → fauda (rule 2: t > d / V_V)"
+
+- id: tear
+  proto: pliva
+  modern: pliva
+  pos: noun
+  gender: f
+  gloss: tear
+  definition: "A tear (from the eye)."
+
+- id: breath
+  proto: hesur
+  modern: hesur
+  pos: noun
+  gender: m
+  gloss: breath
+  definition: "Breath, breathing."
+  notes: "Gender listed: -r is unmarked."
+
+- id: flesh
+  proto: mausa
+  modern: mausa
+  pos: noun
+  gender: f
+  gloss: flesh
+  definition: "Flesh; the living body as matter."
+
+- id: wound
+  proto: gudria
+  modern: gudria
+  pos: noun
+  gender: f
+  gloss: wound
+  definition: "A wound."
+
+- id: illness
+  proto: lauzia
+  modern: lauja
+  pos: noun
+  gender: f
+  gloss: illness
+  definition: "Illness, disease."
+  notes: "*lauzia → lauja (rule 1: zi > j / _V)"
+
+- id: pain
+  proto: urco
+  modern: urco
+  pos: noun
+  gender: m
+  gloss: pain
+  definition: "Pain."
+
+- id: voice
+  proto: calio
+  modern: calho
+  pos: noun
+  gender: m
+  gloss: voice
+  definition: "The voice."
+  notes: "*calio → calho (rule 1: li > lh / _V)"
+
+- id: body
+  proto: brusto
+  modern: brusto
+  pos: noun
+  gender: m
+  gloss: body
+  definition: "The body."
+
+- id: soul
+  proto: emia
+  modern: emia
+  pos: noun
+  gender: f
+  gloss: soul
+  definition: "The soul: the person's inner self, which lives on."
+
+- id: spirit
+  proto: ilso
+  modern: ilso
+  pos: noun
+  gender: m
+  gloss: spirit
+  definition: "Spirit: the breath of life; a spiritual being; the Spirit of God. Pairs with emia soul (Hebrew ruach and nefesh)."
