@@ -128,6 +128,8 @@ vowels:
 		{"forbidden unknown category", "forbidden: [[V, Stop]]\n", `unknown segment or category "Stop"`},
 		{"lowercase category", "categories: {stop: [p]}\n", "uppercase"},
 		{"forbidden single", "forbidden: [[p]]\n", "2 or more"},
+		{"proto coda vowel", "proto: {codas: [a]}\n", "is a vowel"},
+		{"proto geminate unknown", "proto: {geminates: [t]}\n", `unknown segment "t"`},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -139,6 +141,10 @@ vowels:
 	}
 	if _, err := Parse([]byte(base)); err != nil {
 		t.Errorf("base: %v", err)
+	}
+	modernOnly := strings.Replace(base, "vowels:", "  - {spell: x, ipa: ʃ, modern_only: true}\nvowels:", 1)
+	if _, err := Parse([]byte(modernOnly + "proto: {finals: [r, x]}\n")); err == nil || !strings.Contains(err.Error(), `"x" is not a proto-language sound`) {
+		t.Errorf("modern-only proto final: err = %v", err)
 	}
 	if _, err := Parse([]byte(base + "categories: {Stop: [p]}\nforbidden: [[V, V, V], [Stop, r]]\n")); err != nil {
 		t.Errorf("categories in forbidden: %v", err)

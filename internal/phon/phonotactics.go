@@ -52,12 +52,26 @@ func (inv *Inventory) CheckForbidden(segs []Segment) []Violation {
 //   - an onset is one consonant or a listed cluster;
 //   - a coda is at most one consonant, from codas (inside the word) or
 //     finals (at the end);
+//   - no double consonants: a coda that repeats the next onset (as.sa);
 //   - no forbidden sequence occurs anywhere.
 //
 // Onsets and codas are checked per syllable, because "is this consonant
 // allowed here?" depends on its position. Forbidden sequences are checked on
 // the flat segment list, because they cross syllable boundaries.
 func (inv *Inventory) CheckPhonotactics(segs []Segment) []Violation {
+	return inv.check(segs, inv.Codas, inv.Finals, nil)
+}
+
+// CheckProtoPhonotactics is CheckPhonotactics with the proto-language codas
+// and finals, plus geminates: a double consonant is legal when it is in
+// Geminates (*cup.pe), even if it isn't a legal coda. Since a coda
+// follows a nucleus and a one-consonant onset precedes one, that means
+// "only between vowels". It doesn't check for modern-only segments.
+func (inv *Inventory) CheckProtoPhonotactics(segs []Segment) []Violation {
+	return inv.check(segs, inv.ProtoCodas, inv.ProtoFinals, inv.Geminates)
+}
+
+func (inv *Inventory) check(segs []Segment, codas, finals, geminates []string) []Violation {
 	syls, err := inv.Syllabify(segs)
 	if err != nil {
 		return []Violation{{err.Error()}}
@@ -73,13 +87,18 @@ func (inv *Inventory) CheckPhonotactics(segs []Segment) []Violation {
 			bad("illegal onset %q", strings.Join(on, ""))
 		}
 		co := Spellings(s.Coda)
-		allowed, what := inv.Codas, "coda"
-		if k == len(syls)-1 {
-			allowed, what = inv.Finals, "word-final consonant"
+		last := k == len(syls)-1
+		allowed, what := codas, "coda"
+		if last {
+			allowed, what = finals, "word-final consonant"
 		}
+		double := len(co) == 1 && !last && slices.Equal(Spellings(syls[k+1].Onset), co)
 		switch {
 		case len(co) > 1:
 			bad("%s %q has more than one consonant", what, strings.Join(co, ""))
+		case double && slices.Contains(geminates, co[0]):
+		case double:
+			bad("double consonant %q", co[0]+co[0])
 		case len(co) == 1 && !slices.Contains(allowed, co[0]):
 			bad("illegal %s %q", what, co[0])
 		}

@@ -7,12 +7,12 @@ previous one is "done", even if done means small.
 
 _Keep this section current: it's where every new session starts._
 
-1. **Decide the proto phonotactics** (before 2.6, the generator). Today
-   proto forms are only checked for proto-only sounds and `forbidden`,
-   because proto has geminates (`*pippo`) that modern codas don't allow.
-   The generator needs real proto onsets/codas/templates to build roots from.
-2. **Phase 2, step 2.6**: `lnova gen -n 20`. `sound.Evolve` (2.5) gives
-   each candidate's modern form; the 2.3 validator filters it.
+1. **Phase 2, step 2.6**: `lnova gen -n 20`. Build proto roots from weighted
+   syllable templates over the proto phonotactics (`phonology.yaml` →
+   `proto:`), check them with `CheckProtoPhonotactics`, evolve them with
+   `sound.Evolve`, and check the modern form with `CheckPhonotactics`.
+   First decide the templates and weights (one option: count them in the
+   104 roots).
 
 ## Phase 0 — Learn the basics (reading, ~1–2 weeks alongside Phase 1)
 
@@ -112,6 +112,9 @@ in `sound-changes.txt` are a bleeding example.
   → `sound.Evolve` + `TestLexiconEvolves`; 104/104 entries match `modern`.
 
 ### 2.6 Word generator
+
+- [x] Proto phonotactics decided and enforced (`phonology.yaml` → `proto:`;
+  `lnova validate` checks proto onsets, codas, finals and geminates).
 
 - [ ] `lnova gen -n 20`: random proto roots built from weighted syllable
   templates, filtered through the 2.3 validator, skipping existing words.

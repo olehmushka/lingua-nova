@@ -6,6 +6,43 @@ why, and where to pick up. The task list itself lives in `ROADMAP.md` →
 
 ---
 
+## 2026-10-16 (later): proto phonotactics
+
+### Done
+
+- `phonology.yaml` got a `proto:` block (`codas`, `finals`, `geminates`).
+  `phonology.md` → "Proto phonotactics" says the same in prose.
+- `phon.CheckProtoPhonotactics`: the same per-syllable check as the modern
+  one (both now share `check`), with the proto sets and geminates.
+- `lnova validate` now runs the full proto check, not only proto-only
+  sounds + `forbidden`. All 104 roots pass; `evolve` is still 104/104.
+- **New rule, modern too: no double consonants.** A coda that repeats the
+  next onset (`as.sa`) is an error unless it's a listed geminate. The modern
+  language lists no geminates. `phonology.md` already said "no double
+  consonants in modern words", but nothing enforced it: `assa` validated,
+  because `s` is a legal coda and a legal onset. No current word is affected.
+- Tests: a proto phonotactics table, Parse errors for the `proto:` block,
+  validator cases (bad proto coda/final/geminate, modern double consonant).
+
+### Key decisions (the user's choices)
+
+| Area | Decision | Why |
+|---|---|---|
+| Proto codas | `r l s` (+ geminate halves) | Exactly what the 104 roots do; a modern coda `h` comes only from suffixes |
+| Proto finals | vowel, `r n m` | Matches the data; rule 4 deletes n/m, giving vowel-final words with a nasal history |
+| Geminates | `pp tt cc`, only between vowels | Rule 3 degeminates only those; anything else would leak a double consonant into modern |
+
+Side effect: `*apta`-type clusters (stop + stop, Latin *nocte*) are illegal
+in proto. That follows from codas `r l s`.
+
+### Start next session here
+
+1. `ROADMAP.md` → "▶ Next up": step 2.6, the generator. Decide the syllable
+   templates and weights first.
+2. Committed.
+
+---
+
 ## 2026-10-16: Phase 2, step 2.5, rule engine + `lnova evolve`
 
 ### Done

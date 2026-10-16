@@ -52,6 +52,12 @@ type Inventory struct {
 	Finals     []string   // consonants allowed word-finally; vowels always are
 	Forbidden  [][]string // items are segment spellings or category names
 
+	// Proto-language phonotactics. Onsets, diphthongs and forbidden are
+	// shared with the modern language.
+	ProtoCodas  []string
+	ProtoFinals []string
+	Geminates   []string // consonants that may double between vowels in proto (*cup.pe)
+
 	bySpell    map[string]Segment
 	maxLen     int // longest spelling in bytes, for longest-match tokenizing
 	diphthongs map[[2]string]bool
@@ -78,6 +84,13 @@ type fileYAML struct {
 	Codas      []string            `yaml:"codas"`
 	Finals     []string            `yaml:"finals"`
 	Forbidden  [][]string          `yaml:"forbidden"`
+	Proto      protoYAML           `yaml:"proto"`
+}
+
+type protoYAML struct {
+	Codas     []string `yaml:"codas"`
+	Finals    []string `yaml:"finals"`
+	Geminates []string `yaml:"geminates"`
 }
 
 // Load reads and validates a phonology file.
@@ -103,15 +116,18 @@ func Parse(data []byte) (*Inventory, error) {
 	}
 
 	inv := &Inventory{
-		Categories: map[string][]string{},
-		Diphthongs: f.Diphthongs,
-		Onsets:     f.Onsets,
-		Codas:      f.Codas,
-		Finals:     f.Finals,
-		Forbidden:  f.Forbidden,
-		bySpell:    map[string]Segment{},
-		diphthongs: map[[2]string]bool{},
-		onsets:     map[string]bool{},
+		Categories:  map[string][]string{},
+		Diphthongs:  f.Diphthongs,
+		Onsets:      f.Onsets,
+		Codas:       f.Codas,
+		Finals:      f.Finals,
+		Forbidden:   f.Forbidden,
+		ProtoCodas:  f.Proto.Codas,
+		ProtoFinals: f.Proto.Finals,
+		Geminates:   f.Proto.Geminates,
+		bySpell:     map[string]Segment{},
+		diphthongs:  map[[2]string]bool{},
+		onsets:      map[string]bool{},
 	}
 	add := func(s segmentYAML, k Kind) error {
 		if s.Spell == "" || s.IPA == "" {
@@ -190,6 +206,23 @@ func Parse(data []byte) (*Inventory, error) {
 	}
 	if err := inv.checkSeq("finals", inv.Finals, Consonant); err != nil {
 		return nil, err
+	}
+	for _, p := range []struct {
+		what   string
+		spells []string
+	}{
+		{"proto codas", inv.ProtoCodas},
+		{"proto finals", inv.ProtoFinals},
+		{"proto geminates", inv.Geminates},
+	} {
+		if err := inv.checkSeq(p.what, p.spells, Consonant); err != nil {
+			return nil, err
+		}
+		for _, sp := range p.spells {
+			if !inv.bySpell[sp].Proto {
+				return nil, fmt.Errorf("%s %v: %q is not a proto-language sound", p.what, p.spells, sp)
+			}
+		}
 	}
 	for _, s := range inv.Forbidden {
 		if err := inv.checkPattern("forbidden", s); err != nil {

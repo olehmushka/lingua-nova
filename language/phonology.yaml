@@ -78,3 +78,12 @@ forbidden:
   - [n, h]
   - [c, h]
   - [V, V, V]   # no three vowels in a row
+
+# Proto-language phonotactics. Onsets, diphthongs and forbidden are shared
+# with the modern language; these replace codas and finals for proto forms.
+# Geminates are double consonants, allowed only between vowels (*cup.pe,
+# *it.tun). Only pp tt cc, because sound change rule 3 removes exactly those.
+proto:
+  codas: [r, l, s]
+  finals: [r, n, m]
+  geminates: [p, t, c]

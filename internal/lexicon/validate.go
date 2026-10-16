@@ -26,11 +26,9 @@ var verbEndings = []string{"ar", "er", "ir"}
 //   - gender m/f: required on nouns, optional on pronouns (sela keeps the
 //     gender of the noun it came from), not allowed elsewhere;
 //   - verbs end in -ar/-er/-ir (proto and modern);
-//   - proto uses only proto segments and no forbidden sequence;
+//   - proto uses only proto segments and obeys the proto phonotactics
+//     (its own codas and finals, plus geminates like *pippo);
 //   - modern (and word, if set) obeys the modern phonotactics.
-//
-// Proto forms get no onset/coda check: the proto-language has geminates
-// (*pippo) that the modern codas don't allow.
 func Validate(lex *Lexicon, inv *phon.Inventory) []Problem {
 	probs := slices.Clone(lex.Problems)
 	firstID := map[string]*Entry{}
@@ -99,7 +97,7 @@ func hasVerbEnding(w string) bool {
 }
 
 // checkProto reports segments that only exist in the modern language and
-// forbidden sequences.
+// everything that breaks the proto phonotactics.
 func checkProto(inv *phon.Inventory, form string, report func(string)) {
 	segs, err := inv.Tokenize(form)
 	if err != nil {
@@ -111,7 +109,7 @@ func checkProto(inv *phon.Inventory, form string, report func(string)) {
 			report(fmt.Sprintf("%q /%s/ is not a proto-language sound", s.Spell, s.IPA))
 		}
 	}
-	for _, v := range inv.CheckForbidden(segs) {
+	for _, v := range inv.CheckProtoPhonotactics(segs) {
 		report(v.Msg)
 	}
 }

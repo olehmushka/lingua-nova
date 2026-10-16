@@ -91,6 +91,28 @@ Syllable shape: **(C)(C)V(C)**, with open syllables (CV) by far the most common.
   (`bilha`: bi-lha or bil-ha?). Banning the sequence keeps every spelling
   readable in one way only. The validator enforces it.
 
+### Proto phonotactics
+
+The proto-language has the same onsets, diphthongs and banned sequences,
+but different codas and finals:
+
+| | Proto | Modern |
+|---|---|---|
+| Codas (inside a word) | `r l s`, plus the first half of a geminate | `r l s h` |
+| Word-final | a vowel, or `r n m` | a vowel, or `r l s h` |
+| Double consonants | `pp tt cc`, only between vowels | none |
+
+- **Geminates** (double consonants) are only `pp tt cc`, because sound change
+  rule 3 removes exactly those. A proto `*ss` would survive into the modern
+  language, where it's illegal. They stand only between vowels
+  (`*cup.pe`, `*it.tun`), never next to another consonant or at a word edge.
+  Their job is to give the modern language voiceless `p t c` between vowels:
+  `*patta` → `pata`, while `*pata` → `pada`.
+- **Final `n m`** exist only in proto. Rule 4 deletes them, so `*cutan` →
+  `cuda` hides a nasal in its history.
+- **No `h` coda in proto roots.** A modern coda `h` comes from a suffix
+  (the `-h` plural), not from a root.
+
 ## Stress
 
 **Always on the second-to-last syllable** (penultimate), like most

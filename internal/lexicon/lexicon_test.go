@@ -92,6 +92,19 @@ func TestValidate(t *testing.T) {
 			`t.yaml:2: water: proto *aiuca: forbidden sequence [a i u] (matches [V V V])`,
 		}},
 		{"geminate allowed in proto", strings.Replace(ok, "proto: acua", "proto: accua", 1), nil},
+		{"final nasal allowed in proto", strings.Replace(ok, "proto: acua", "proto: acuan", 1), nil},
+		{"bad coda in proto", strings.Replace(ok, "proto: acua", "proto: ampua", 1), []string{
+			`t.yaml:2: water: proto *ampua: illegal coda "m" in am.pu.a`,
+		}},
+		{"bad geminate in proto", strings.Replace(ok, "proto: acua", "proto: assua", 1), []string{
+			`t.yaml:2: water: proto *assua: double consonant "ss" in as.su.a`,
+		}},
+		{"bad final in proto", strings.Replace(ok, "proto: acua", "proto: acuas", 1), []string{
+			`t.yaml:2: water: proto *acuas: illegal word-final consonant "s" in a.cu.as`,
+		}},
+		{"double consonant in modern", strings.Replace(ok, "modern: agua", "modern: aggua", 1), []string{
+			`t.yaml:3: water: modern "aggua": double consonant "gg" in ag.gu.a`,
+		}},
 		{"bad coda in modern", strings.Replace(ok, "modern: agua", "modern: agpua", 1), []string{
 			`t.yaml:3: water: modern "agpua": illegal coda "g" in ag.pu.a`,
 		}},
