@@ -121,13 +121,13 @@
   definition: "A deer."
 
 - id: hen
-  proto: pulia
-  modern: pulha
+  proto: dolia
+  modern: dolha
   pos: noun
   gender: f
   gloss: hen
   definition: "A hen, a chicken."
-  notes: "*pulia → pulha (rule 1: li > lh / _V)"
+  notes: "*dolia → dolha (rule 1: li > lh / _V)"
 
 - id: egg
   proto: oppo

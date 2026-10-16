@@ -54,6 +54,14 @@ why, and where to pick up. The task list itself lives in `ROADMAP.md` →
   unchanged.
 - The `-auja` trio `auja` morning, `lauja` illness, `gauja` beautiful is a
   side effect of `zi > j`; kept.
+- **Profanity check** (PT, ES, FR, EN, UA, ~200 insults), by sound, not
+  spelling (Rifatian `h` = /x/, so `hu-` sounds like ху-), over every
+  inflected form (present, past, future, plural, possessive): 2367 forms.
+  Changed: `bostar` 'carry' → `tolcar` (3sg was `bosta`, PT 'shit');
+  `pulha` 'hen' → `dolha` (PT 'scoundrel'). Kept on purpose:
+  `curvir` 'understand' (`curve` ~ UA курва), `sutar`/`rucar` (3sg
+  `suta`/`ruca` ~ сука), `hersa` 'war' (~ хер), the `-loh` plurals
+  (~ лох).
 
 ### Start next session here
 
