@@ -1,0 +1,77 @@
+# Time: seasons, parts of the day.
+
+- id: year
+  proto: rauto
+  modern: raudo
+  pos: noun
+  gender: m
+  gloss: year
+  definition: "A year."
+  notes: "*rauto → raudo (rule 2: t > d / V_V)"
+
+- id: month
+  proto: seuvo
+  modern: seuvo
+  pos: noun
+  gender: m
+  gloss: month
+  definition: "A month."
+
+- id: morning
+  proto: auzia
+  modern: auja
+  pos: noun
+  gender: f
+  gloss: morning
+  definition: "Morning."
+  notes: "*auzia → auja (rule 1: zi > j / _V)"
+
+- id: evening
+  proto: ladria
+  modern: ladria
+  pos: noun
+  gender: f
+  gloss: evening
+  definition: "Evening."
+
+- id: summer
+  proto: heuta
+  modern: heuda
+  pos: noun
+  gender: f
+  gloss: summer
+  definition: "Summer."
+  notes: "*heuta → heuda (rule 2: t > d / V_V)"
+
+- id: winter
+  proto: zelmo
+  modern: zelmo
+  pos: noun
+  gender: m
+  gloss: winter
+  definition: "Winter."
+
+- id: spring_season
+  proto: tilsa
+  modern: tilsa
+  pos: noun
+  gender: f
+  gloss: spring.season
+  definition: "Spring, the season."
+
+- id: autumn
+  proto: fauzio
+  modern: faujo
+  pos: noun
+  gender: m
+  gloss: autumn
+  definition: "Autumn."
+  notes: "*fauzio → faujo (rule 1: zi > j / _V)"
+
+- id: time
+  proto: selvo
+  modern: selvo
+  pos: noun
+  gender: m
+  gloss: time
+  definition: "Time; a time, an occasion."

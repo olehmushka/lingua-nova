@@ -38,3 +38,57 @@
   gloss: five
   definition: "Five."
   notes: "*zoltie → zolche (rule 1: ti > ch / _V)"
+
+- id: six
+  proto: tauri
+  modern: tauri
+  pos: numeral
+  gloss: six
+  definition: "Six (6)."
+
+- id: seven
+  proto: sipum
+  modern: sibu
+  pos: numeral
+  gloss: seven
+  definition: "Seven (7)."
+  notes: "*sipum → sibu (rule 2: p > b / V_V; rule 4: m > ∅ / _#)"
+
+- id: eight
+  proto: gaucer
+  modern: gauger
+  pos: numeral
+  gloss: eight
+  definition: "Eight (8)."
+  notes: "*gaucer → gauger (rule 2: c > g / V_V)"
+
+- id: nine
+  proto: veun
+  modern: veu
+  pos: numeral
+  gloss: nine
+  definition: "Nine (9)."
+  notes: "*veun → veu (rule 4: n > ∅ / _#)"
+
+- id: ten
+  proto: darca
+  modern: darca
+  pos: numeral
+  gloss: ten
+  definition: "Ten (10)."
+
+- id: hundred
+  proto: trasun
+  modern: trasu
+  pos: numeral
+  gloss: hundred
+  definition: "A hundred (100)."
+  notes: "*trasun → trasu (rule 4: n > ∅ / _#)"
+
+- id: thousand
+  proto: talsia
+  modern: talxa
+  pos: numeral
+  gloss: thousand
+  definition: "A thousand (1000)."
+  notes: "*talsia → talxa (rule 1: si > x / _V)"
