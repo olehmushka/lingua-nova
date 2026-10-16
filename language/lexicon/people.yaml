@@ -90,3 +90,196 @@
   gloss: Rifatian
   definition: "The Rifatian language (native name)."
   notes: "*rifatia → rifacha (rule 1: ti > ch / _V)"
+
+- id: brother
+  proto: tirmo
+  modern: tirmo
+  pos: noun
+  gender: m
+  gloss: brother
+  definition: "A brother."
+  notes: "Pairs with tirma sister."
+
+- id: sister
+  proto: tirma
+  modern: tirma
+  pos: noun
+  gender: f
+  gloss: sister
+  definition: "A sister."
+  notes: "Pairs with tirmo brother: same root, -a for female."
+
+- id: son
+  proto: nauso
+  modern: nauso
+  pos: noun
+  gender: m
+  gloss: son
+  definition: "A son."
+  notes: "Pairs with nausa daughter."
+
+- id: daughter
+  proto: nausa
+  modern: nausa
+  pos: noun
+  gender: f
+  gloss: daughter
+  definition: "A daughter."
+  notes: "Pairs with nauso son: same root, -a for female."
+
+- id: husband
+  proto: heldo
+  modern: heldo
+  pos: noun
+  gender: m
+  gloss: husband
+  definition: "A husband."
+
+- id: wife
+  proto: ulsa
+  modern: ulsa
+  pos: noun
+  gender: f
+  gloss: wife
+  definition: "A wife."
+
+- id: king
+  proto: dauzo
+  modern: dauzo
+  pos: noun
+  gender: m
+  gloss: king
+  definition: "A king."
+
+- id: servant
+  proto: bilso
+  modern: bilso
+  pos: noun
+  gender: m
+  gloss: servant
+  definition: "A servant, a slave."
+
+- id: guest
+  proto: veudo
+  modern: veudo
+  pos: noun
+  gender: m
+  gloss: guest
+  definition: "A guest; a stranger received into the house."
+
+- id: enemy
+  proto: zorgo
+  modern: zorgo
+  pos: noun
+  gender: m
+  gloss: enemy
+  definition: "An enemy."
+
+- id: stranger
+  proto: forsio
+  modern: forxo
+  pos: noun
+  gender: m
+  gloss: stranger
+  definition: "A stranger, a foreigner."
+  notes: "*forsio → forxo (rule 1: si > x / _V)"
+
+- id: priest
+  proto: dernio
+  modern: dernho
+  pos: noun
+  gender: m
+  gloss: priest
+  definition: "A priest."
+  notes: "*dernio → dernho (rule 1: ni > nh / _V)"
+
+- id: prophet
+  proto: vidur
+  modern: vidur
+  pos: noun
+  gender: m
+  gloss: prophet
+  definition: "A prophet: one who speaks for God."
+  notes: "Gender listed: -r is unmarked."
+
+- id: judge
+  proto: taltio
+  modern: talcho
+  pos: noun
+  gender: m
+  gloss: judge
+  definition: "A judge."
+  notes: "*taltio → talcho (rule 1: ti > ch / _V)"
+
+- id: warrior
+  proto: gurzo
+  modern: gurzo
+  pos: noun
+  gender: m
+  gloss: warrior
+  definition: "A warrior, a soldier."
+
+- id: shepherd
+  proto: barlo
+  modern: barlo
+  pos: noun
+  gender: m
+  gloss: shepherd
+  definition: "A shepherd."
+
+- id: farmer
+  proto: tervo
+  modern: tervo
+  pos: noun
+  gender: m
+  gloss: farmer
+  definition: "A farmer."
+
+- id: smith
+  proto: zeuro
+  modern: zeuro
+  pos: noun
+  gender: m
+  gloss: smith
+  definition: "A smith, a metalworker."
+
+- id: folk
+  proto: loda
+  modern: loda
+  pos: noun
+  gender: f
+  gloss: people
+  definition: "A people, a nation, a folk."
+
+- id: village
+  proto: virsa
+  modern: virsa
+  pos: noun
+  gender: f
+  gloss: village
+  definition: "A village."
+
+- id: city
+  proto: grosa
+  modern: grosa
+  pos: noun
+  gender: f
+  gloss: city
+  definition: "A city, a town."
+
+- id: law
+  proto: sedun
+  modern: sedu
+  pos: noun
+  gender: m
+  gloss: law
+  definition: "A law; the law."
+  notes: "*sedun → sedu (rule 4: n > ∅ / _#) Gender listed: -u is unmarked."
+
+- id: war
+  proto: hersa
+  modern: hersa
+  pos: noun
+  gender: f
+  gloss: war
+  definition: "War, a war."
