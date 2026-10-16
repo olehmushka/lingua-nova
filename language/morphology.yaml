@@ -1,0 +1,47 @@
+# Inflection tables: the data form of the Nouns, Pronouns and Verbs
+# sections of grammar.md (keep the two in sync). Read by internal/morph.
+#
+# A word form is built by concatenating morphemes (stem + endings). Each
+# morpheme carries a gloss label, in Leipzig style: PST, 1SG, PL.
+
+# Verbs: stem + theme vowel (TH) + tense marker + person ending.
+# The stem is the infinitive minus -ar/-er/-ir; the class's theme vowel is
+# the vowel of that ending.
+verb:
+  persons: [1SG, 2SG, 3SG, 1PL, 2PL, 3PL]
+  classes:
+    - {name: I,   infinitive: ar, theme: a}
+    - {name: II,  infinitive: er, theme: e}
+    - {name: III, infinitive: ir, theme: i}
+  tenses:
+    # Present: no tense marker. An empty ending fuses with the theme vowel
+    # in the gloss (nar-a = see-TH.3SG).
+    - name: PRS
+      endings: {1SG: u, 2SG: s, 3SG: "", 1PL: mu, 2PL: di, 3PL: h}
+      no_theme: [1SG]          # nar-u, like Portuguese falo
+      theme:                   # theme vowel overrides, per class and person
+        III: {2SG: e, 3SG: e, 3PL: e}
+    - name: PST
+      marker: x
+      endings: {1SG: u, 2SG: is, 3SG: e, 1PL: emu, 2PL: edi, 3PL: eh}
+    # Future: the old infinitive -r, reanalysed as a tense marker.
+    - name: FUT
+      marker: r
+      endings: {1SG: u, 2SG: is, 3SG: e, 1PL: emu, 2PL: edi, 3PL: eh}
+
+# Nouns: suffixes in slot order (PL before POSS: menah-es). Each suffix has
+# two shapes, chosen by the last sound of what it attaches to.
+noun:
+  - {name: PL,   after_vowel: h, after_consonant: eh}
+  - {name: POSS, after_vowel: s, after_consonant: es}
+
+# Pronouns are listed whole (suppletion), keyed by lexicon id. Forms are
+# [subject, object, possessive]. The gloss is person + number, then mark,
+# then case (subject is unmarked): hani = 3SG.F.OBJ.
+pronoun:
+  i:          {person: "1", SG: [mu, mi, me],          PL: [muh, mih, meh]}
+  thou:       {person: "2", SG: [chu, chi, che],       PL: [chuh, chih, cheh]}
+  you_polite: {person: "2", mark: POL, SG: [sela, sela, selas], PL: [selah, selah, selahes]}
+  he:         {person: "3", mark: M, SG: [hono, honi, hone], PL: [honoh, honih, honeh]}
+  she:        {person: "3", mark: F, SG: [hana, hani, hane], PL: [hanah, hanih, haneh]}
+  it:         {person: "3", mark: N, SG: [hunu, huni, hune]}

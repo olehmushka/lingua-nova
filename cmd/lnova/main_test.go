@@ -41,6 +41,14 @@ func TestRun(t *testing.T) {
 		{"gen homophone", []string{"gen", "-n", "300", "-seed", "5"}, 0, " = ", ""},
 		{"gen extra args", []string{"gen", "x"}, 2, "", "usage: lnova gen"},
 		{"gen zero", []string{"gen", "-n", "0"}, 2, "", "usage: lnova gen"},
+		{"inflect form", []string{"inflect", "see", "pst", "1sg"}, 0, "PST.1SG   naraxu   nar-a-x-u   see-TH-PST-1SG   /naˈɾa.ʃu/\n", ""},
+		{"inflect verb paradigm", []string{"inflect", "see"}, 0, "PRS.3SG   nara       nar-a         see-TH.3SG       /ˈna.ɾa/\n", ""},
+		{"inflect noun paradigm", []string{"inflect", "woman"}, 0, "PL.POSS   menahes   mena-h-es   woman-PL-POSS", ""},
+		{"inflect missing form", []string{"inflect", "it"}, 0, "PL.SBJ    —\n", ""},
+		{"inflect bad feature", []string{"inflect", "see", "PL"}, 1, "", `unexpected feature "PL"`},
+		{"inflect unknown id", []string{"inflect", "nope"}, 1, "", `no lexicon entry "nope"`},
+		{"inflect adjective", []string{"inflect", "white"}, 1, "", "white (adjective) doesn't inflect"},
+		{"inflect no args", []string{"inflect"}, 2, "", "usage: lnova inflect"},
 		{"no command", nil, 2, "", "usage: lnova"},
 		{"unknown command", []string{"nope"}, 2, "", `unknown command "nope"`},
 		{"bad lang dir", []string{"-lang", "/nonexistent", "ipa", "lu"}, 1, "", "no such file"},
@@ -112,6 +120,10 @@ func TestValidateBroken(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(dir, "phonology.yaml"), phonology, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	morphology := "verb:\n  persons: [1SG]\n  classes: [{name: I, infinitive: ar, theme: a}]\n  tenses: [{name: PRS, endings: {1SG: u}}]\n"
+	if err := os.WriteFile(filepath.Join(dir, "morphology.yaml"), []byte(morphology), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.Mkdir(filepath.Join(dir, "lexicon"), 0o755); err != nil {

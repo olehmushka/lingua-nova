@@ -17,6 +17,7 @@ import (
 
 	"github.com/olehmushka/lingua-nova/internal/gen"
 	"github.com/olehmushka/lingua-nova/internal/lexicon"
+	"github.com/olehmushka/lingua-nova/internal/morph"
 	"github.com/olehmushka/lingua-nova/internal/phon"
 	"github.com/olehmushka/lingua-nova/internal/sound"
 )
@@ -25,7 +26,8 @@ const usage = `usage: lnova [-lang dir] <command> [args]
 
 commands:
   ipa <word>...   show segments and IPA with syllables and stress
-  validate        check the lexicon against the phonology and entry format
+  validate        check the lexicon against the phonology and entry format,
+                  and every inflected form against the phonotactics
   rules           parse sound-changes.txt and list the rules with line numbers
   evolve          run every proto form through the sound changes and compare
                   with modern
@@ -34,6 +36,8 @@ commands:
   gen [-n 20] [-seed N]
                   generate new proto roots and show their modern forms
   gen -count      count the lexicon's syllable templates (generator weights)
+  inflect <id> [features...]
+                  inflect a word (see PST 1SG), or show its whole paradigm
 `
 
 func main() {
@@ -65,6 +69,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return cmdEvolve(*langDir, rest, stdout, stderr)
 	case "gen":
 		return cmdGen(*langDir, rest, stdout, stderr)
+	case "inflect":
+		return cmdInflect(*langDir, rest, stdout, stderr)
 	default:
 		fmt.Fprintf(stderr, "lnova: unknown command %q\n%s", cmd, usage)
 		return 2
@@ -107,8 +113,9 @@ func cmdIPA(langDir string, words []string, stdout, stderr io.Writer) int {
 	return status
 }
 
-// cmdValidate checks every lexicon entry and prints problems like compiler
-// errors, one per line, then a summary:
+// cmdValidate checks every lexicon entry, and every form morphology.yaml
+// builds from it, and prints problems like compiler errors, one per line,
+// then a summary:
 //
 //	language/lexicon/verbs.yaml:42: ruccar: verb modern "ruca" must end in -ar, -er or -ir
 //	104 entries, 1 problem
@@ -129,7 +136,15 @@ func cmdValidate(langDir string, args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "lnova: %v\n", err)
 		return 1
 	}
-	probs := lexicon.Validate(lex, inv)
+	rules, err := morph.Load(filepath.Join(langDir, "morphology.yaml"), inv)
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	probs := append(lexicon.Validate(lex, inv), morph.Check(lex, rules)...)
+	slices.SortStableFunc(probs, func(a, b lexicon.Problem) int {
+		return cmp.Or(cmp.Compare(a.File, b.File), cmp.Compare(a.Line, b.Line))
+	})
 	for _, p := range probs {
 		fmt.Fprintln(stdout, p)
 	}
@@ -437,4 +452,90 @@ func printCounts(inv *phon.Inventory, corpus [][]phon.Segment, stdout, stderr io
 		fmt.Fprintf(stdout, "%-8s {%s}\n", row.name+":", strings.Join(parts, ", "))
 	}
 	return 0
+}
+
+// cmdInflect prints one form of a lexicon entry, or with no features every
+// form in its paradigm, one per line:
+//
+//	PST.1SG   naraxu   nar-a-x-u   see-TH-PST-1SG   /naˈɾa.ʃu/
+//
+// A form the language lacks (hunu has no plural) is printed as "—".
+func cmdInflect(langDir string, args []string, stdout, stderr io.Writer) int {
+	if len(args) == 0 {
+		fmt.Fprintln(stderr, "usage: lnova inflect <id> [features...]")
+		return 2
+	}
+	inv, err := phon.Load(filepath.Join(langDir, "phonology.yaml"))
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	rules, err := morph.Load(filepath.Join(langDir, "morphology.yaml"), inv)
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	lex, err := lexicon.Load(filepath.Join(langDir, "lexicon"))
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	i := slices.IndexFunc(lex.Entries, func(e *lexicon.Entry) bool { return e.ID == args[0] })
+	if i < 0 {
+		fmt.Fprintf(stderr, "lnova: no lexicon entry %q\n", args[0])
+		return 1
+	}
+	e := lex.Entries[i]
+
+	var forms []*morph.Form
+	var labels []string // for missing forms, which have no Label
+	if len(args) > 1 {
+		f, err := rules.Inflect(e, args[1:]...)
+		if err != nil {
+			fmt.Fprintf(stderr, "lnova: %v\n", err)
+			return 1
+		}
+		forms, labels = []*morph.Form{&f}, []string{""}
+	} else {
+		t, err := rules.Paradigm(e)
+		if err != nil {
+			fmt.Fprintf(stderr, "lnova: %v\n", err)
+			return 1
+		}
+		if t == nil {
+			fmt.Fprintf(stderr, "lnova: %s (%s) doesn't inflect\n", e.ID, e.POS)
+			return 1
+		}
+		for j, col := range t.Cols { // column by column: all of PRS, then PST…
+			for _, row := range t.Rows {
+				forms = append(forms, row.Cells[j])
+				labels = append(labels, strings.Trim(row.Label+"."+col, "."))
+			}
+		}
+	}
+
+	tw := tabwriter.NewWriter(stdout, 0, 0, 3, ' ', 0)
+	for j, f := range forms {
+		if f == nil {
+			fmt.Fprintf(tw, "%s\t—\n", labels[j])
+			continue
+		}
+		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t/%s/\n", f.Label(), f.Word(), f.Segmented(), f.Gloss(), ipa(inv, f.Word()))
+	}
+	tw.Flush()
+	return 0
+}
+
+// ipa returns a word's syllabified, stressed IPA, or "?" if it can't be
+// syllabified (validate reports those).
+func ipa(inv *phon.Inventory, word string) string {
+	segs, err := inv.Tokenize(word)
+	if err != nil {
+		return "?"
+	}
+	syls, err := inv.Syllabify(segs)
+	if err != nil {
+		return "?"
+	}
+	return phon.SyllableIPA(syls, phon.Stress(syls))
 }

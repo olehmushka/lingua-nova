@@ -6,6 +6,63 @@ why, and where to pick up. The task list itself lives in `ROADMAP.md` →
 
 ---
 
+## 2026-10-17: Phase 3 closed, Phase 4 morphology generator
+
+### Done
+
+- **Phase 3 closed** (your call: the app beats grepping YAML).
+- **`language/morphology.yaml`**: the grammar.md inflection tables as data.
+  Verbs: persons, 3 classes (infinitive ending → theme vowel), tenses with
+  a marker (`x`, `r`), person endings, `no_theme` (PRS 1SG) and theme
+  overrides (class III `e` in PRS 2SG/3SG/3PL). Nouns: PL and POSS as
+  two-shape suffixes in slot order. Pronouns: whole forms per lexicon id.
+- **`internal/morph`**: `Inflect(entry, feats...)` → `Form` (morphemes
+  with glosses: `nar-a-x-u` / `see-TH-PST-1SG`), `Paradigm(entry)` → table,
+  `Check(lex, rules)` → problems.
+- **`lnova inflect <id> [features]`**, and `lnova validate` now also checks
+  every inflected form: 323 entries, 0 problems.
+- **Entry page**: Conjugation / Declension / Forms table, segmentation
+  under each form, gloss as tooltip. `morphology.yaml` hot-reloads like the
+  other files.
+- Tests: every form in grammar.md, lexicon-wide `Check`, parse errors,
+  CLI, pages, reload of a changed/broken `morphology.yaml`.
+
+### Key decisions (the user's choices)
+
+| Area | Decision | Why |
+|---|---|---|
+| Rules source | **Data file** `morphology.yaml` | Draft endings change without code; the analyzer reads the same tables |
+| Scope | **Verbs + nouns + pronouns** | Everything the example sentences need for glossing |
+| `it` plural | **None**; plural things are `honoh` | Like Portuguese *eles*; noted in grammar.md |
+
+### Concepts
+
+- **Morpheme, slot, paradigm**: a verb is stem + theme + tense + person,
+  always in that order; the paradigm is the grid of all feature cells.
+- **Allomorphy**: `-h`/`-eh`, `-s`/`-es` are one morpheme each, shape
+  chosen by the preceding sound (*phonologically conditioned*). `menahes`
+  gets `-es` because plural `-h` is a consonant, no special rule needed.
+- **Fusion**: `nar-a` = `see-TH.3SG`, one vowel carrying two meanings.
+- **Suppletion**: pronouns are listed, not derived.
+- **Item-and-arrangement** (the engine glues morphemes) vs.
+  **word-and-paradigm** (the table you read).
+- **Boundaries vs. spelling**: gluing strings can create a digraph across
+  a morpheme boundary (`pul` + `hu` would read `p·u·lh·u`). `Check`
+  compares the word's segments with its morphemes' segments to catch it.
+  No current ending triggers it.
+
+### Known limitations
+
+- Still not checked in a real browser (Chrome extension not connected);
+  checked with tests and curl.
+- Inflection works on the modern form only; proto morphology isn't modelled.
+
+### Start next session here
+
+1. `ROADMAP.md` → "▶ Next up": the analyzer.
+
+---
+
 ## 2026-10-17: Phase 3 htmx live search
 
 ### Done

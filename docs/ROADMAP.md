@@ -7,9 +7,9 @@ previous one is "done", even if done means small.
 
 _Keep this section current: it's where every new session starts._
 
-1. **Close Phase 3?** Use the app for a while and decide whether it's
-   "done" (you prefer it over grepping YAML), or list what's missing.
-   Then Phase 4 starts with the morphology generator.
+1. **Phase 4 analyzer**: inflected form → root + features, reading
+   `morphology.yaml` in reverse (`naraxu` → see + PST + 1SG). Decide how to
+   handle ambiguity (one form, several analyses).
 
 ## Phase 0 — Learn the basics (reading, ~1–2 weeks alongside Phase 1)
 
@@ -145,11 +145,14 @@ the derivation.
   data under a red banner, validate problems show the new data under a
   yellow one.
 
-**Done when:** you prefer using the app over grepping YAML.
+**Done when:** you prefer using the app over grepping YAML. → Done (2026-10-17).
 
 ## Phase 4 — Morphology and rule-based translation
 
-- [ ] **Generator**: root + features → inflected form (`see + PAST + 3SG`).
+- [x] **Generator**: root + features → inflected form (`see + PAST + 3SG`).
+  → `language/morphology.yaml` (verbs, nouns, pronouns), `internal/morph`;
+  `lnova inflect see PST 1SG` / `lnova inflect see` (whole paradigm);
+  paradigm table on the entry page; `validate` checks every form.
 - [ ] **Analyzer**: inflected form → root + features (the reverse; harder).
 - [ ] **Interlinear glossing**: conlang sentence → word-by-word gloss line.
 - [ ] **English → conlang** for a controlled subset (simple SVO sentences): tokenize, tag, build a small tree, reorder per grammar, inflect.

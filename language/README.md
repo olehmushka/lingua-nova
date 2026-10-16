@@ -12,6 +12,7 @@ these files, and you edit them by hand.
 | `phonology.yaml` | The same inventory as data, for the Go tools (keep in sync with `phonology.md`) |
 | `sound-changes.txt` | Ordered historical rules: proto → modern |
 | `grammar.md` | Word order, morphology, syntax |
+| `morphology.yaml` | The inflection tables of `grammar.md` as data, for `lnova inflect` (keep in sync with `grammar.md`) |
 | `lexicon/*.yaml` | Dictionary entries, grouped by topic |
 
 ## Lexicon entry format (draft, expect it to change)

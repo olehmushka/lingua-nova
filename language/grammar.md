@@ -18,6 +18,9 @@ is decided; the exact sounds can still change.
 | Negation | **Portuguese-style**: particle before the verb, double negation |
 | Questions | **Portuguese-style**: same order as statements, rising intonation |
 
+The inflection tables below also exist as data in `morphology.yaml`
+(`lnova inflect <id>` prints a word's paradigm). Keep the two in sync.
+
 ## Nouns
 
 ### Gender
@@ -90,6 +93,8 @@ subject **-u/-o/-a**, object **-i**, possessive **-e**, and plural **-h**.
   "your grace") does in Portuguese: 3rd-person verb, possessive with **-s**.
   Its plural is the regular noun plural **selah**, with a 3pl verb, like
   Brazilian *vocês*: `Selah narah?` = "Do you (all, polite) see?"
+- **it** (`hunu`) has no plural. Things in the plural are `honoh`, like
+  Portuguese *eles* for masculine things.
 - Object pronouns come **after the verb**, in normal SVO position:
   `Mu naraxu chi.` = "I saw thee." (Unlike Portuguese clitics, they never move.)
 

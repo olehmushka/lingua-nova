@@ -9,6 +9,7 @@ package main
 
 import (
 	"bytes"
+	"cmp"
 	"embed"
 	"flag"
 	"fmt"
@@ -19,11 +20,13 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync/atomic"
 	"time"
 
 	"github.com/olehmushka/lingua-nova/internal/lexicon"
+	"github.com/olehmushka/lingua-nova/internal/morph"
 	"github.com/olehmushka/lingua-nova/internal/phon"
 	"github.com/olehmushka/lingua-nova/internal/sound"
 )
@@ -69,6 +72,18 @@ type entryInfo struct {
 	Evolved    string // what the sound changes give from proto
 	Steps      []step
 	Homophones []*lexicon.Entry // other entries with the same modern form
+	Paradigm   *morph.Table     // nil if the word doesn't inflect
+}
+
+// ParadigmTitle names the paradigm table: verbs conjugate, nouns decline.
+func (e *entryInfo) ParadigmTitle() string {
+	switch e.POS {
+	case "verb":
+		return "Conjugation"
+	case "noun":
+		return "Declension"
+	}
+	return "Forms"
 }
 
 // Mismatch reports whether the sound changes don't reproduce modern, the
@@ -151,8 +166,16 @@ func load(langDir string) (*data, error) {
 	if err != nil {
 		return nil, err
 	}
+	morphRules, err := morph.Load(filepath.Join(langDir, "morphology.yaml"), inv)
+	if err != nil {
+		return nil, err
+	}
 
-	d := &data{lex: lex, info: map[string]*entryInfo{}, problems: lexicon.Validate(lex, inv)}
+	probs := append(lexicon.Validate(lex, inv), morph.Check(lex, morphRules)...)
+	slices.SortStableFunc(probs, func(a, b lexicon.Problem) int {
+		return cmp.Or(cmp.Compare(a.File, b.File), cmp.Compare(a.Line, b.Line))
+	})
+	d := &data{lex: lex, info: map[string]*entryInfo{}, problems: probs}
 	byModern := map[string][]*lexicon.Entry{}
 	for _, e := range lex.Entries {
 		byModern[e.Modern] = append(byModern[e.Modern], e)
@@ -172,6 +195,9 @@ func load(langDir string) (*data, error) {
 				info.Steps = append(info.Steps, step{st.Rule.Line, st.Rule.Text, phon.Spell(st.Before), phon.Spell(st.After)})
 			}
 		}
+		// A word that can't be inflected (a verb without a class ending)
+		// is a validate problem; the page just has no table.
+		info.Paradigm, _ = morphRules.Paradigm(e)
 		for _, h := range byModern[e.Modern] {
 			if h != e {
 				info.Homophones = append(info.Homophones, h)
@@ -214,7 +240,9 @@ type stamp struct {
 // map too. A file that can't be stat'ed is left out; load reports it.
 func stamps(langDir string) map[string]stamp {
 	files, _ := filepath.Glob(filepath.Join(langDir, "lexicon", "*.yaml"))
-	files = append(files, filepath.Join(langDir, "phonology.yaml"), filepath.Join(langDir, "sound-changes.txt"))
+	for _, f := range []string{"phonology.yaml", "sound-changes.txt", "morphology.yaml"} {
+		files = append(files, filepath.Join(langDir, f))
+	}
 	m := map[string]stamp{}
 	for _, f := range files {
 		if fi, err := os.Stat(f); err == nil {

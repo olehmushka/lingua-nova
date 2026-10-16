@@ -11,6 +11,16 @@
 </dl>
 {{end}}
 
+{{with .Paradigm}}
+<h2>{{$.ParadigmTitle}}</h2>
+<table class="paradigm">
+  <tr><th></th>{{range .Cols}}<th>{{.}}</th>{{end}}</tr>
+  {{range .Rows}}
+  <tr><th>{{.Label}}</th>{{range .Cells}}<td>{{if .}}{{.Word}}<br><small class="muted" title="{{.Gloss}}">{{.Segmented}}</small>{{else}}<span class="muted">—</span>{{end}}</td>{{end}}</tr>
+  {{end}}
+</table>
+{{end}}
+
 <h2>Derivation</h2>
 <p><span class="proto">*{{.Proto}}</span> <span class="ipa">/{{.ProtoIPA}}/</span> → {{.Evolved}}</p>
 {{if .Steps}}

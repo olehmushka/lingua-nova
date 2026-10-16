@@ -29,6 +29,10 @@ func TestPages(t *testing.T) {
 		{"/?q=zzzz", false, 200, []string{"No entries match"}, nil},
 		{"/?q=<b>", false, 200, []string{"&lt;b&gt;"}, []string{"<b>"}},
 		{"/entry/water", false, 200, []string{"<h1>exa", "*esia", "si &gt; x / _V", "esia → exa", "nature.yaml"}, []string{`class="bad"`}},
+		{"/entry/see", false, 200, []string{"<h2>Conjugation", "<th>PST</th>", "naraxu", "nar-a-x-u", `title="see-TH-PST-1SG"`}, nil},
+		{"/entry/water", false, 200, []string{"<h2>Declension", "exahes", "exa-h-es"}, nil},
+		{"/entry/it", false, 200, []string{"<h2>Forms", "huni", `<span class="muted">—</span>`}, nil},
+		{"/entry/white", false, 200, nil, []string{`class="paradigm"`}},
 		{"/entry/nope", false, 404, []string{"Not found"}, nil},
 		{"/nowhere", false, 404, []string{"Not found"}, nil},
 		{"/?q=water", false, 200, []string{`<div id="results">`, `hx-get="/"`, "/static/htmx.min.js"}, nil},
@@ -139,6 +143,47 @@ func TestReload(t *testing.T) {
 	}
 }
 
+// TestReloadMorphology edits morphology.yaml: a new ending shows up on the
+// entry page, and a broken file keeps the old tables.
+func TestReloadMorphology(t *testing.T) {
+	dir := copyLang(t)
+	s, err := newHandler(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	file := filepath.Join(dir, "morphology.yaml")
+	orig, err := os.ReadFile(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	changed := strings.Replace(string(orig), "marker: x", "marker: z", 1)
+	steps := []struct {
+		name, file string
+		want, not  []string
+	}{
+		{"new marker", changed, []string{"narazu"}, []string{"naraxu", `class="banner`}},
+		{"broken keeps old", changed + "verb: [\n", []string{"narazu", `class="banner banner-error"`, "morphology.yaml"}, nil},
+		{"restored", string(orig), []string{"naraxu"}, []string{`class="banner`}},
+	}
+	for _, st := range steps {
+		if err := os.WriteFile(file, []byte(st.file), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		s.reload()
+		body := get(t, s, "/entry/see")
+		for _, w := range st.want {
+			if !strings.Contains(body, w) {
+				t.Errorf("%s: body lacks %q", st.name, w)
+			}
+		}
+		for _, n := range st.not {
+			if strings.Contains(body, n) {
+				t.Errorf("%s: body contains %q", st.name, n)
+			}
+		}
+	}
+}
+
 func TestStamps(t *testing.T) {
 	dir := copyLang(t)
 	extra := filepath.Join(dir, "lexicon", "extra.yaml")
@@ -154,6 +199,9 @@ func TestStamps(t *testing.T) {
 			defer f.Close()
 			_, err = f.WriteString("\n")
 			return err
+		}},
+		{"morphology", func() error {
+			return os.WriteFile(filepath.Join(dir, "morphology.yaml"), []byte("changed"), 0o644)
 		}},
 		{"new file", func() error { return os.WriteFile(extra, nil, 0o644) }},
 		{"delete file", func() error { return os.Remove(extra) }},
