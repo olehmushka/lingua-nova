@@ -6,6 +6,52 @@ why, and where to pick up. The task list itself lives in `ROADMAP.md` →
 
 ---
 
+## 2026-10-17: Phase 3 htmx live search
+
+### Done
+
+- **Search as you type.** The input has `hx-get="/"`,
+  `hx-trigger="input changed delay:200ms, search"`, `hx-target="#results"`,
+  `hx-push-url="true"`. The form and button stay, so it works without JS.
+- **One handler, two shapes.** `handleSearch` checks the `HX-Request`
+  header: htmx gets only the `results` template (defined in
+  `search.html`), a browser gets the full page. `Vary: HX-Request` keeps
+  caches from mixing them. `render` now calls a shared `execute`.
+- **htmx 2.0.4 vendored** in `cmd/server/static/`, embedded with
+  `//go:embed`, served at `/static/`.
+- Tests: `TestPages` gained an `htmx` column (fragment has results but no
+  `<!doctype>`/header/input; escaping; static file).
+
+### Key decisions (the user's choices)
+
+| Area | Decision | Why |
+|---|---|---|
+| htmx source | **Embedded in the binary** | Works offline, version pinned in the repo, same as the templates |
+
+### Concepts
+
+- **Hypermedia / HTML over the wire**: the server sends ready HTML
+  fragments and htmx swaps them in. All rendering stays in Go templates;
+  no JSON API, no client-side templates.
+- **Debouncing**: `delay:200ms` waits until typing pauses, so `exa`
+  sends one request, not three. `changed` skips keys that don't change
+  the value (arrows).
+- **URL as state**: `hx-push-url` updates `/?q=…`, so refresh, back and
+  sharing a link give the same page (the full-page path renders it).
+
+### Known limitation
+
+- The reload banners only refresh on a full page load, not on live-search
+  swaps. Fixable later with `hx-swap-oob` if it bothers you.
+- Not checked in a real browser this session (Chrome extension wasn't
+  connected); checked with tests and curl.
+
+### Start next session here
+
+1. `ROADMAP.md` → "▶ Next up": decide whether Phase 3 is done.
+
+---
+
 ## 2026-10-17: Phase 3 hot reload
 
 ### Done

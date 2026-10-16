@@ -18,22 +18,32 @@ func TestPages(t *testing.T) {
 	}
 	tests := []struct {
 		path   string
+		htmx   bool // sent by htmx: expects just the results fragment
 		status int
 		want   []string
 		not    []string
 	}{
-		{"/", 200, []string{`name="q"`, "entries"}, nil},
-		{"/?q=water", 200, []string{`href="/entry/water"`, "exa", "/ˈe.ʃa/", "gloss, exact"}, nil},
-		{"/?q=*esia", 200, []string{`href="/entry/water"`, "proto, exact"}, nil},
-		{"/?q=zzzz", 200, []string{"No entries match"}, nil},
-		{"/?q=<b>", 200, []string{"&lt;b&gt;"}, []string{"<b>"}},
-		{"/entry/water", 200, []string{"<h1>exa", "*esia", "si &gt; x / _V", "esia → exa", "nature.yaml"}, []string{`class="bad"`}},
-		{"/entry/nope", 404, []string{"Not found"}, nil},
-		{"/nowhere", 404, []string{"Not found"}, nil},
+		{"/", false, 200, []string{`name="q"`, "entries"}, nil},
+		{"/?q=water", false, 200, []string{`href="/entry/water"`, "exa", "/ˈe.ʃa/", "gloss, exact"}, nil},
+		{"/?q=*esia", false, 200, []string{`href="/entry/water"`, "proto, exact"}, nil},
+		{"/?q=zzzz", false, 200, []string{"No entries match"}, nil},
+		{"/?q=<b>", false, 200, []string{"&lt;b&gt;"}, []string{"<b>"}},
+		{"/entry/water", false, 200, []string{"<h1>exa", "*esia", "si &gt; x / _V", "esia → exa", "nature.yaml"}, []string{`class="bad"`}},
+		{"/entry/nope", false, 404, []string{"Not found"}, nil},
+		{"/nowhere", false, 404, []string{"Not found"}, nil},
+		{"/?q=water", false, 200, []string{`<div id="results">`, `hx-get="/"`, "/static/htmx.min.js"}, nil},
+		{"/?q=water", true, 200, []string{`href="/entry/water"`, "gloss, exact"}, []string{"<!doctype", "<header>", `name="q"`}},
+		{"/?q=", true, 200, []string{"entries. Search"}, []string{"<!doctype"}},
+		{"/?q=<zzzz>", true, 200, []string{"No entries match", "&lt;zzzz&gt;"}, []string{"<zzzz>"}},
+		{"/static/htmx.min.js", false, 200, []string{"htmx"}, nil},
 	}
 	for _, tt := range tests {
 		rec := httptest.NewRecorder()
-		h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, tt.path, nil))
+		req := httptest.NewRequest(http.MethodGet, tt.path, nil)
+		if tt.htmx {
+			req.Header.Set("HX-Request", "true")
+		}
+		h.ServeHTTP(rec, req)
 		body, _ := io.ReadAll(rec.Body)
 		if rec.Code != tt.status {
 			t.Errorf("GET %s: status %d, want %d", tt.path, rec.Code, tt.status)

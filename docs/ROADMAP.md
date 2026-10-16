@@ -7,10 +7,9 @@ previous one is "done", even if done means small.
 
 _Keep this section current: it's where every new session starts._
 
-1. **Phase 3, htmx**: live search as you type (`hx-get` on the input,
-   the server returns just the results table).
-2. Then decide Phase 3 is "done" (you prefer the app over grepping YAML),
-   or what's missing.
+1. **Close Phase 3?** Use the app for a while and decide whether it's
+   "done" (you prefer it over grepping YAML), or list what's missing.
+   Then Phase 4 starts with the morphology generator.
 
 ## Phase 0 — Learn the basics (reading, ~1–2 weeks alongside Phase 1)
 
@@ -132,7 +131,10 @@ the derivation.
 
 ## Phase 3 — Dictionary web app
 
-- [x] Go `net/http` + `html/template` (`cmd/server`). htmx still to add.
+- [x] Go `net/http` + `html/template` (`cmd/server`).
+- [x] htmx live search: the input sends `hx-get` as you type (200ms
+  debounce) and gets back just the results fragment (`HX-Request` header);
+  htmx 2.0.4 embedded in the binary, URL kept in sync.
 - [x] Search conlang→English and English→conlang.
   → `lexicon.Search`: one box, both directions, `*` for proto; ranked
   exact > word > prefix > substring, then by field.

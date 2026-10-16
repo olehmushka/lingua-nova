@@ -13,6 +13,7 @@ import (
 	"flag"
 	"fmt"
 	"html/template"
+	"io/fs"
 	"log"
 	"maps"
 	"net/http"
@@ -29,6 +30,12 @@ import (
 
 //go:embed templates/*.html
 var templateFS embed.FS
+
+// static holds htmx.min.js (2.0.4), served at /static/ so the app works
+// offline.
+//
+//go:embed static
+var staticFS embed.FS
 
 func main() {
 	langDir := flag.String("lang", "language", "language data directory")
@@ -118,6 +125,8 @@ func newHandler(langDir string) (*server, error) {
 	s.mux = http.NewServeMux()
 	s.mux.HandleFunc("GET /{$}", s.handleSearch)
 	s.mux.HandleFunc("GET /entry/{id}", s.handleEntry)
+	static, _ := fs.Sub(staticFS, "static")
+	s.mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServerFS(static)))
 	s.mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		s.render(w, http.StatusNotFound, "notfound", r.URL.Path)
 	})
@@ -257,11 +266,20 @@ func (s *server) handleSearch(w http.ResponseWriter, r *http.Request) {
 	for _, h := range d.lex.Search(q) {
 		results = append(results, result{d.info[h.Entry.ID], h.Field, h.Match})
 	}
-	s.render(w, http.StatusOK, "search", map[string]any{
+	data := map[string]any{
 		"Query":   q,
 		"Results": results,
 		"Total":   len(d.lex.Entries),
-	})
+	}
+	// Live search: htmx sends HX-Request and swaps the response into
+	// #results, so it gets just that fragment. Vary tells caches the same
+	// URL has two shapes.
+	w.Header().Add("Vary", "HX-Request")
+	if r.Header.Get("HX-Request") == "true" {
+		s.execute(w, http.StatusOK, "search", "results", data)
+		return
+	}
+	s.render(w, http.StatusOK, "search", data)
 }
 
 func (s *server) handleEntry(w http.ResponseWriter, r *http.Request) {
@@ -284,8 +302,7 @@ type view struct {
 
 const maxProblems = 10
 
-// render executes a page into a buffer first, so a template error gives a
-// clean 500 instead of half a page.
+// render executes a whole page, with the banner.
 func (s *server) render(w http.ResponseWriter, status int, page string, data any) {
 	st := s.state.Load()
 	v := view{Data: data, Err: st.err, Problems: st.d.problems}
@@ -293,9 +310,15 @@ func (s *server) render(w http.ResponseWriter, status int, page string, data any
 		v.More = len(v.Problems) - maxProblems
 		v.Problems = v.Problems[:maxProblems]
 	}
+	s.execute(w, status, page, "base", v)
+}
+
+// execute runs one named template of a page into a buffer first, so a
+// template error gives a clean 500 instead of half a page.
+func (s *server) execute(w http.ResponseWriter, status int, page, name string, data any) {
 	var buf bytes.Buffer
-	if err := s.pages[page].ExecuteTemplate(&buf, "base", v); err != nil {
-		log.Printf("render %s: %v", page, err)
+	if err := s.pages[page].ExecuteTemplate(&buf, name, data); err != nil {
+		log.Printf("render %s/%s: %v", page, name, err)
 		http.Error(w, "template error", http.StatusInternalServerError)
 		return
 	}
