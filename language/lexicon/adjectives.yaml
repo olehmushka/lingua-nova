@@ -74,3 +74,165 @@
   gloss: cold
   definition: "Cold."
   notes: "*greppo → grepo (rule 3: pp > p)"
+
+- id: green
+  proto: gilsio
+  modern: gilxo
+  pos: adjective
+  gloss: green
+  definition: "Green."
+  notes: "*gilsio → gilxo (rule 1: si > x / _V)"
+
+- id: yellow
+  proto: zeulo
+  modern: zeulo
+  pos: adjective
+  gloss: yellow
+  definition: "Yellow."
+
+- id: blue
+  proto: celvo
+  modern: celvo
+  pos: adjective
+  gloss: blue
+  definition: "Blue."
+
+- id: long
+  proto: estra
+  modern: estra
+  pos: adjective
+  gloss: long
+  definition: "Long."
+
+- id: short
+  proto: bricco
+  modern: brico
+  pos: adjective
+  gloss: short
+  definition: "Short."
+  notes: "*bricco → brico (rule 3: cc > c)"
+
+- id: wide
+  proto: aupo
+  modern: aubo
+  pos: adjective
+  gloss: wide
+  definition: "Wide, broad."
+  notes: "*aupo → aubo (rule 2: p > b / V_V)"
+
+- id: high
+  proto: eldo
+  modern: eldo
+  pos: adjective
+  gloss: high
+  definition: "High, tall."
+
+- id: heavy
+  proto: torva
+  modern: torva
+  pos: adjective
+  gloss: heavy
+  definition: "Heavy."
+
+- id: hot
+  proto: hurzio
+  modern: hurjo
+  pos: adjective
+  gloss: hot
+  definition: "Hot."
+  notes: "*hurzio → hurjo (rule 1: zi > j / _V)"
+
+- id: dry
+  proto: tisco
+  modern: tisco
+  pos: adjective
+  gloss: dry
+  definition: "Dry."
+
+- id: wet
+  proto: ludra
+  modern: ludra
+  pos: adjective
+  gloss: wet
+  definition: "Wet."
+
+- id: full
+  proto: bauvo
+  modern: bauvo
+  pos: adjective
+  gloss: full
+  definition: "Full."
+
+- id: empty
+  proto: velto
+  modern: velto
+  pos: adjective
+  gloss: empty
+  definition: "Empty."
+
+- id: sweet
+  proto: meuzia
+  modern: meuja
+  pos: adjective
+  gloss: sweet
+  definition: "Sweet."
+  notes: "*meuzia → meuja (rule 1: zi > j / _V)"
+
+- id: bitter
+  proto: harpio
+  modern: harpio
+  pos: adjective
+  gloss: bitter
+  definition: "Bitter."
+
+- id: young
+  proto: teiro
+  modern: teiro
+  pos: adjective
+  gloss: young
+  definition: "Young."
+
+- id: beautiful
+  proto: gauzia
+  modern: gauja
+  pos: adjective
+  gloss: beautiful
+  definition: "Beautiful."
+  notes: "*gauzia → gauja (rule 1: zi > j / _V)"
+
+- id: strong
+  proto: bruzo
+  modern: bruzo
+  pos: adjective
+  gloss: strong
+  definition: "Strong."
+
+- id: weak
+  proto: meivo
+  modern: meivo
+  pos: adjective
+  gloss: weak
+  definition: "Weak."
+
+- id: true
+  proto: gelto
+  modern: gelto
+  pos: adjective
+  gloss: true
+  definition: "True."
+
+- id: holy
+  proto: sutio
+  modern: sucho
+  pos: adjective
+  gloss: holy
+  definition: "Holy: set apart for God."
+  notes: "*sutio → sucho (rule 1: ti > ch / _V)"
+
+- id: clean
+  proto: nitto
+  modern: nito
+  pos: adjective
+  gloss: clean
+  definition: "Clean, pure."
+  notes: "*nitto → nito (rule 3: tt > t)"
