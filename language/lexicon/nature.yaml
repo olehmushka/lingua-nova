@@ -156,3 +156,195 @@
   gloss: colour
   definition: "Colour."
   notes: "*tilio → tilho (rule 1: li > lh / _V)"
+
+- id: cloud
+  proto: ulvia
+  modern: ulvia
+  pos: noun
+  gender: f
+  gloss: cloud
+  definition: "A cloud."
+
+- id: snow
+  proto: zeinia
+  modern: zeinha
+  pos: noun
+  gender: f
+  gloss: snow
+  definition: "Snow."
+  notes: "*zeinia → zeinha (rule 1: ni > nh / _V)"
+
+- id: ice
+  proto: crezo
+  modern: crezo
+  pos: noun
+  gender: m
+  gloss: ice
+  definition: "Ice."
+
+- id: thunder
+  proto: gromur
+  modern: gromur
+  pos: noun
+  gender: m
+  gloss: thunder
+  definition: "Thunder."
+  notes: "Gender listed: -r is unmarked."
+
+- id: storm
+  proto: hurta
+  modern: hurta
+  pos: noun
+  gender: f
+  gloss: storm
+  definition: "A storm, a tempest."
+
+- id: lake
+  proto: aulo
+  modern: aulo
+  pos: noun
+  gender: m
+  gloss: lake
+  definition: "A lake."
+
+- id: spring
+  proto: fiutta
+  modern: fiuta
+  pos: noun
+  gender: f
+  gloss: spring
+  definition: "A spring, a source of water."
+  notes: "*fiutta → fiuta (rule 3: tt > t)"
+
+- id: shore
+  proto: borla
+  modern: borla
+  pos: noun
+  gender: f
+  gloss: shore
+  definition: "A shore, the bank of a river or the sea."
+
+- id: field
+  proto: tolbo
+  modern: tolbo
+  pos: noun
+  gender: m
+  gloss: field
+  definition: "A field, open land."
+
+- id: forest
+  proto: sulpa
+  modern: sulpa
+  pos: noun
+  gender: f
+  gloss: forest
+  definition: "A forest, a wood."
+
+- id: hill
+  proto: gorpo
+  modern: gorpo
+  pos: noun
+  gender: m
+  gloss: hill
+  definition: "A hill."
+
+- id: valley
+  proto: davia
+  modern: davia
+  pos: noun
+  gender: f
+  gloss: valley
+  definition: "A valley."
+
+- id: sand
+  proto: ralpa
+  modern: ralpa
+  pos: noun
+  gender: f
+  gloss: sand
+  definition: "Sand."
+
+- id: dust
+  proto: pauro
+  modern: pauro
+  pos: noun
+  gender: m
+  gloss: dust
+  definition: "Dust."
+
+- id: salt
+  proto: halsa
+  modern: halsa
+  pos: noun
+  gender: f
+  gloss: salt
+  definition: "Salt."
+
+- id: ash
+  proto: ciura
+  modern: chura
+  pos: noun
+  gender: f
+  gloss: ash
+  definition: "Ash, ashes."
+  notes: "*ciura → chura (rule 1: ci > ch / _V)"
+
+- id: smoke
+  proto: daumo
+  modern: daumo
+  pos: noun
+  gender: m
+  gloss: smoke
+  definition: "Smoke."
+
+- id: road
+  proto: vetta
+  modern: veta
+  pos: noun
+  gender: f
+  gloss: road
+  definition: "A road, a way, a path."
+  notes: "*vetta → veta (rule 3: tt > t)"
+
+- id: island
+  proto: icuta
+  modern: iguda
+  pos: noun
+  gender: f
+  gloss: island
+  definition: "An island."
+  notes: "*icuta → iguda (rule 2: t > d / V_V; rule 2: c > g / V_V)"
+
+- id: light
+  proto: eiva
+  modern: eiva
+  pos: noun
+  gender: f
+  gloss: light
+  definition: "Light."
+
+- id: shadow
+  proto: suvia
+  modern: suvia
+  pos: noun
+  gender: f
+  gloss: shadow
+  definition: "A shadow, shade."
+
+- id: world
+  proto: ertun
+  modern: ertu
+  pos: noun
+  gender: m
+  gloss: world
+  definition: "The world."
+  notes: "*ertun → ertu (rule 4: n > ∅ / _#) Gender listed: -u is unmarked."
+
+- id: cave
+  proto: crupia
+  modern: crubia
+  pos: noun
+  gender: f
+  gloss: cave
+  definition: "A cave."
+  notes: "*crupia → crubia (rule 2: p > b / V_V)"
