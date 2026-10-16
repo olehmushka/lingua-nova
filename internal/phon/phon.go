@@ -56,7 +56,8 @@ type Inventory struct {
 	// shared with the modern language.
 	ProtoCodas  []string
 	ProtoFinals []string
-	Geminates   []string // consonants that may double between vowels in proto (*cup.pe)
+	Geminates   []string       // consonants that may double between vowels in proto (*cup.pe)
+	Generator   *GeneratorSpec // word generator templates; nil if the file has none
 
 	bySpell    map[string]Segment
 	maxLen     int // longest spelling in bytes, for longest-match tokenizing
@@ -88,9 +89,10 @@ type fileYAML struct {
 }
 
 type protoYAML struct {
-	Codas     []string `yaml:"codas"`
-	Finals    []string `yaml:"finals"`
-	Geminates []string `yaml:"geminates"`
+	Codas     []string       `yaml:"codas"`
+	Finals    []string       `yaml:"finals"`
+	Geminates []string       `yaml:"geminates"`
+	Generator *generatorYAML `yaml:"generator"`
 }
 
 // Load reads and validates a phonology file.
@@ -231,6 +233,13 @@ func Parse(data []byte) (*Inventory, error) {
 		if len(s) < 2 {
 			return nil, fmt.Errorf("forbidden %v: want a sequence of 2 or more segments", s)
 		}
+	}
+	if f.Proto.Generator != nil {
+		g, err := parseGenerator(f.Proto.Generator)
+		if err != nil {
+			return nil, err
+		}
+		inv.Generator = g
 	}
 	return inv, nil
 }

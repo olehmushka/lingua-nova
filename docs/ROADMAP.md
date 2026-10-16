@@ -7,12 +7,12 @@ previous one is "done", even if done means small.
 
 _Keep this section current: it's where every new session starts._
 
-1. **Phase 2, step 2.6**: `lnova gen -n 20`. Build proto roots from weighted
-   syllable templates over the proto phonotactics (`phonology.yaml` →
-   `proto:`), check them with `CheckProtoPhonotactics`, evolve them with
-   `sound.Evolve`, and check the modern form with `CheckPhonotactics`.
-   First decide the templates and weights (one option: count them in the
-   104 roots).
+1. **Phase 2 wrap-up**: check the "Done when" line of Phase 2 (all done:
+   `evolve` 104/104 with traces). Try `lnova gen` on a few batches, tune the
+   weights in `phonology.yaml` if words look off, and maybe add a few
+   generated roots to the lexicon.
+2. **Phase 3**: dictionary web app. Start with `net/http` + `html/template`
+   and a search page over `internal/lexicon`.
 
 ## Phase 0 — Learn the basics (reading, ~1–2 weeks alongside Phase 1)
 
@@ -116,9 +116,12 @@ in `sound-changes.txt` are a bleeding example.
 - [x] Proto phonotactics decided and enforced (`phonology.yaml` → `proto:`;
   `lnova validate` checks proto onsets, codas, finals and geminates).
 
-- [ ] `lnova gen -n 20`: random proto roots built from weighted syllable
+- [x] `lnova gen -n 20`: random proto roots built from weighted syllable
   templates, filtered through the 2.3 validator, skipping existing words.
   Show each candidate with its evolved modern form.
+  → position-aware templates in `phonology.yaml` → `proto: generator:`,
+  sounds weighted by lexicon frequency per slot, `internal/gen`;
+  homophones marked (`*ciu → chu = thou`); `-seed` reproduces a batch.
 
 **Done when:** `lnova evolve` reproduces all 100 `modern` forms (or every
 mismatch has been explained and fixed in the data or the rules) and can print

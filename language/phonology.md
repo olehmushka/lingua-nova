@@ -113,6 +113,24 @@ but different codas and finals:
 - **No `h` coda in proto roots.** A modern coda `h` comes from a suffix
   (the `-h` plural), not from a root.
 
+### Word generator
+
+`lnova gen` invents new proto roots that look like the existing ones.
+`phonology.yaml` → `proto: generator:` holds its templates: a weighted
+syllable count (mostly two syllables), then weighted syllable shapes for
+each position. Shapes depend on position: first syllables vary (`CV`, `CVV`,
+`CVC`, `V`, `CCV`...), middle ones are nearly always `CV`, and last ones are
+`CV`, `CVC` or a bare `V` (the `-ia`/`-io` hiatus endings, `*u.si.a`). The
+starting weights are the counts in the 104 roots; edit them to steer the
+generator.
+
+Which sound fills each slot is weighted by how often it fills that slot in
+the lexicon, plus one, so sounds the roots never use in a slot are rare but
+possible. A coda inside a word may be the first half of a geminate; the
+next syllable then starts with the same consonant (`*cup.pe`). Every
+candidate is checked with the proto phonotactics, then evolved and checked
+again as a modern word.
+
 ## Stress
 
 **Always on the second-to-last syllable** (penultimate), like most

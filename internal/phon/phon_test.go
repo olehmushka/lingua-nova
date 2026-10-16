@@ -130,6 +130,18 @@ vowels:
 		{"forbidden single", "forbidden: [[p]]\n", "2 or more"},
 		{"proto coda vowel", "proto: {codas: [a]}\n", "is a vowel"},
 		{"proto geminate unknown", "proto: {geminates: [t]}\n", `unknown segment "t"`},
+		{"generator no syllables", "proto: {generator: {final: {CV: 1}}}\n", "syllables is empty"},
+		{"generator zero count", "proto: {generator: {syllables: {0: 1}}}\n", "want 1 or more"},
+		{"generator zero weight", "proto: {generator: {syllables: {1: 0}}}\n", "weight 0"},
+		{"generator no mono", "proto: {generator: {syllables: {1: 1}}}\n", "mono: needed"},
+		{"generator no medial", "proto: {generator: {syllables: {3: 1}, initial: {CV: 1}, final: {CV: 1}}}\n", "medial: needed"},
+		{"generator long coda", "proto: {generator: {syllables: {1: 1}, mono: {CVCC: 1}}}\n", `mono "CVCC": coda of more`},
+		{"generator long onset", "proto: {generator: {syllables: {1: 1}, mono: {CCCV: 1}}}\n", `mono "CCCV": onset of more`},
+		{"generator long nucleus", "proto: {generator: {syllables: {1: 1}, mono: {CVVV: 1}}}\n", "nucleus of more"},
+		{"generator no vowel", "proto: {generator: {syllables: {1: 1}, mono: {CC: 1}}}\n", "no vowel"},
+		{"generator bad letter", "proto: {generator: {syllables: {1: 1}, mono: {CVX: 1}}}\n", "want C, CC"},
+		{"generator template order", "proto: {generator: {syllables: {1: 1}, mono: {VCV: 1}}}\n", "want C, CC"},
+		{"generator template weight", "proto: {generator: {syllables: {1: 1}, mono: {CV: -1}}}\n", `mono "CV": weight -1`},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -148,6 +160,29 @@ vowels:
 	}
 	if _, err := Parse([]byte(base + "categories: {Stop: [p]}\nforbidden: [[V, V, V], [Stop, r]]\n")); err != nil {
 		t.Errorf("categories in forbidden: %v", err)
+	}
+}
+
+func TestParseGenerator(t *testing.T) {
+	g := loadReal(t).Generator
+	if g == nil {
+		t.Fatal("real phonology has no generator block")
+	}
+	if got := len(g.Syllables); got != 4 || g.Syllables[0] != (Weighted[int]{1, 10}) {
+		t.Errorf("syllables = %v, want 4 counts starting at {1 10}", g.Syllables)
+	}
+	want := map[string]Template{
+		"CCVC": {Text: "CCVC", Onset: 2, Nucleus: 1, Coda: 1, Weight: 4},
+		"VV":   {Text: "VV", Onset: 0, Nucleus: 2, Coda: 0, Weight: 2},
+		"CV":   {Text: "CV", Onset: 1, Nucleus: 1, Coda: 0, Weight: 36},
+	}
+	for _, tmpl := range g.Initial {
+		if w, ok := want[tmpl.Text]; ok && tmpl != w {
+			t.Errorf("initial %s = %+v, want %+v", tmpl.Text, tmpl, w)
+		}
+	}
+	if !slices.IsSortedFunc(g.Initial, func(a, b Template) int { return strings.Compare(a.Text, b.Text) }) {
+		t.Errorf("initial templates not sorted: %v", g.Initial)
 	}
 }
 

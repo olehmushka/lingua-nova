@@ -2,14 +2,17 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"io"
+	"math/rand/v2"
 	"os"
 	"path/filepath"
 	"strings"
 	"text/tabwriter"
 
+	"github.com/olehmushka/lingua-nova/internal/gen"
 	"github.com/olehmushka/lingua-nova/internal/lexicon"
 	"github.com/olehmushka/lingua-nova/internal/phon"
 	"github.com/olehmushka/lingua-nova/internal/sound"
@@ -25,6 +28,8 @@ commands:
                   with modern
   evolve -trace <id|*proto>...
                   show the derivation of lexicon entries or ad-hoc proto forms
+  gen [-n 20] [-seed N]
+                  generate new proto roots and show their modern forms
 `
 
 func main() {
@@ -54,6 +59,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return cmdRules(*langDir, rest, stdout, stderr)
 	case "evolve":
 		return cmdEvolve(*langDir, rest, stdout, stderr)
+	case "gen":
+		return cmdGen(*langDir, rest, stdout, stderr)
 	default:
 		fmt.Fprintf(stderr, "lnova: unknown command %q\n%s", cmd, usage)
 		return 2
@@ -277,6 +284,117 @@ func traceWords(inv *phon.Inventory, rules []sound.Rule, lex *lexicon.Lexicon, a
 		}
 	}
 	return status
+}
+
+// cmdGen prints n new proto roots with their evolved modern form and IPA,
+// then a summary. Candidates come from internal/gen and are kept only if
+// they pass the proto phonotactics, aren't already in the lexicon (or the
+// batch), and evolve into a legal modern word. A modern form that equals an
+// existing word's is kept but marked:
+//
+//	*gaurdo   gaurdo   /ˈgau̯ɾ.do/
+//	*esio     exo      /ˈe.ʃo/       = egg
+//	20 words, seed 1234; rejected 41: 35 proto phonotactics, 4 existing, 2 modern phonotactics
+//
+// The seed is random unless given, and always printed, so a batch can be
+// reproduced.
+func cmdGen(langDir string, args []string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet("gen", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	n := fs.Int("n", 20, "number of words")
+	seed := fs.Uint64("seed", 0, "random seed (default: random)")
+	fs.Usage = func() { fmt.Fprintln(stderr, "usage: lnova gen [-n 20] [-seed N]") }
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
+	if fs.NArg() > 0 || *n < 1 {
+		fs.Usage()
+		return 2
+	}
+	seeded := false
+	fs.Visit(func(f *flag.Flag) { seeded = seeded || f.Name == "seed" })
+	if !seeded {
+		*seed = rand.Uint64()
+	}
+
+	inv, err := phon.Load(filepath.Join(langDir, "phonology.yaml"))
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	rules, err := sound.Load(filepath.Join(langDir, "sound-changes.txt"), inv)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	lex, err := lexicon.Load(filepath.Join(langDir, "lexicon"))
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	var corpus [][]phon.Segment
+	seen := map[string]bool{}        // proto forms: lexicon + this batch
+	homophone := map[string]string{} // modern form → lexicon id
+	for _, e := range lex.Entries {
+		proto := strings.TrimPrefix(e.Proto, "*")
+		segs, err := inv.Tokenize(proto)
+		if err != nil {
+			fmt.Fprintf(stderr, "%s:%d: %s: proto *%s: %v\n", e.File, e.LineOf("proto"), e.ID, e.Proto, err)
+			return 1
+		}
+		corpus = append(corpus, segs)
+		seen[proto] = true
+		if _, ok := homophone[e.Modern]; !ok {
+			homophone[e.Modern] = e.ID
+		}
+	}
+	g, err := gen.New(inv, corpus, rand.New(rand.NewPCG(*seed, 0)))
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+
+	var table bytes.Buffer
+	tw := tabwriter.NewWriter(&table, 0, 0, 3, ' ', 0)
+	words, badProto, existing, badModern := 0, 0, 0, 0
+	for attempt := 0; words < *n && attempt < *n*1000; attempt++ {
+		segs := g.Word()
+		proto := spell(segs)
+		switch {
+		case len(inv.CheckProtoPhonotactics(segs)) > 0:
+			badProto++
+			continue
+		case seen[proto]:
+			existing++
+			continue
+		}
+		out, _ := sound.Evolve(inv, rules, segs)
+		if len(inv.CheckPhonotactics(out)) > 0 {
+			badModern++
+			continue
+		}
+		seen[proto] = true
+		words++
+		modern := spell(out)
+		syls, _ := inv.Syllabify(out) // out has a vowel: the rules never delete one from a legal proto
+		note := ""
+		if id, ok := homophone[modern]; ok {
+			note = "= " + id
+		}
+		fmt.Fprintf(tw, "*%s\t%s\t/%s/\t%s\n", proto, modern, phon.SyllableIPA(syls, phon.Stress(syls)), note)
+	}
+	tw.Flush()
+	for line := range strings.Lines(table.String()) {
+		// The note column is usually empty; don't leave its padding behind.
+		fmt.Fprintln(stdout, strings.TrimRight(line, " \n"))
+	}
+	fmt.Fprintf(stdout, "%d words, seed %d; rejected %d: %d proto phonotactics, %d existing, %d modern phonotactics\n",
+		words, *seed, badProto+existing+badModern, badProto, existing, badModern)
+	if words < *n {
+		fmt.Fprintf(stderr, "lnova: only %d of %d words after %d attempts\n", words, *n, *n*1000)
+		return 1
+	}
+	return 0
 }
 
 func spell(segs []phon.Segment) string { return strings.Join(phon.Spellings(segs), "") }

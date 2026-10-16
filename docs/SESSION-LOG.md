@@ -6,6 +6,57 @@ why, and where to pick up. The task list itself lives in `ROADMAP.md` →
 
 ---
 
+## 2026-10-16 (evening): Phase 2, step 2.6, word generator
+
+### Done
+
+- `phonology.yaml` → `proto: generator:`: weighted syllable counts and
+  syllable templates per position (`mono`, `initial`, `medial`, `final`),
+  seeded with the counts from the 104 roots. `phonology.md` → "Word
+  generator" says the same in prose.
+- `internal/phon/generator.go` parses and checks the block (template syntax
+  `C{0,2}V{1,2}C?`, positive weights, the positions the counts need).
+- `internal/gen`: `New(inv, corpus, rng)` + `Word()`. Picks a count, a
+  template per syllable, then a sound per slot.
+- `lnova gen [-n 20] [-seed N]`: keeps candidates that pass the proto
+  phonotactics, aren't in the lexicon or the batch, and evolve into a legal
+  modern word. Prints proto, modern, IPA, a homophone mark, and a summary
+  with the seed and the rejection counts.
+- Tests: generator block parse errors, seed reproducibility, a 5000-word
+  distribution test (syllable shares, geminates only between vowels, ≥ 80%
+  pass the proto check), `New` errors, CLI output.
+
+### Result
+
+Only about 10% of candidates are rejected (300 words: 24 proto phonotactics,
+4 existing, 0 modern), so the templates and the validator agree. Rejects
+come from what the templates can't see across a syllable boundary, e.g. an
+accidental double consonant (`*al.la`: coda `l` + onset `l`, seen in tests)
+or three vowels in a row; the breakdown by kind wasn't measured. **0 modern rejects**: every legal proto root evolves
+into a legal modern word, a good sign for the rules.
+
+First homophone found: `*ciu` → `chu`, the same as `*tiu` → `chu` (thou).
+Rule 1 palatalizes both `ti` and `ci` before a vowel to `ch`, so the two
+merge. Real languages do the same; it's the reason for homophones.
+
+### Key decisions (the user's choices)
+
+| Area | Decision | Why |
+|---|---|---|
+| Templates | **Per position** (mono / initial / medial / final) + weighted syllable count | Middles are nearly all `CV` and finals often a bare `V`; one flat list would produce shapes the roots never have |
+| Template weights | **Hand-written in `phonology.yaml`**, seeded from the counts | `language/` is the source of truth; the user steers them |
+| Sound weights | **Lexicon frequency per slot, +1 smoothing** | Skewed like real languages (r, a common; f, e rare); +1 keeps unseen legal sounds possible |
+| Geminates | A medial coda may be `p t c`; the next onset is then the same consonant | "Geminate halves count as codas" from the last session; 10 roots have one |
+| Homophones | **Shown, marked `= id`** | Merger is natural; the user decides whether to keep the word |
+| Seed | Random by default, always printed | A good batch can be reproduced with `-seed` |
+
+### Start next session here
+
+1. `ROADMAP.md` → "▶ Next up": Phase 2 wrap-up, then Phase 3.
+2. Committed.
+
+---
+
 ## 2026-10-16 (later): proto phonotactics
 
 ### Done

@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/olehmushka/lingua-nova/internal/lexicon"
 )
 
 func TestRun(t *testing.T) {
@@ -33,6 +35,10 @@ func TestRun(t *testing.T) {
 		{"evolve trace no change", []string{"evolve", "-trace", "*lirma"}, 0, "*lirma → lirma\n  (no rule applies)\n", ""},
 		{"evolve trace unknown id", []string{"evolve", "-trace", "nope", "*lirma"}, 1, "*lirma → lirma", `no lexicon entry "nope"`},
 		{"evolve trace bad letter", []string{"evolve", "-trace", "*kato"}, 1, "", `unknown letter 'k'`},
+		{"gen", []string{"gen", "-n", "3", "-seed", "1"}, 0, "*frappo   frapo    /ˈfɾa.po/\n", ""},
+		{"gen homophone", []string{"gen", "-n", "300", "-seed", "5"}, 0, "= thou\n", ""},
+		{"gen extra args", []string{"gen", "x"}, 2, "", "usage: lnova gen"},
+		{"gen zero", []string{"gen", "-n", "0"}, 2, "", "usage: lnova gen"},
 		{"no command", nil, 2, "", "usage: lnova"},
 		{"unknown command", []string{"nope"}, 2, "", `unknown command "nope"`},
 		{"bad lang dir", []string{"-lang", "/nonexistent", "ipa", "lu"}, 1, "", "no such file"},
@@ -54,6 +60,44 @@ func TestRun(t *testing.T) {
 				t.Errorf("stderr = %q, want it to contain %q", stderr.String(), tt.stderr)
 			}
 		})
+	}
+}
+
+// TestGen checks a batch: n word lines plus the summary, no proto form from
+// the lexicon or repeated in the batch, the same output for the same seed.
+func TestGen(t *testing.T) {
+	gen := func(seed string) string {
+		var stdout, stderr bytes.Buffer
+		if code := run([]string{"-lang", "../../language", "gen", "-n", "50", "-seed", seed}, &stdout, &stderr); code != 0 {
+			t.Fatalf("exit code %d, stderr: %s", code, stderr.String())
+		}
+		return stdout.String()
+	}
+	out := gen("7")
+	if again := gen("7"); again != out {
+		t.Errorf("same seed, different output:\n%s\n---\n%s", out, again)
+	}
+	lines := strings.Split(strings.TrimSuffix(out, "\n"), "\n")
+	if len(lines) != 51 || !strings.HasPrefix(lines[50], "50 words, seed 7; rejected ") {
+		t.Fatalf("want 50 words and a summary, got:\n%s", out)
+	}
+	lex, err := lexicon.Load("../../language/lexicon")
+	if err != nil {
+		t.Fatal(err)
+	}
+	seen := map[string]bool{}
+	for _, e := range lex.Entries {
+		seen["*"+strings.TrimPrefix(e.Proto, "*")] = true
+	}
+	for _, l := range lines[:50] {
+		proto := strings.Fields(l)[0]
+		if seen[proto] {
+			t.Errorf("%s is in the lexicon or generated twice", proto)
+		}
+		seen[proto] = true
+		if l != strings.TrimRight(l, " ") {
+			t.Errorf("trailing spaces in %q", l)
+		}
 	}
 }
 
