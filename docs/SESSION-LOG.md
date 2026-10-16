@@ -6,6 +6,54 @@ why, and where to pick up. The task list itself lives in `ROADMAP.md` →
 
 ---
 
+## 2026-10-16 (late night): generator re-seed, Phase 3 search + entry page
+
+### Done
+
+- **`lnova gen -count`** (`gen.Count`): syllabifies every proto root and
+  prints the template counts as a `generator:` block. A geminate's first
+  half counts as a coda (`*pip.po`: initial `CVC`).
+- **Generator weights re-seeded from the 323 roots** (`phonology.yaml`,
+  `phonology.md`). Biggest shift: initial `CVC` 13 → 101, now the most
+  common first syllable (`lir.ma`, `bil.sa`, geminates). New shapes: mono
+  `CVVC`, initial `CCVV`, medial `CCV`/`VC`. Reject rate is about 14% both
+  before and after (3 × 300 words), still 0 illegal modern words.
+- **`lexicon.Search`**: one query, both directions. Rifatian forms
+  (`modern`, `word`, substring too), English `gloss` and `definition` (by
+  whole word, so `ate` doesn't find `water`), `*` = proto only. Gloss dots
+  count as spaces (`accident` → `kill.by.accident`).
+- **`cmd/server`**: `net/http` + embedded `html/template`, no JS.
+  `/?q=` search, `/entry/{id}` with IPA, proto IPA, the derivation table
+  (rule line, rule, before → after), a red warning if the rules don't
+  give `modern`, homophones, source file:line. Everything is computed once
+  at start. `httptest` tests over the real `language/`.
+- `phon.Spell` replaces the CLI's private `spell`.
+
+### Key decisions
+
+| Area | Decision | Why |
+|---|---|---|
+| Weights | **New counts as-is** (user's choice) | The generator should imitate the lexicon as it is now |
+| Ranking | exact > whole word > prefix > substring, then field tier (modern/word, gloss, proto, definition), then alphabetical | A whole-word gloss hit (`love` in `love.eros`) must beat a prefix; a stable order makes tests and pages predictable |
+| Search index | Linear scan | 323 entries take microseconds; an inverted index (word → entries) is the step if the lexicon grows a lot |
+| Server data | Loaded once at start | Hot reload is the next step |
+
+### Concepts
+
+- **Ranking as a tuple sort**: each hit gets (match kind, field tier,
+  headword) and results sort on that, the same idea search engines use
+  with many more features and learned weights.
+- **Normalization**: queries and fields go through the same function
+  (lower-case, non-letters → spaces), so `Water;`, `water` and
+  `spring.water` compare as words.
+
+### Start next session here
+
+1. `ROADMAP.md` → "▶ Next up": hot reload, then htmx live search.
+2. Committed.
+
+---
+
 ## 2026-10-16 (night): Phase 2 wrap-up, lexicon 104 → 323
 
 ### Done

@@ -7,12 +7,14 @@ previous one is "done", even if done means small.
 
 _Keep this section current: it's where every new session starts._
 
-1. **Phase 3**: dictionary web app. Start with `net/http` + `html/template`
-   and a search page over `internal/lexicon` (323 entries now, so search
-   is worth having).
-2. Open question for the user: re-seed the generator's template weights in
-   `phonology.yaml` (`proto: generator:`) from the 323 roots? They still
-   hold the counts from the first 104.
+1. **Phase 3, hot reload**: watch `language/` and reload the server's data
+   when a file changes (stdlib only: poll mtimes, or decide on
+   `fsnotify`). A file with errors should keep the old data and show the
+   problem, like `lnova validate`.
+2. **Phase 3, htmx**: live search as you type (`hx-get` on the input,
+   the server returns just the results table).
+3. Then decide Phase 3 is "done" (you prefer the app over grepping YAML),
+   or what's missing.
 
 ## Phase 0 — Learn the basics (reading, ~1–2 weeks alongside Phase 1)
 
@@ -126,6 +128,7 @@ in `sound-changes.txt` are a bleeding example.
 - [x] Wrap-up: proto hiatus only after `i`; sound change rules 5–6 fix two
   palatalization side effects found by the generator; lexicon grown to 323
   roots (special families: kill, love, create, god).
+- [x] Generator weights re-seeded from the 323 roots (`lnova gen -count`).
 
 **Done when:** `lnova evolve` reproduces all 100 `modern` forms (or every
 mismatch has been explained and fixed in the data or the rules) and can print
@@ -133,9 +136,12 @@ the derivation.
 
 ## Phase 3 — Dictionary web app
 
-- [ ] Go `net/http` + `html/template` + htmx.
-- [ ] Search conlang→English and English→conlang.
-- [ ] Entry page: meaning, part of speech, examples, derivation history.
+- [x] Go `net/http` + `html/template` (`cmd/server`). htmx still to add.
+- [x] Search conlang→English and English→conlang.
+  → `lexicon.Search`: one box, both directions, `*` for proto; ranked
+  exact > word > prefix > substring, then by field.
+- [x] Entry page: meaning, part of speech, examples, derivation history.
+  → IPA, derivation table, mismatch warning, homophones, source file:line.
 - [ ] Hot-reload `language/` files while you edit them.
 
 **Done when:** you prefer using the app over grepping YAML.

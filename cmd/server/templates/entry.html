@@ -1,0 +1,38 @@
+{{define "title"}}{{.Headword}} · Rifatian dictionary{{end}}
+{{define "content"}}
+<h1>{{.Headword}} <span class="ipa">/{{.IPA}}/</span></h1>
+<p><b>{{.Gloss}}</b> · {{.POS}}{{with .Gender}} ({{.}}){{end}}</p>
+<p>{{.Definition}}</p>
+
+{{with .Examples}}
+<h2>Examples</h2>
+<dl>
+  {{range .}}<dt>{{.Text}}</dt><dd>{{.Translation}}</dd>{{end}}
+</dl>
+{{end}}
+
+<h2>Derivation</h2>
+<p><span class="proto">*{{.Proto}}</span> <span class="ipa">/{{.ProtoIPA}}/</span> → {{.Evolved}}</p>
+{{if .Steps}}
+<table>
+  <tr><th>line</th><th>rule</th><th>change</th></tr>
+  {{range .Steps}}
+  <tr><td>{{.Line}}</td><td><code>{{.Rule}}</code></td><td>{{.Before}} → {{.After}}</td></tr>
+  {{end}}
+</table>
+{{else}}
+<p class="muted">No rule applies: the proto form survives unchanged.</p>
+{{end}}
+{{if .Mismatch}}
+<p class="bad">The sound changes give “{{.Evolved}}”, but the lexicon says “{{.Modern}}”.</p>
+{{end}}
+
+{{with .Notes}}<h2>Notes</h2><p>{{.}}</p>{{end}}
+
+{{with .Homophones}}
+<h2>Homophones</h2>
+<ul>{{range .}}<li><a href="/entry/{{.ID}}">{{.Modern}}</a> “{{.Gloss}}”</li>{{end}}</ul>
+{{end}}
+
+<p class="muted">{{.ID}} · {{.File}}:{{.Line}}</p>
+{{end}}

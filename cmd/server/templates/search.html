@@ -1,0 +1,28 @@
+{{define "content"}}
+<form action="/" method="get">
+  <input type="search" name="q" value="{{.Query}}" placeholder="Rifatian, English or *proto" autofocus>
+  <button>Search</button>
+</form>
+{{if .Query}}
+  {{if .Results}}
+  <p class="muted">{{len .Results}} of {{.Total}} entries</p>
+  <table>
+    <tr><th>word</th><th>IPA</th><th>pos</th><th>gloss</th><th>matched</th></tr>
+    {{range .Results}}
+    <tr>
+      <td><a href="/entry/{{.ID}}">{{.Headword}}</a></td>
+      <td class="ipa">/{{.IPA}}/</td>
+      <td>{{.POS}}{{with .Gender}} {{.}}{{end}}</td>
+      <td>{{.Gloss}}</td>
+      <td class="muted">{{.Field}}, {{.Match}}</td>
+    </tr>
+    {{end}}
+  </table>
+  {{else}}
+  <p>No entries match “{{.Query}}”.</p>
+  {{end}}
+{{else}}
+  <p class="muted">{{.Total}} entries. Search a Rifatian word (<a href="/?q=exa">exa</a>), an English
+  word (<a href="/?q=love">love</a>) or a proto form (<a href="/?q=*esia">*esia</a>).</p>
+{{end}}
+{{end}}
