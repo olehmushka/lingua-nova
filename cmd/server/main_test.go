@@ -43,6 +43,12 @@ func TestPages(t *testing.T) {
 		{"/?q=naraxu", true, 200, []string{`href="/entry/see"`, "nar-a-x-u"}, []string{"<!doctype"}},
 		{"/?q=sela", false, 200, []string{"SG.SBJ", "SG.OBJ", `href="/entry/you_polite"`}, nil},
 		{"/?q=pumaxu", false, 200, []string{"No entries match"}, []string{"is a form of"}},
+		{"/gloss", false, 200, []string{`name="s"`, `hx-get="/gloss"`, "Type a Rifatian sentence"}, nil},
+		{"/gloss?s=Lu+mena+nara+lu+trubo.", false, 200, []string{`<div id="gloss">`, `<a href="/entry/the" title="lu">Lu</a>`, `title="narar">nar-a</a>`, "see-TH.3SG", "trubo</a>."}, []string{`<ul class="remarks`}},
+		{"/gloss?s=Mu+naraxu+sela.", true, 200, []string{"2SG.POL.OBJ", "sela: removed 2SG.POL (SBJ after the verb)"}, []string{"<!doctype", `name="s"`}},
+		{"/gloss?s=Mu+pumaxu+xxxx", true, 200, []string{`title="?pumar: not in the lexicon">pum-a-x-u</span>`, `<span class="bad">xxxx</span>`, "???", "xxxx: no analysis"}, nil},
+		{"/gloss?s=Mu+nara.", true, 200, []string{"mu (1SG) doesn&#39;t agree with nara (3SG)"}, nil},
+		{"/gloss?s=<b>", true, 200, nil, []string{"<b>"}},
 		{"/static/htmx.min.js", false, 200, []string{"htmx"}, nil},
 	}
 	for _, tt := range tests {

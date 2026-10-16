@@ -6,6 +6,81 @@ why, and where to pick up. The task list itself lives in `ROADMAP.md` →
 
 ---
 
+## 2026-10-17: Phase 4 interlinear glossing
+
+### Done
+
+- **`internal/gloss`**: `New(analyzer).Gloss(sentence) → *Result`. The
+  tokenizer keeps punctuation (`hono?`, `— Naraxu.`) and splits clauses at
+  `. , ? ! ; : —`. Each word gets every reading from `morph.Analyzer`, then
+  rules run per clause:
+  1. the **verb** is the first word with a finite reading (known roots
+     before guesses); finite readings of other words are removed;
+  2. **case by position**: SBJ pronoun readings after the verb and OBJ
+     readings before it are removed;
+  3. **agreement**: the subject is the nearest word before the verb
+     (skipping `na` and adjectives; none = pro-drop), and readings of
+     subject or verb that don't agree are removed.
+  A rule never removes a word's last reading. If it would, the sentence
+  gets a **note** instead ("hono is SBJ after the verb", "mu (1SG) doesn't
+  agree with nara (3SG)").
+- **`morph`**: `Analysis.Finite()` (verb person) and
+  `Analyzer.Agreement()` (the verb person a subject takes).
+  **`morphology.yaml`**: `you_polite` gets `agrees: "3"` (approved with
+  the plan); grammar.md already said sela takes 3sg verbs.
+- **`lnova gloss <sentence>`**: two aligned lines, then remarks (removed
+  readings, guesses, notes). Exit 1 if a word has no analysis.
+- **`/gloss`** page: live as you type (htmx, like search). Words link to
+  their entries, guesses are muted, unknown words are red, and remarks
+  are listed below. There's a "Gloss" link in the header.
+- Tests: **every interlinear block in grammar.md** is a golden test, read
+  from the file; ambiguity, agreement, pro-drop, clauses, guesses,
+  tokenizer, column layout, CLI, pages.
+
+### Key decisions (the user's choices)
+
+| Area | Decision | Why |
+|---|---|---|
+| Ambiguity | **Word order + agreement**, rejected readings listed with the rule | A first taste of syntax; the reasons make the choice visible |
+| Surfaces | **CLI + web page** | Phase 4's done-when: the app glosses any sentence |
+| Unknown roots | **Best guess, marked** (`?-TH-PST-1SG`) | Same as the analyzer; useful for LLM output |
+
+Smaller choices made while coding (easy to change): rule violations become
+notes rather than errors; an unresolved ambiguity takes the analyzer's
+first reading and lists the others as "also".
+
+### Concepts
+
+- **Interlinear glossing** (Leipzig Glossing Rules): line 1 is the word
+  split at morpheme boundaries, line 2 has one label per morpheme, aligned
+  word by word. Hyphens match between the two lines.
+- **Constraint Grammar** (Karlsson 1990): no tree, just readings and rules
+  that SELECT or REMOVE readings in context. "Never remove the last
+  reading" keeps it robust: a bad sentence still gets a gloss, plus a
+  note. Real CG grammars (VISL, Giellatekno for Sámi) have thousands of
+  such rules; ours has three.
+- **Agreement as evidence**: the verb ending `-a` (3SG) tells you which
+  reading of the subject is meant. Morphology on one word disambiguates
+  another word. That's syntax.
+- **Pro-drop**: no subject before the verb is fine, since the verb ending
+  carries the person. So "no subject" isn't an error, only a mismatch is.
+- **Polite pronouns and agreement**: `sela` is 2nd person in meaning but
+  3rd in grammar (like *você*, *Usted*). The gloss says `2SG.POL` and
+  agreement uses 3SG, so meaning and form are separate features.
+- **Golden tests from documentation**: the examples in grammar.md are now
+  checked by code, so the doc and the engine can't drift apart.
+
+### Found on the way
+
+- grammar.md used `hono` (subject) as an object twice. Fixed to `honi`
+  (your call), as the pronoun table says.
+
+### Start next session here
+
+1. `ROADMAP.md` → "▶ Next up": English → Rifatian.
+
+---
+
 ## 2026-10-17: Phase 4 analyzer
 
 ### Done

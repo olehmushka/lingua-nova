@@ -16,6 +16,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/olehmushka/lingua-nova/internal/gen"
+	"github.com/olehmushka/lingua-nova/internal/gloss"
 	"github.com/olehmushka/lingua-nova/internal/lexicon"
 	"github.com/olehmushka/lingua-nova/internal/morph"
 	"github.com/olehmushka/lingua-nova/internal/phon"
@@ -40,6 +41,9 @@ commands:
                   inflect a word (see PST 1SG), or show its whole paradigm
   analyze <word>...
                   find the root and features of word forms (naraxu → see PST 1SG)
+  gloss <sentence>
+                  interlinear gloss: each word split into morphemes over
+                  their glosses, ambiguity resolved by word order and agreement
 `
 
 func main() {
@@ -75,6 +79,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return cmdInflect(*langDir, rest, stdout, stderr)
 	case "analyze":
 		return cmdAnalyze(*langDir, rest, stdout, stderr)
+	case "gloss":
+		return cmdGloss(*langDir, rest, stdout, stderr)
 	default:
 		fmt.Fprintf(stderr, "lnova: unknown command %q\n%s", cmd, usage)
 		return 2
@@ -599,4 +605,42 @@ func cmdAnalyze(langDir string, args []string, stdout, stderr io.Writer) int {
 	}
 	tw.Flush()
 	return code
+}
+
+// cmdGloss prints a sentence's interlinear gloss, then remarks: readings
+// the rules removed, guesses, grammar notes.
+//
+//	Lu   mena   nar-a       lu   trubo.
+//	the  woman  see-TH.3SG  the  river
+//
+// The words of all arguments form one sentence, so quotes are optional.
+// Exits 1 if any word has no analysis.
+func cmdGloss(langDir string, args []string, stdout, stderr io.Writer) int {
+	if len(args) == 0 {
+		fmt.Fprintln(stderr, "usage: lnova gloss <sentence>")
+		return 2
+	}
+	inv, err := phon.Load(filepath.Join(langDir, "phonology.yaml"))
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	rules, err := morph.Load(filepath.Join(langDir, "morphology.yaml"), inv)
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	lex, err := lexicon.Load(filepath.Join(langDir, "lexicon"))
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	res := gloss.New(morph.NewAnalyzer(rules, lex)).Gloss(strings.Join(args, " "))
+	fmt.Fprint(stdout, res)
+	for _, w := range res.Words {
+		if w.Top() == nil {
+			return 1
+		}
+	}
+	return 0
 }

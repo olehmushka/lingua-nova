@@ -1,5 +1,6 @@
 // Command server is the Rifatian dictionary web app: search in both
-// directions, and an entry page with IPA and the sound-change derivation.
+// directions, an entry page with IPA and the sound-change derivation, and
+// an interlinear glosser.
 //
 //	go run ./cmd/server [-lang language] [-addr :8080] [-poll 500ms]
 //
@@ -25,6 +26,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/olehmushka/lingua-nova/internal/gloss"
 	"github.com/olehmushka/lingua-nova/internal/lexicon"
 	"github.com/olehmushka/lingua-nova/internal/morph"
 	"github.com/olehmushka/lingua-nova/internal/phon"
@@ -118,6 +120,7 @@ type data struct {
 	lex      *lexicon.Lexicon
 	info     map[string]*entryInfo // by id
 	analyzer *morph.Analyzer
+	glosser  *gloss.Glosser
 	problems []lexicon.Problem // what lnova validate reports
 }
 
@@ -130,7 +133,7 @@ func newHandler(langDir string) (*server, error) {
 	s := &server{langDir: langDir, pages: map[string]*template.Template{}}
 	s.state.Store(&state{d: d})
 
-	for _, page := range []string{"search", "entry", "notfound"} {
+	for _, page := range []string{"search", "entry", "gloss", "notfound"} {
 		t, err := template.ParseFS(templateFS, "templates/base.html", "templates/"+page+".html")
 		if err != nil {
 			return nil, err
@@ -141,6 +144,7 @@ func newHandler(langDir string) (*server, error) {
 	s.mux = http.NewServeMux()
 	s.mux.HandleFunc("GET /{$}", s.handleSearch)
 	s.mux.HandleFunc("GET /entry/{id}", s.handleEntry)
+	s.mux.HandleFunc("GET /gloss", s.handleGloss)
 	static, _ := fs.Sub(staticFS, "static")
 	s.mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServerFS(static)))
 	s.mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -176,7 +180,8 @@ func load(langDir string) (*data, error) {
 	slices.SortStableFunc(probs, func(a, b lexicon.Problem) int {
 		return cmp.Or(cmp.Compare(a.File, b.File), cmp.Compare(a.Line, b.Line))
 	})
-	d := &data{lex: lex, info: map[string]*entryInfo{}, analyzer: morph.NewAnalyzer(morphRules, lex), problems: probs}
+	analyzer := morph.NewAnalyzer(morphRules, lex)
+	d := &data{lex: lex, info: map[string]*entryInfo{}, analyzer: analyzer, glosser: gloss.New(analyzer), problems: probs}
 	byModern := map[string][]*lexicon.Entry{}
 	for _, e := range lex.Entries {
 		byModern[e.Modern] = append(byModern[e.Modern], e)
@@ -327,6 +332,22 @@ func (s *server) handleSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.render(w, http.StatusOK, "search", data)
+}
+
+// handleGloss glosses the sentence in ?s, live like search: htmx gets
+// just the gloss fragment.
+func (s *server) handleGloss(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query().Get("s")
+	data := map[string]any{"Sentence": q}
+	if strings.TrimSpace(q) != "" {
+		data["Result"] = s.state.Load().d.glosser.Gloss(q)
+	}
+	w.Header().Add("Vary", "HX-Request")
+	if r.Header.Get("HX-Request") == "true" {
+		s.execute(w, http.StatusOK, "gloss", "gloss", data)
+		return
+	}
+	s.render(w, http.StatusOK, "gloss", data)
 }
 
 func (s *server) handleEntry(w http.ResponseWriter, r *http.Request) {

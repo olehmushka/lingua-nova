@@ -113,3 +113,55 @@ func TestAnalyzeRoundTrip(t *testing.T) {
 		t.Errorf("only %d forms checked", n)
 	}
 }
+
+func TestAgreement(t *testing.T) {
+	r, lex := load(t)
+	a := NewAnalyzer(r, lex)
+	tests := []struct {
+		word string
+		want []string // per analysis: person, or - for not a subject
+	}{
+		{"mu", []string{"1SG"}},
+		{"chuh", []string{"2PL"}},
+		{"sela", []string{"3SG", "-"}}, // polite: 3rd-person verb; OBJ isn't a subject
+		{"selah", []string{"3PL", "-"}},
+		{"me", []string{"-"}},
+		{"mena", []string{"3SG"}},
+		{"dubroh", []string{"3PL"}},
+		{"menas", []string{"-"}}, // possessor
+		{"nara", []string{"-"}},
+		{"lu", []string{"-"}},
+	}
+	for _, tt := range tests {
+		as, err := a.Analyze(tt.word)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var got []string
+		for _, an := range as {
+			p, ok := a.Agreement(an)
+			if !ok {
+				p = "-"
+			}
+			got = append(got, p)
+		}
+		if !slices.Equal(got, tt.want) {
+			t.Errorf("Agreement(%s) = %v, want %v", tt.word, got, tt.want)
+		}
+	}
+}
+
+func TestFinite(t *testing.T) {
+	r, lex := load(t)
+	a := NewAnalyzer(r, lex)
+	for word, want := range map[string]string{"naraxu": "1SG", "nara": "3SG", "narar": "-", "mena": "-"} {
+		as, _ := a.Analyze(word)
+		p, ok := as[0].Finite()
+		if !ok {
+			p = "-"
+		}
+		if p != want {
+			t.Errorf("Finite(%s) = %s, want %s", word, p, want)
+		}
+	}
+}

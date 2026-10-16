@@ -1,0 +1,29 @@
+{{define "title"}}Gloss · Rifatian dictionary{{end}}
+
+{{define "content"}}
+<form action="/gloss" method="get">
+  <input type="search" name="s" value="{{.Sentence}}" placeholder="Lu mena nara lu trubo." autofocus
+    hx-get="/gloss" hx-trigger="input changed delay:200ms, search" hx-target="#gloss" hx-push-url="true">
+  <button>Gloss</button>
+</form>
+<div id="gloss">{{template "gloss" .}}</div>
+{{end}}
+
+{{/* gloss is the part live glossing replaces: one column per word, the
+     morphemes over their glosses, then the remarks. */}}
+{{define "gloss"}}
+{{with .Result}}
+  <table class="gloss">
+    <tr>{{range .Words}}<td>{{template "word" .}}</td>{{end}}</tr>
+    <tr>{{range .Words}}<td class="muted">{{.Gloss}}</td>{{end}}</tr>
+  </table>
+  {{with .Remarks}}<ul class="remarks muted">{{range .}}<li>{{.}}</li>{{end}}</ul>{{end}}
+{{else}}
+  <p class="muted">Type a Rifatian sentence: <a href="/gloss?s=Chu+naraxis+lu+menas+huro%3F">Chu naraxis lu menas huro?</a>
+  or <a href="/gloss?s=Mu+naraxu+sela.">Mu naraxu sela.</a></p>
+{{end}}
+{{end}}
+
+{{/* word links a known root to its entry; a guess is muted, a word with
+     no reading red. */}}
+{{define "word"}}{{.Lead}}{{with .Top}}{{if .Entry}}<a href="/entry/{{.Entry.ID}}" title="{{.Lemma}}">{{$.Morphs}}</a>{{else}}<span class="muted" title="?{{.Lemma}}: not in the lexicon">{{$.Morphs}}</span>{{end}}{{else}}<span class="bad">{{.Text}}</span>{{end}}{{.Punct}}{{end}}

@@ -7,10 +7,9 @@ previous one is "done", even if done means small.
 
 _Keep this section current: it's where every new session starts._
 
-1. **Phase 4 interlinear glossing**: a Rifatian sentence → word-by-word
-   gloss line, using the analyzer (`morph.Analyzer`). Decide what to do when a
-   word has several analyses (`sela` SBJ/OBJ): show all, or pick by
-   word order (a first, small taste of syntax).
+1. **Phase 4 English → Rifatian** for simple SVO sentences: tokenize, tag,
+   build a small tree, reorder per grammar, inflect. Decide on the English
+   side first: a hand-written word list + tagger, or something else.
 
 ## Phase 0 — Learn the basics (reading, ~1–2 weeks alongside Phase 1)
 
@@ -159,7 +158,12 @@ the derivation.
   re-inflecting (analysis by synthesis); pronouns by table lookup; all
   analyses ranked, unknown roots as `?guesses`. `lnova analyze`; search
   shows "naraxu is a form of narar". Every paradigm cell round-trips.
-- [ ] **Interlinear glossing**: conlang sentence → word-by-word gloss line.
+- [x] **Interlinear glossing**: conlang sentence → word-by-word gloss line.
+  → `internal/gloss`: a small Constraint Grammar on top of the analyzer
+  (one verb per clause, SBJ before / OBJ after it, subject–verb
+  agreement; never removes a word's last reading, notes it instead).
+  `lnova gloss`, `/gloss` page with live htmx; grammar.md's examples are
+  golden tests.
 - [ ] **English → conlang** for a controlled subset (simple SVO sentences): tokenize, tag, build a small tree, reorder per grammar, inflect.
 
 **Done when:** the app glosses any sentence you write and translates simple English sentences correctly.

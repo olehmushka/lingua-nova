@@ -22,6 +22,35 @@ type Analysis struct {
 // Guess reports whether the root isn't in the lexicon.
 func (a Analysis) Guess() bool { return a.Entry == nil }
 
+// Finite reports whether a is a conjugated verb (not an infinitive), and
+// its person: PST.1SG → 1SG.
+func (a Analysis) Finite() (person string, ok bool) {
+	if a.POS != "verb" || len(a.Form.Feats) != 2 {
+		return "", false
+	}
+	return a.Form.Feats[1], true
+}
+
+// Agreement is the verb person that a can be the subject of: mu → 1SG,
+// polite sela → 3SG, a plural noun → 3PL. ok is false for anything that
+// isn't a subject: an object or possessive form, a verb, an article.
+func (a *Analyzer) Agreement(an Analysis) (person string, ok bool) {
+	f := an.Form.Feats
+	switch {
+	case an.POS == "noun" && len(f) == 1:
+		person = "3" + f[0]
+	case an.POS == "pronoun" && an.Entry != nil && len(f) == 2 && f[1] == "SBJ":
+		p, ok := a.r.Pronouns[an.Entry.ID]
+		if !ok {
+			return "", false
+		}
+		person = cmp.Or(p.Agrees, p.Person) + f[0]
+	default:
+		return "", false
+	}
+	return person, slices.Contains(a.r.Verb.Persons, person)
+}
+
 // Analyzer runs Inflect in reverse: word form → root + features.
 //
 // It works by affix stripping and verification (analysis by synthesis):

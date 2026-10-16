@@ -120,6 +120,7 @@ type Suffix struct {
 // Pronoun is a suppletive pronoun: whole forms, not built by rule.
 type Pronoun struct {
 	Person string   `yaml:"person"`
+	Agrees string   `yaml:"agrees"` // verb person it takes, if not its own: polite sela takes 3SG
 	Mark   string   `yaml:"mark"`
 	SG     []string `yaml:"SG"` // subject, object, possessive
 	PL     []string `yaml:"PL"` // empty if there is no plural

@@ -166,7 +166,7 @@ As in Romance history (Latin *cantare habeo* → Portuguese *cantarei*):
 ## Questions (Portuguese-style)
 
 - **Yes/no questions**: same word order as statements, with rising intonation and **?** in writing:
-  `Chu naraxis hono?` = "Didst thou see him?"
+  `Chu naraxis honi?` = "Didst thou see him?"
 - **Wh-questions**: the question word comes first and nothing else moves (no *do*-support, no inversion).
   There are two series:
   - **i-** for participants and places: `ifa` who, `itu` what, `iba` where
@@ -174,7 +174,7 @@ As in Romance history (Latin *cantare habeo* → Portuguese *cantarei*):
 
   Example: `Cuda chu naraxis hani?` = "When didst thou see her?"
 - **Answering yes**: repeat the verb, as Portuguese does (*Viste? — Vi.*):
-  `Naraxis hono? — Naraxu.` = "Did you see him? — Yes (I saw)."
+  `Naraxis honi? — Naraxu.` = "Did you see him? — Yes (I saw)."
 - No answer: `Na.` or `Na naraxu.`
 
 ## Example sentences

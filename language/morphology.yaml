@@ -37,11 +37,13 @@ noun:
 
 # Pronouns are listed whole (suppletion), keyed by lexicon id. Forms are
 # [subject, object, possessive]. The gloss is person + number, then mark,
-# then case (subject is unmarked): hani = 3SG.F.OBJ.
+# then case (subject is unmarked): hani = 3SG.F.OBJ. agrees is the verb
+# person a subject pronoun takes when it isn't its own person: polite sela
+# takes 3rd-person verbs, like Portuguese você.
 pronoun:
   i:          {person: "1", SG: [mu, mi, me],          PL: [muh, mih, meh]}
   thou:       {person: "2", SG: [chu, chi, che],       PL: [chuh, chih, cheh]}
-  you_polite: {person: "2", mark: POL, SG: [sela, sela, selas], PL: [selah, selah, selahes]}
+  you_polite: {person: "2", agrees: "3", mark: POL, SG: [sela, sela, selas], PL: [selah, selah, selahes]}
   he:         {person: "3", mark: M, SG: [hono, honi, hone], PL: [honoh, honih, honeh]}
   she:        {person: "3", mark: F, SG: [hana, hani, hane], PL: [hanah, hanih, haneh]}
   it:         {person: "3", mark: N, SG: [hunu, huni, hune]}
