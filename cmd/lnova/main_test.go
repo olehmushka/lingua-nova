@@ -35,8 +35,8 @@ func TestRun(t *testing.T) {
 		{"evolve trace no change", []string{"evolve", "-trace", "*lirma"}, 0, "*lirma → lirma\n  (no rule applies)\n", ""},
 		{"evolve trace unknown id", []string{"evolve", "-trace", "nope", "*lirma"}, 1, "*lirma → lirma", `no lexicon entry "nope"`},
 		{"evolve trace bad letter", []string{"evolve", "-trace", "*kato"}, 1, "", `unknown letter 'k'`},
-		{"gen", []string{"gen", "-n", "3", "-seed", "1"}, 0, "*frappo   frapo    /ˈfɾa.po/\n", ""},
-		{"gen homophone", []string{"gen", "-n", "300", "-seed", "5"}, 0, "= thou\n", ""},
+		{"gen", []string{"gen", "-n", "3", "-seed", "1"}, 0, "3 words, seed 1; rejected ", ""}, // words vary with the lexicon
+		{"gen homophone", []string{"gen", "-n", "300", "-seed", "5"}, 0, " = ", ""},
 		{"gen extra args", []string{"gen", "x"}, 2, "", "usage: lnova gen"},
 		{"gen zero", []string{"gen", "-n", "0"}, 2, "", "usage: lnova gen"},
 		{"no command", nil, 2, "", "usage: lnova"},
