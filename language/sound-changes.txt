@@ -47,3 +47,19 @@ cc > c
 #    proto *saman → sama
 n > ∅ / _#
 m > ∅ / _#
+
+# 5. Geminate affricates simplify: a stop left before ch merges into it.
+#    Rule 1 turns the second half of a geminate into ch (*pattia → patcha)
+#    and so bleeds rule 3, which no longer sees tt. This rule cleans up:
+#    *pattia → pacha, *luccio → lucho. *pattia and *patia now merge.
+t > ∅ / _ch
+c > ∅ / _ch
+
+# 6. A stop or f before lh is lost. Rule 1 turns the l of a pl bl cl gl fl
+#    onset into lh when i + vowel follows, and plh, clh... are not legal
+#    onsets: *plia → plha → lha, *aclio → aclho → alho.
+p > ∅ / _lh
+b > ∅ / _lh
+c > ∅ / _lh
+g > ∅ / _lh
+f > ∅ / _lh

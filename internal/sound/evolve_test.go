@@ -53,6 +53,10 @@ func TestEvolve(t *testing.T) {
 		// Bleeding: rule 1 (voicing) can't touch tt, and rule 2 then removes
 		// the geminate.
 		{"bleeding", "t > d / V_V\ntt > t", "patta", "pata", "2:patta>pata"},
+		// Palatalization bleeds degemination: ti > ch takes the second t of
+		// tt, so tt > t finds nothing, and rule 3 removes the stranded t
+		// (rule 5 in the real file).
+		{"palatal bleeds degemination", "ti > ch / _V\ntt > t\nt > ∅ / _ch", "pattia", "pacha", "1:pattia>patcha 3:patcha>pacha"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

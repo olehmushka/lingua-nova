@@ -32,6 +32,8 @@ func TestRun(t *testing.T) {
 		{"evolve trace no args", []string{"evolve", "-trace"}, 2, "", "usage: lnova evolve"},
 		{"evolve trace id", []string{"evolve", "--trace", "water"}, 0, "water: *esia → exa\n  28   si > x / _V   esia → exa\n", ""},
 		{"evolve trace proto", []string{"evolve", "-trace", "*patta"}, 0, "*patta → pata\n  43   tt > t   patta → pata\n", ""},
+		{"evolve trace geminate palatal", []string{"evolve", "-trace", "*luccio"}, 0, "*luccio → lucho\n", ""},
+		{"evolve trace cluster palatal", []string{"evolve", "-trace", "*plia"}, 0, "*plia → lha\n", ""},
 		{"evolve trace no change", []string{"evolve", "-trace", "*lirma"}, 0, "*lirma → lirma\n  (no rule applies)\n", ""},
 		{"evolve trace unknown id", []string{"evolve", "-trace", "nope", "*lirma"}, 1, "*lirma → lirma", `no lexicon entry "nope"`},
 		{"evolve trace bad letter", []string{"evolve", "-trace", "*kato"}, 1, "", `unknown letter 'k'`},

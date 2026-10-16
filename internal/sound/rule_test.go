@@ -137,7 +137,7 @@ func TestRealRules(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	wantLines := []int{26, 27, 28, 29, 30, 31, 35, 36, 37, 42, 43, 44, 48, 49}
+	wantLines := []int{26, 27, 28, 29, 30, 31, 35, 36, 37, 42, 43, 44, 48, 49, 55, 56, 61, 62, 63, 64, 65}
 	if len(rules) != len(wantLines) {
 		t.Fatalf("got %d rules, want %d", len(rules), len(wantLines))
 	}
