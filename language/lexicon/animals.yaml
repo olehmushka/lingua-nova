@@ -51,3 +51,138 @@
   gender: f
   gloss: cow
   definition: "Cow."
+
+- id: cat
+  proto: nuzio
+  modern: nujo
+  pos: noun
+  gender: m
+  gloss: cat
+  definition: "A cat."
+  notes: "*nuzio → nujo (rule 1: zi > j / _V)"
+
+- id: pig
+  proto: gorsu
+  modern: gorsu
+  pos: noun
+  gender: m
+  gloss: pig
+  definition: "A pig."
+  notes: "Gender listed: -u is unmarked."
+
+- id: sheep
+  proto: meuta
+  modern: meuda
+  pos: noun
+  gender: f
+  gloss: sheep
+  definition: "A sheep."
+  notes: "*meuta → meuda (rule 2: t > d / V_V)"
+
+- id: goat
+  proto: zecco
+  modern: zeco
+  pos: noun
+  gender: m
+  gloss: goat
+  definition: "A goat."
+  notes: "*zecco → zeco (rule 3: cc > c)"
+
+- id: wolf
+  proto: hurlo
+  modern: hurlo
+  pos: noun
+  gender: m
+  gloss: wolf
+  definition: "A wolf."
+
+- id: bear
+  proto: dorvo
+  modern: dorvo
+  pos: noun
+  gender: m
+  gloss: bear
+  definition: "A bear."
+
+- id: mouse
+  proto: sirpo
+  modern: sirpo
+  pos: noun
+  gender: m
+  gloss: mouse
+  definition: "A mouse."
+
+- id: deer
+  proto: ceuria
+  modern: ceuria
+  pos: noun
+  gender: f
+  gloss: deer
+  definition: "A deer."
+
+- id: hen
+  proto: pulia
+  modern: pulha
+  pos: noun
+  gender: f
+  gloss: hen
+  definition: "A hen, a chicken."
+  notes: "*pulia → pulha (rule 1: li > lh / _V)"
+
+- id: egg
+  proto: oppo
+  modern: opo
+  pos: noun
+  gender: m
+  gloss: egg
+  definition: "An egg."
+  notes: "*oppo → opo (rule 3: pp > p)"
+
+- id: bee
+  proto: zuma
+  modern: zuma
+  pos: noun
+  gender: f
+  gloss: bee
+  definition: "A bee."
+
+- id: worm
+  proto: cerbo
+  modern: cerbo
+  pos: noun
+  gender: m
+  gloss: worm
+  definition: "A worm."
+
+- id: feather
+  proto: frisa
+  modern: frisa
+  pos: noun
+  gender: f
+  gloss: feather
+  definition: "A feather."
+
+- id: wing
+  proto: pelsa
+  modern: pelsa
+  pos: noun
+  gender: f
+  gloss: wing
+  definition: "A wing."
+
+- id: tail
+  proto: rusca
+  modern: rusca
+  pos: noun
+  gender: f
+  gloss: tail
+  definition: "A tail."
+
+- id: horn
+  proto: ticco
+  modern: tico
+  pos: noun
+  gender: m
+  gloss: horn
+  definition: "A horn."
+  notes: "*ticco → tico (rule 3: cc > c)"

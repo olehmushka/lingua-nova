@@ -1,0 +1,61 @@
+# Plants and their parts.
+
+- id: grass
+  proto: leiva
+  modern: leiva
+  pos: noun
+  gender: f
+  gloss: grass
+  definition: "Grass."
+
+- id: flower
+  proto: mirsia
+  modern: mirxa
+  pos: noun
+  gender: f
+  gloss: flower
+  definition: "A flower."
+  notes: "*mirsia → mirxa (rule 1: si > x / _V)"
+
+- id: seed
+  proto: sopur
+  modern: sobur
+  pos: noun
+  gender: m
+  gloss: seed
+  definition: "A seed."
+  notes: "*sopur → sobur (rule 2: p > b / V_V) Gender listed: -r is unmarked."
+
+- id: root
+  proto: curnia
+  modern: curnha
+  pos: noun
+  gender: f
+  gloss: root
+  definition: "A root."
+  notes: "*curnia → curnha (rule 1: ni > nh / _V)"
+
+- id: fruit
+  proto: gaura
+  modern: gaura
+  pos: noun
+  gender: f
+  gloss: fruit
+  definition: "A fruit."
+
+- id: grain
+  proto: birlo
+  modern: birlo
+  pos: noun
+  gender: m
+  gloss: grain
+  definition: "Grain, corn: wheat, barley and the like."
+
+- id: branch
+  proto: zacca
+  modern: zaca
+  pos: noun
+  gender: f
+  gloss: branch
+  definition: "A branch."
+  notes: "*zacca → zaca (rule 3: cc > c)"
