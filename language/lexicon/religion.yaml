@@ -1,0 +1,35 @@
+# Religion: God, the gods and their images.
+
+- id: god
+  proto: ourim
+  modern: ouri
+  pos: noun
+  gender: m
+  gloss: God
+  definition: "God, the one true God. Used with lu; written with a capital letter."
+  notes: "*ourim → ouri (rule 4: m > ∅ / _#) Written with a capital letter: lu Ouri, God. Gender listed: -i is unmarked."
+
+- id: false_god
+  proto: nizia
+  modern: nija
+  pos: noun
+  gender: f
+  gloss: false.god
+  definition: "A vain god, one that does not exist; literally 'a nothing'."
+  notes: "*nizia → nija (rule 1: zi > j / _V) Mostly plural: lu nijah, the vain gods."
+
+- id: idol
+  proto: gulvo
+  modern: gulvo
+  pos: noun
+  gender: m
+  gloss: idol
+  definition: "An idol: a carved or cast image that people worship."
+
+- id: deity
+  proto: zevo
+  modern: zevo
+  pos: noun
+  gender: m
+  gloss: deity
+  definition: "A god of any religion, a deity: the neutral word."

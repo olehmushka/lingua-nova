@@ -96,12 +96,13 @@
   definition: "To die."
   notes: "*zatier → zacher (rule 1: ti > ch / _V)"
 
-- id: love
+- id: like
   proto: teuvar
   modern: teuvar
   pos: verb
-  gloss: love
-  definition: "To love."
+  gloss: like
+  definition: "To like, to love things: animals, food, places. Never used for people."
+  notes: "Love for people takes one of the love_* verbs (eluvir, ferzar, solhar, noidar)."
 
 - id: make
   proto: ruccar
@@ -124,3 +125,116 @@
   pos: verb
   gloss: be
   definition: "To be."
+
+- id: kill
+  proto: heccar
+  modern: hecar
+  pos: verb
+  gloss: kill
+  definition: "To kill, to slay: neutral, in battle or in general."
+  notes: "*heccar → hecar (rule 3: cc > c)"
+
+- id: murder
+  proto: gruzier
+  modern: grujer
+  pos: verb
+  gloss: murder
+  definition: "To murder: to kill a person unlawfully, on purpose or recklessly."
+  notes: "*gruzier → grujer (rule 1: zi > j / _V)"
+
+- id: execute
+  proto: talvir
+  modern: talvir
+  pos: verb
+  gloss: execute
+  definition: "To put to death lawfully, by judgment."
+
+- id: slaughter
+  proto: suttar
+  modern: sutar
+  pos: verb
+  gloss: slaughter
+  definition: "To slaughter an animal: for food, or as a sacrifice."
+  notes: "*suttar → sutar (rule 3: tt > t)"
+
+- id: kill_accident
+  proto: lopiar
+  modern: lobiar
+  pos: verb
+  gloss: kill.by.accident
+  definition: "To cause a death without intending it."
+  notes: "*lopiar → lobiar (rule 2: p > b / V_V)"
+
+- id: avenge_blood
+  proto: zalder
+  modern: zalder
+  pos: verb
+  gloss: avenge
+  definition: "To kill in blood vengeance, for a killed kinsman."
+
+- id: love_agape
+  proto: eluvir
+  modern: eluvir
+  pos: verb
+  gloss: love.agape
+  definition: "To love unconditionally and self-givingly: God's love, love of neighbour (Greek agape)."
+
+- id: love_eros
+  proto: ferzar
+  modern: ferzar
+  pos: verb
+  gloss: love.eros
+  definition: "To love romantically, with passion and desire (Greek eros)."
+
+- id: love_philia
+  proto: soliar
+  modern: solhar
+  pos: verb
+  gloss: love.philia
+  definition: "To love as a friend, between equals (Greek philia)."
+  notes: "*soliar → solhar (rule 1: li > lh / _V)"
+
+- id: love_storge
+  proto: noitar
+  modern: noidar
+  pos: verb
+  gloss: love.storge
+  definition: "To love as family: the natural affection of parents, children, kin (Greek storge)."
+  notes: "*noitar → noidar (rule 2: t > d / V_V)"
+
+- id: love_doing
+  proto: bauzer
+  modern: bauzer
+  pos: verb
+  gloss: love.doing
+  definition: "To love doing something, to delight in an activity."
+
+- id: create
+  proto: eurir
+  modern: eurir
+  pos: verb
+  gloss: create
+  definition: "To create from nothing. Only God is its subject."
+
+- id: form
+  proto: plotar
+  modern: plodar
+  pos: verb
+  gloss: form
+  definition: "To form, to shape from existing material, like a potter shaping clay."
+  notes: "*plotar → plodar (rule 2: t > d / V_V)"
+
+- id: craft
+  proto: teccir
+  modern: tecir
+  pos: verb
+  gloss: craft
+  definition: "To make with skill and art: the work of a smith, carpenter or artist."
+  notes: "*teccir → tecir (rule 3: cc > c)"
+
+- id: build
+  proto: brener
+  modern: brener
+  pos: verb
+  gloss: build
+  definition: "To build, to put together a structure: a house, a wall, a city."
