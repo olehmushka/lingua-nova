@@ -1,0 +1,191 @@
+# Home, food, tools and materials.
+
+- id: door
+  proto: pauta
+  modern: pauda
+  pos: noun
+  gender: f
+  gloss: door
+  definition: "A door."
+  notes: "*pauta → pauda (rule 2: t > d / V_V)"
+
+- id: wall
+  proto: drimo
+  modern: drimo
+  pos: noun
+  gender: m
+  gloss: wall
+  definition: "A wall."
+
+- id: roof
+  proto: zulco
+  modern: zulco
+  pos: noun
+  gender: m
+  gloss: roof
+  definition: "A roof."
+
+- id: bed
+  proto: bauso
+  modern: bauso
+  pos: noun
+  gender: m
+  gloss: bed
+  definition: "A bed."
+
+- id: table
+  proto: talva
+  modern: talva
+  pos: noun
+  gender: f
+  gloss: table
+  definition: "A table."
+
+- id: bread
+  proto: gurna
+  modern: gurna
+  pos: noun
+  gender: f
+  gloss: bread
+  definition: "Bread; a loaf."
+
+- id: wine
+  proto: amosa
+  modern: amosa
+  pos: noun
+  gender: f
+  gloss: wine
+  definition: "Wine."
+
+- id: milk
+  proto: meulo
+  modern: meulo
+  pos: noun
+  gender: m
+  gloss: milk
+  definition: "Milk."
+
+- id: honey
+  proto: ziva
+  modern: ziva
+  pos: noun
+  gender: f
+  gloss: honey
+  definition: "Honey."
+
+- id: oil
+  proto: ucco
+  modern: uco
+  pos: noun
+  gender: m
+  gloss: oil
+  definition: "Oil, olive oil."
+  notes: "*ucco → uco (rule 3: cc > c)"
+
+- id: meat
+  proto: forna
+  modern: forna
+  pos: noun
+  gender: f
+  gloss: meat
+  definition: "Meat (as food)."
+
+- id: pot
+  proto: curpo
+  modern: curpo
+  pos: noun
+  gender: m
+  gloss: pot
+  definition: "A pot, a cooking vessel."
+
+- id: cup
+  proto: ceula
+  modern: ceula
+  pos: noun
+  gender: f
+  gloss: cup
+  definition: "A cup."
+
+- id: knife
+  proto: brizio
+  modern: brijo
+  pos: noun
+  gender: m
+  gloss: knife
+  definition: "A knife."
+  notes: "*brizio → brijo (rule 1: zi > j / _V)"
+
+- id: sword
+  proto: halto
+  modern: halto
+  pos: noun
+  gender: m
+  gloss: sword
+  definition: "A sword."
+
+- id: rope
+  proto: funia
+  modern: funha
+  pos: noun
+  gender: f
+  gloss: rope
+  definition: "A rope, a cord."
+  notes: "*funia → funha (rule 1: ni > nh / _V)"
+
+- id: cloth
+  proto: leuza
+  modern: leuza
+  pos: noun
+  gender: f
+  gloss: cloth
+  definition: "Cloth, fabric; a garment."
+
+- id: boat
+  proto: zippa
+  modern: zipa
+  pos: noun
+  gender: f
+  gloss: boat
+  definition: "A boat."
+  notes: "*zippa → zipa (rule 3: pp > p)"
+
+- id: wheel
+  proto: volsa
+  modern: volsa
+  pos: noun
+  gender: f
+  gloss: wheel
+  definition: "A wheel."
+
+- id: iron
+  proto: grauso
+  modern: grauso
+  pos: noun
+  gender: m
+  gloss: iron
+  definition: "Iron."
+
+- id: gold
+  proto: ilcun
+  modern: ilcu
+  pos: noun
+  gender: m
+  gloss: gold
+  definition: "Gold."
+  notes: "*ilcun → ilcu (rule 4: n > ∅ / _#) Gender listed: -u is unmarked."
+
+- id: silver
+  proto: nesca
+  modern: nesca
+  pos: noun
+  gender: f
+  gloss: silver
+  definition: "Silver."
+
+- id: clay
+  proto: dolza
+  modern: dolza
+  pos: noun
+  gender: f
+  gloss: clay
+  definition: "Clay, the potter's earth."
