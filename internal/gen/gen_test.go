@@ -1,6 +1,7 @@
 package gen
 
 import (
+	"maps"
 	"math/rand/v2"
 	"path/filepath"
 	"slices"
@@ -166,6 +167,44 @@ proto:
 	for range 200 {
 		if w := spell(g.Word()); strings.Contains(w, "pp") {
 			t.Fatalf("generated %s: geminate with no one-consonant onset to follow", w)
+		}
+	}
+}
+
+func TestCount(t *testing.T) {
+	_, inv := newReal(t, 1)
+	tests := []struct {
+		words []string
+		want  Counts
+	}{
+		{[]string{"pippo"}, Counts{Syllables: map[int]int{2: 1}, Initial: map[string]int{"CVC": 1}, Final: map[string]int{"CV": 1}}},
+		{[]string{"acua"}, Counts{Syllables: map[int]int{3: 1}, Initial: map[string]int{"V": 1}, Medial: map[string]int{"CV": 1}, Final: map[string]int{"V": 1}}},
+		{[]string{"rifatia"}, Counts{Syllables: map[int]int{4: 1}, Initial: map[string]int{"CV": 1}, Medial: map[string]int{"CV": 2}, Final: map[string]int{"V": 1}}},
+		{[]string{"sai", "lirma"}, Counts{Syllables: map[int]int{1: 1, 2: 1}, Mono: map[string]int{"CVV": 1}, Initial: map[string]int{"CVC": 1}, Final: map[string]int{"CV": 1}}},
+	}
+	for _, tt := range tests {
+		var corpus [][]phon.Segment
+		for _, w := range tt.words {
+			segs, err := inv.Tokenize(w)
+			if err != nil {
+				t.Fatal(err)
+			}
+			corpus = append(corpus, segs)
+		}
+		got, err := Count(inv, corpus)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for name, pair := range map[string][2]map[string]int{
+			"mono": {got.Mono, tt.want.Mono}, "initial": {got.Initial, tt.want.Initial},
+			"medial": {got.Medial, tt.want.Medial}, "final": {got.Final, tt.want.Final},
+		} {
+			if !maps.Equal(pair[0], pair[1]) && len(pair[0])+len(pair[1]) > 0 {
+				t.Errorf("%v: %s = %v, want %v", tt.words, name, pair[0], pair[1])
+			}
+		}
+		if !maps.Equal(got.Syllables, tt.want.Syllables) {
+			t.Errorf("%v: syllables = %v, want %v", tt.words, got.Syllables, tt.want.Syllables)
 		}
 	}
 }

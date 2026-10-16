@@ -95,11 +95,12 @@ proto:
   # Word generator (lnova gen). A word is a syllable count, then one template
   # per syllable from the list for its position; weights are relative. In a
   # template, C is a consonant and V a vowel: CC is an onset cluster, VV a
-  # diphthong, a trailing C a coda. The starting weights are the counts in
-  # the 104 roots. Which sound fills each slot comes from the lexicon.
+  # diphthong, a trailing C a coda. The weights are the counts in the 323
+  # roots (lnova gen -count recounts them). Which sound fills each slot
+  # comes from the lexicon.
   generator:
-    syllables: {1: 10, 2: 72, 3: 19, 4: 3}
-    mono:    {CV: 5, CVV: 3, CVC: 2}
-    initial: {CV: 36, CVV: 20, CVC: 13, V: 9, VC: 5, CCV: 5, CCVC: 4, VV: 2}
-    medial:  {CV: 24, V: 1}
-    final:   {CV: 52, CVC: 20, V: 20, CCV: 1, VC: 1}
+    syllables: {1: 11, 2: 245, 3: 64, 4: 3}
+    mono:    {CV: 5, CVV: 3, CVC: 2, CVVC: 1}
+    initial: {CVC: 101, CV: 70, CVV: 61, CCV: 27, VC: 22, V: 13, VV: 10, CCVC: 6, CCVV: 2}
+    medial:  {CV: 66, CCV: 2, V: 1, VC: 1}
+    final:   {CV: 160, CVC: 87, V: 54, VC: 8, CCV: 3}

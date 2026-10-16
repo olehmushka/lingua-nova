@@ -3,12 +3,15 @@ package main
 
 import (
 	"bytes"
+	"cmp"
 	"flag"
 	"fmt"
 	"io"
+	"maps"
 	"math/rand/v2"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"text/tabwriter"
 
@@ -30,6 +33,7 @@ commands:
                   show the derivation of lexicon entries or ad-hoc proto forms
   gen [-n 20] [-seed N]
                   generate new proto roots and show their modern forms
+  gen -count      count the lexicon's syllable templates (generator weights)
 `
 
 func main() {
@@ -217,7 +221,7 @@ func cmdEvolve(langDir string, args []string, stdout, stderr io.Writer) int {
 			continue
 		}
 		out, _ := sound.Evolve(inv, rules, segs)
-		if got := spell(out); got != e.Modern {
+		if got := phon.Spell(out); got != e.Modern {
 			fmt.Fprintf(stdout, "%s:%d: %s: *%s → %s, want %s\n", e.File, e.LineOf("modern"), e.ID, e.Proto, got, e.Modern)
 			bad++
 		}
@@ -269,16 +273,16 @@ func traceWords(inv *phon.Inventory, rules []sound.Rule, lex *lexicon.Lexicon, a
 		if i > 0 {
 			fmt.Fprintln(stdout)
 		}
-		fmt.Fprintf(stdout, "%s*%s → %s\n", label, proto, spell(out))
+		fmt.Fprintf(stdout, "%s*%s → %s\n", label, proto, phon.Spell(out))
 		tw := tabwriter.NewWriter(stdout, 0, 0, 3, ' ', 0)
 		for _, s := range steps {
-			fmt.Fprintf(tw, "  %d\t%s\t%s → %s\n", s.Rule.Line, s.Rule, spell(s.Before), spell(s.After))
+			fmt.Fprintf(tw, "  %d\t%s\t%s → %s\n", s.Rule.Line, s.Rule, phon.Spell(s.Before), phon.Spell(s.After))
 		}
 		if len(steps) == 0 {
 			fmt.Fprintln(tw, "  (no rule applies)")
 		}
 		tw.Flush()
-		if entry != nil && spell(out) != entry.Modern {
+		if entry != nil && phon.Spell(out) != entry.Modern {
 			fmt.Fprintf(stdout, "  want %s\n", entry.Modern)
 			status = 1
 		}
@@ -303,7 +307,8 @@ func cmdGen(langDir string, args []string, stdout, stderr io.Writer) int {
 	fs.SetOutput(stderr)
 	n := fs.Int("n", 20, "number of words")
 	seed := fs.Uint64("seed", 0, "random seed (default: random)")
-	fs.Usage = func() { fmt.Fprintln(stderr, "usage: lnova gen [-n 20] [-seed N]") }
+	countMode := fs.Bool("count", false, "print the lexicon's template counts as a generator: block")
+	fs.Usage = func() { fmt.Fprintln(stderr, "usage: lnova gen [-n 20] [-seed N] | -count") }
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
@@ -348,6 +353,9 @@ func cmdGen(langDir string, args []string, stdout, stderr io.Writer) int {
 			homophone[e.Modern] = e.ID
 		}
 	}
+	if *countMode {
+		return printCounts(inv, corpus, stdout, stderr)
+	}
 	g, err := gen.New(inv, corpus, rand.New(rand.NewPCG(*seed, 0)))
 	if err != nil {
 		fmt.Fprintf(stderr, "lnova: %v\n", err)
@@ -359,7 +367,7 @@ func cmdGen(langDir string, args []string, stdout, stderr io.Writer) int {
 	words, badProto, existing, badModern := 0, 0, 0, 0
 	for attempt := 0; words < *n && attempt < *n*1000; attempt++ {
 		segs := g.Word()
-		proto := spell(segs)
+		proto := phon.Spell(segs)
 		switch {
 		case len(inv.CheckProtoPhonotactics(segs)) > 0:
 			badProto++
@@ -375,7 +383,7 @@ func cmdGen(langDir string, args []string, stdout, stderr io.Writer) int {
 		}
 		seen[proto] = true
 		words++
-		modern := spell(out)
+		modern := phon.Spell(out)
 		syls, _ := inv.Syllabify(out) // out has a vowel: the rules never delete one from a legal proto
 		note := ""
 		if id, ok := homophone[modern]; ok {
@@ -397,4 +405,36 @@ func cmdGen(langDir string, args []string, stdout, stderr io.Writer) int {
 	return 0
 }
 
-func spell(segs []phon.Segment) string { return strings.Join(phon.Spellings(segs), "") }
+// printCounts prints the syllable counts and templates of the lexicon's
+// proto forms in the shape of phonology.yaml's proto: generator: block,
+// biggest count first, ready to compare or paste:
+//
+//	syllables: {1: 10, 2: 72, 3: 19, 4: 3}
+//	mono:    {CV: 5, CVV: 3, CVC: 2}
+func printCounts(inv *phon.Inventory, corpus [][]phon.Segment, stdout, stderr io.Writer) int {
+	c, err := gen.Count(inv, corpus)
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	var syl []string
+	for _, n := range slices.Sorted(maps.Keys(c.Syllables)) {
+		syl = append(syl, fmt.Sprintf("%d: %d", n, c.Syllables[n]))
+	}
+	fmt.Fprintf(stdout, "# counts in the %d roots\n", len(corpus))
+	fmt.Fprintf(stdout, "syllables: {%s}\n", strings.Join(syl, ", "))
+	for _, row := range []struct {
+		name string
+		m    map[string]int
+	}{{"mono", c.Mono}, {"initial", c.Initial}, {"medial", c.Medial}, {"final", c.Final}} {
+		ts := slices.SortedFunc(maps.Keys(row.m), func(a, b string) int {
+			return cmp.Or(cmp.Compare(row.m[b], row.m[a]), cmp.Compare(a, b))
+		})
+		parts := make([]string, len(ts))
+		for i, t := range ts {
+			parts[i] = fmt.Sprintf("%s: %d", t, row.m[t])
+		}
+		fmt.Fprintf(stdout, "%-8s {%s}\n", row.name+":", strings.Join(parts, ", "))
+	}
+	return 0
+}

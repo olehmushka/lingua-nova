@@ -169,13 +169,13 @@ func TestParseGenerator(t *testing.T) {
 	if g == nil {
 		t.Fatal("real phonology has no generator block")
 	}
-	if got := len(g.Syllables); got != 4 || g.Syllables[0] != (Weighted[int]{1, 10}) {
-		t.Errorf("syllables = %v, want 4 counts starting at {1 10}", g.Syllables)
+	if got := len(g.Syllables); got != 4 || g.Syllables[0] != (Weighted[int]{1, 11}) {
+		t.Errorf("syllables = %v, want 4 counts starting at {1 11}", g.Syllables)
 	}
 	want := map[string]Template{
-		"CCVC": {Text: "CCVC", Onset: 2, Nucleus: 1, Coda: 1, Weight: 4},
-		"VV":   {Text: "VV", Onset: 0, Nucleus: 2, Coda: 0, Weight: 2},
-		"CV":   {Text: "CV", Onset: 1, Nucleus: 1, Coda: 0, Weight: 36},
+		"CCVC": {Text: "CCVC", Onset: 2, Nucleus: 1, Coda: 1, Weight: 6},
+		"VV":   {Text: "VV", Onset: 0, Nucleus: 2, Coda: 0, Weight: 10},
+		"CV":   {Text: "CV", Onset: 1, Nucleus: 1, Coda: 0, Weight: 70},
 	}
 	for _, tmpl := range g.Initial {
 		if w, ok := want[tmpl.Text]; ok && tmpl != w {

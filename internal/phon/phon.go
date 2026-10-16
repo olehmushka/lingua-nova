@@ -338,3 +338,6 @@ func Spellings(segs []Segment) []string {
 	}
 	return out
 }
+
+// Spell joins the segments' spellings: f·o·lh·a → "folha".
+func Spell(segs []Segment) string { return strings.Join(Spellings(segs), "") }
