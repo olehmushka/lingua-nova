@@ -189,3 +189,11 @@
   gender: f
   gloss: clay
   definition: "Clay, the potter's earth."
+
+- id: fortress
+  proto: sabo
+  modern: sabo
+  pos: noun
+  gender: m
+  gloss: fortress
+  definition: "A fortress, a stronghold."

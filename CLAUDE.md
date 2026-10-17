@@ -31,7 +31,7 @@ writes them.
 - `phonology.yaml`: the same inventory as data (read by `internal/phon`)
 - `grammar.md`: morphology and syntax; **(draft)** marks unsettled forms
 - `sound-changes.txt`: ordered rules, proto → modern
-- `lexicon/*.yaml`: 323 entries; format in `language/README.md`
+- `lexicon/*.yaml`: 629 entries; format in `language/README.md`
 
 Rules:
 

@@ -236,3 +236,56 @@
   gloss: clean
   definition: "Clean, pure."
   notes: "*nitto → nito (rule 3: tt > t)"
+
+- id: pink
+  proto: purfa
+  modern: purfa
+  pos: adjective
+  gloss: pink
+  definition: "Pink."
+
+- id: brown
+  proto: larto
+  modern: larto
+  pos: adjective
+  gloss: brown
+  definition: "Brown."
+
+- id: grey
+  proto: arzifa
+  modern: arzifa
+  pos: adjective
+  gloss: grey
+  definition: "Grey."
+
+- id: purple
+  proto: veccaza
+  modern: vecaza
+  pos: adjective
+  gloss: purple
+  definition: "Purple."
+  notes: "*veccaza → vecaza (rule 3: cc > c)."
+
+- id: orange
+  proto: zautuza
+  modern: zauduza
+  pos: adjective
+  gloss: orange
+  definition: "Orange (the colour)."
+  notes: "*zautuza → zauduza (rule 2: t > d / V_V)."
+
+- id: golden
+  proto: ilcunio
+  modern: ilcunho
+  pos: adjective
+  gloss: golden
+  definition: "Golden, gold-coloured; made of gold."
+  notes: "*ilcunio → ilcunho (rule 1: ni > nh / _V). Adjective: gold *ilcun + -io."
+
+- id: silver_colour
+  proto: nescio
+  modern: nescho
+  pos: adjective
+  gloss: silver.colour
+  definition: "Silver, silvery; made of silver."
+  notes: "*nescio → nescho (rule 1: ci > ch / _V). Adjective: silver *nesca + -io."

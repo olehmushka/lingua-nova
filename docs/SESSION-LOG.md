@@ -6,6 +6,49 @@ why, and where to pick up. The task list itself lives in `ROADMAP.md` →
 
 ---
 
+## 2026-10-18 (later): Lexicon 323 → 629, word formation
+
+### Done
+
+- **306 new entries**: hate (verb *povisar*) + hatred, fortress, colours
+  (pink, brown, grey, purple, orange; golden and silver derived from the
+  nouns), and animals in new files: `mammals.yaml` (112),
+  `birds.yaml` (76), `insects.yaml` (33), `fishes.yaml` (27),
+  `creatures.yaml` (48). `colour` already existed (*tilho*).
+- **Word formation** in `grammar.md` (draft): proto-level diminutive
+  *-itto/-itta*, augmentative *-aron/-aran*, adjective *-io*, deverbal noun
+  *-tia*, head-first compounds. 183 roots from `lnova gen`, 123 derived
+  (lion *sersebo* → leopard *sersebito*, horse + river → hippopotamus
+  *brecotrubo*). Each derived entry says how in `notes`; no new YAML field.
+- Builder script (not in the repo): roots from `gen`, rejected if
+  Levenshtein distance < 2 to any word, if `analyze` already reads them as a
+  form, if they end in a diphthong (no suffix fits after one) or in `-h`.
+- `validate` 0 problems, `evolve` 0 mismatches over 629, all tests pass.
+
+### Key decisions (the user's choices)
+
+| Area | Decision |
+|---|---|
+| Roots | **Mixed**: generator roots plus derivations from existing words |
+| hate | Verb + noun |
+| golden, silver | **Derived** from the nouns gold, silver |
+| Homonyms | **Dotted glosses**: `fly.insect`, `bat.animal`, `crane.bird`, `silver.colour`... |
+
+Mine: diminutives and augmentatives keep the base's gender, deverbal nouns
+are feminine, a compound takes the head's gender (catfish *nauganujo* is f).
+The lists hold the well-known animals only (≤150 per category, as asked),
+not padded to 150.
+
+### Open questions
+
+- Reviewed by the user on the review page; committed as built.
+- Generator weights count the 323 old roots; re-seed from roots only?
+- `lnova llm -ctx full` now sends 629 entries: may not fit qwen's context.
+- Distance-1 pairs left in: puppy *hurito* / jackal *hurlito* (from dog
+  *huro* / wolf *hurlo*), and two more flagged on the review page.
+
+---
+
 ## 2026-10-18: Tool use for LLM translation
 
 ### Done

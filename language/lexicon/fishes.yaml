@@ -1,0 +1,234 @@
+# Fishes.
+
+- id: salmon
+  proto: tarteda
+  modern: tarteda
+  pos: noun
+  gender: f
+  gloss: salmon
+  definition: "A salmon."
+
+- id: trout
+  proto: tarteditta
+  modern: tartedita
+  pos: noun
+  gender: f
+  gloss: trout
+  definition: "A trout."
+  notes: "*tarteditta → tartedita (rule 3: tt > t). Diminutive: salmon *tarteda + -itta."
+
+- id: carp
+  proto: usvo
+  modern: usvo
+  pos: noun
+  gender: m
+  gloss: carp.fish
+  definition: "A carp."
+
+- id: koi
+  proto: usvoheuzio
+  modern: usvoheujo
+  pos: noun
+  gender: m
+  gloss: koi
+  definition: "A koi (\"red carp\")."
+  notes: "*usvoheuzio → usvoheujo (rule 1: zi > j / _V). Compound: carp *usvo + red *heuzio."
+
+- id: goldfish
+  proto: naucilcun
+  modern: naugilcu
+  pos: noun
+  gender: f
+  gloss: goldfish
+  definition: "A goldfish."
+  notes: "*naucilcun → naugilcu (rule 2: c > g / V_V; rule 4: n > ∅ / _#). Compound: fish *nauca + gold *ilcun."
+
+- id: pike
+  proto: paboho
+  modern: paboho
+  pos: noun
+  gender: m
+  gloss: pike.fish
+  definition: "A pike."
+
+- id: perch
+  proto: perta
+  modern: perta
+  pos: noun
+  gender: f
+  gloss: perch.fish
+  definition: "A perch."
+
+- id: catfish
+  proto: naucanuzio
+  modern: nauganujo
+  pos: noun
+  gender: f
+  gloss: catfish
+  definition: "A catfish."
+  notes: "*naucanuzio → nauganujo (rule 1: zi > j / _V; rule 2: c > g / V_V). Compound: fish *nauca + cat *nuzio; gender from the head (fish)."
+
+- id: minnow
+  proto: naucitta
+  modern: naugita
+  pos: noun
+  gender: f
+  gloss: minnow
+  definition: "A minnow, any small fish."
+  notes: "*naucitta → naugita (rule 2: c > g / V_V; rule 3: tt > t). Diminutive: fish *nauca + -itta."
+
+- id: tilapia
+  proto: cusu
+  modern: cusu
+  pos: noun
+  gender: m
+  gloss: tilapia
+  definition: "A tilapia."
+  notes: "Gender listed: -u is unmarked."
+
+- id: sturgeon
+  proto: cisa
+  modern: cisa
+  pos: noun
+  gender: f
+  gloss: sturgeon
+  definition: "A sturgeon."
+
+- id: eel
+  proto: caucipa
+  modern: caugiba
+  pos: noun
+  gender: f
+  gloss: eel
+  definition: "An eel."
+  notes: "*caucipa → caugiba (rule 2: p > b / V_V; rule 2: c > g / V_V)."
+
+- id: shark
+  proto: volcuda
+  modern: volcuda
+  pos: noun
+  gender: f
+  gloss: shark
+  definition: "A shark."
+
+- id: ray
+  proto: grelamu
+  modern: grelamu
+  pos: noun
+  gender: m
+  gloss: ray.fish
+  definition: "A ray."
+  notes: "Gender listed: -u is unmarked."
+
+- id: cod
+  proto: gilna
+  modern: gilna
+  pos: noun
+  gender: f
+  gloss: cod
+  definition: "A cod."
+
+- id: herring
+  proto: botova
+  modern: bodova
+  pos: noun
+  gender: f
+  gloss: herring
+  definition: "A herring."
+  notes: "*botova → bodova (rule 2: t > d / V_V)."
+
+- id: sardine
+  proto: botovitta
+  modern: bodovita
+  pos: noun
+  gender: f
+  gloss: sardine
+  definition: "A sardine."
+  notes: "*botovitta → bodovita (rule 2: t > d / V_V; rule 3: tt > t). Diminutive: herring *botova + -itta."
+
+- id: anchovy
+  proto: botovittitta
+  modern: bodovitita
+  pos: noun
+  gender: f
+  gloss: anchovy
+  definition: "An anchovy."
+  notes: "*botovittitta → bodovitita (rule 2: t > d / V_V; rule 3: tt > t). Diminutive: sardine *botovitta + -itta."
+
+- id: mackerel
+  proto: soite
+  modern: soide
+  pos: noun
+  gender: m
+  gloss: mackerel
+  definition: "A mackerel."
+  notes: "*soite → soide (rule 2: t > d / V_V). Gender listed: -e is unmarked."
+
+- id: tuna
+  proto: grolfo
+  modern: grolfo
+  pos: noun
+  gender: m
+  gloss: tuna
+  definition: "A tuna."
+
+- id: swordfish
+  proto: naucahalto
+  modern: naugahalto
+  pos: noun
+  gender: f
+  gloss: swordfish
+  definition: "A swordfish."
+  notes: "*naucahalto → naugahalto (rule 2: c > g / V_V). Compound: fish *nauca + sword *halto; gender from the head (fish)."
+
+- id: flounder
+  proto: cauma
+  modern: cauma
+  pos: noun
+  gender: f
+  gloss: flounder.fish
+  definition: "A flounder, a flatfish."
+
+- id: mullet
+  proto: tordo
+  modern: tordo
+  pos: noun
+  gender: m
+  gloss: mullet
+  definition: "A mullet."
+
+- id: piranha
+  proto: tusmom
+  modern: tusmo
+  pos: noun
+  gender: m
+  gloss: piranha
+  definition: "A piranha."
+  notes: "*tusmom → tusmo (rule 4: m > ∅ / _#)."
+
+- id: pufferfish
+  proto: taile
+  modern: taile
+  pos: noun
+  gender: m
+  gloss: pufferfish
+  definition: "A pufferfish."
+  notes: "Gender listed: -e is unmarked."
+
+- id: seahorse
+  proto: breccozahor
+  modern: brecozahor
+  pos: noun
+  gender: m
+  gloss: seahorse
+  definition: "A seahorse (\"sea horse\")."
+  notes: "*breccozahor → brecozahor (rule 3: cc > c). Compound: horse *brecco + sea *zahor."
+
+- id: starfish
+  proto: naucabilsa
+  modern: naugabilsa
+  pos: noun
+  gender: f
+  gloss: starfish
+  definition: "A starfish (\"star fish\")."
+  notes: "*naucabilsa → naugabilsa (rule 2: c > g / V_V). Compound: fish *nauca + star *bilsa."
