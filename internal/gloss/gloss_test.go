@@ -110,6 +110,8 @@ func TestGloss(t *testing.T) {
 				"pumaxu: removed ?pumaxir PRS.1SG (a second verb in the clause)",
 			}},
 		{"Mu xxxx.", "Mu xxxx.", "1SG ???", []string{"xxxx: no analysis"}},
+		// A word with no reading isn't "a second verb" or "SBJ after the verb".
+		{"Lu mena nara lu blomp.", "Lu mena nar-a lu blomp.", "the woman see-TH.3SG the ???", []string{"blomp: no analysis"}},
 		{"Mu kato.", "Mu kato.", "1SG ???", []string{`"kato": unknown letter 'k' at position 0`}},
 		{"", "", "", nil},
 	}

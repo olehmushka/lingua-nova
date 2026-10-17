@@ -4,6 +4,7 @@ package main
 import (
 	"bytes"
 	"cmp"
+	"context"
 	"flag"
 	"fmt"
 	"io"
@@ -18,6 +19,7 @@ import (
 	"github.com/olehmushka/lingua-nova/internal/gen"
 	"github.com/olehmushka/lingua-nova/internal/gloss"
 	"github.com/olehmushka/lingua-nova/internal/lexicon"
+	"github.com/olehmushka/lingua-nova/internal/llm"
 	"github.com/olehmushka/lingua-nova/internal/morph"
 	"github.com/olehmushka/lingua-nova/internal/phon"
 	"github.com/olehmushka/lingua-nova/internal/sound"
@@ -50,6 +52,9 @@ commands:
   translate [-n 20] [-tree] <english sentence>
                   translate simple English into Rifatian: every translation,
                   ranked, with the gloss of the best one
+  llm [-ctx retrieved|full] [-model M] [-attempts 3] [-compare] <english sentence>
+                  translate with a local model (Ollama, via the llm/ service);
+                  the glosser checks each answer and problems go back to the model
 `
 
 func main() {
@@ -91,6 +96,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return cmdParse(*langDir, rest, stdout, stderr)
 	case "translate":
 		return cmdTranslate(*langDir, rest, stdout, stderr)
+	case "llm":
+		return cmdLLM(*langDir, rest, stdout, stderr)
 	default:
 		fmt.Fprintf(stderr, "lnova: unknown command %q\n%s", cmd, usage)
 		return 2
@@ -760,4 +767,119 @@ func cmdTranslate(langDir string, args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stdout, "\n%s", g)
 	}
 	return code
+}
+
+// cmdLLM translates with the local model and shows every attempt:
+//
+//	retrieved context: 41 entries, num_ctx 12288, qwen2.5:7b-instruct-q4_K_M
+//	attempt 1  Lu mena nara lu blomp.  ✗  2.1s, 3080+60 tokens
+//	   ! blomp: not a form of any dictionary word
+//	attempt 2  Lu mena nara lu trubo.  ✓  0.8s, 3210+58 tokens
+//
+// then the gloss of the last answer and, with -compare, the rule-based
+// translator's verdict.
+func cmdLLM(langDir string, args []string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet("llm", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	mode := fs.String("ctx", llm.Retrieved, "context: `retrieved` (entries the sentence needs) or full (every entry)")
+	model := fs.String("model", llm.DefaultModel, "Ollama `model`")
+	attempts := fs.Int("attempts", 3, "give up after `N` attempts")
+	url := fs.String("url", llm.DefaultURL, "`URL` of the llm/ service")
+	compare := fs.Bool("compare", false, "compare with the rule-based translator")
+	usage := func() {
+		fmt.Fprintln(stderr, "usage: lnova llm [-ctx retrieved|full] [-model M] [-attempts 3] [-url U] [-compare] <english sentence>")
+	}
+	fs.Usage = usage
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
+	if fs.NArg() == 0 || *attempts < 1 || (*mode != llm.Retrieved && *mode != llm.Full) {
+		usage()
+		return 2
+	}
+	sentence := strings.Join(fs.Args(), " ")
+
+	tr, err := translate.Load(langDir)
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	lex, err := lexicon.Load(filepath.Join(langDir, "lexicon"))
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	b, err := llm.NewBuilder(langDir, lex, tr.Tagger)
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	ids := map[string]bool{}
+	for _, e := range lex.Entries {
+		ids[e.ID] = true
+	}
+	lt := &llm.Translator{
+		Client:  llm.NewClient(*url),
+		Checker: &llm.Checker{Glosser: tr.Glosser, Known: func(id string) bool { return ids[id] }},
+	}
+
+	c := b.Build(*mode, sentence)
+	opt := llm.Options{Model: *model, MaxAttempts: *attempts}
+	fmt.Fprintf(stdout, "%s context: %d entries, %s\n", *mode, len(c.Entries), *model)
+	res, err := lt.Translate(context.Background(), sentence, c, opt)
+	tw := tabwriter.NewWriter(stdout, 0, 0, 2, ' ', 0)
+	for i, a := range res.Attempts {
+		mark := "✗"
+		if a.Check.OK() {
+			mark = "✓"
+		}
+		fmt.Fprintf(tw, "attempt %d\t%s\t%s\t%.1fs, %d+%d tokens\n", i+1, a.Answer.Translation, mark,
+			a.Duration.Seconds(), a.PromptTokens, a.EvalTokens)
+		for _, p := range a.Check.Problems {
+			fmt.Fprintf(tw, "   ! %s\n", p)
+		}
+		for _, r := range a.Check.Remarks {
+			fmt.Fprintf(tw, "   ~ %s\n", r)
+		}
+		if n := strings.TrimSpace(a.Answer.Notes); n != "" {
+			fmt.Fprintf(tw, "   model: %s\n", n)
+		}
+	}
+	tw.Flush()
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	last := res.Last()
+	if last.Check.Gloss != nil {
+		fmt.Fprintf(stdout, "\n%s", strings.Join(strings.SplitN(last.Check.Gloss.String(), "\n", 3)[:2], "\n")+"\n")
+	}
+	if *compare {
+		fmt.Fprintf(stdout, "\nrule-based: %s\n", compareRuleBased(tr, sentence, last.Answer.Translation))
+	}
+	if !res.OK {
+		fmt.Fprintf(stdout, "no valid translation in %d attempts\n", len(res.Attempts))
+		return 1
+	}
+	return 0
+}
+
+// compareRuleBased says how the rule-based translator's output relates to
+// the model's answer: same as its best, among its translations, different,
+// or no parse.
+func compareRuleBased(tr *translate.Translator, sentence, answer string) string {
+	res, err := tr.Translate(sentence, 0)
+	if err != nil {
+		return "no translation (" + err.Error() + ")"
+	}
+	norm := func(s string) string { return strings.ToLower(strings.TrimRight(strings.TrimSpace(s), ".?!")) }
+	for i, x := range res.Translations {
+		if norm(x.Text) == norm(answer) {
+			if i == 0 {
+				return x.Text + "  = same"
+			}
+			return fmt.Sprintf("%s  ≠ best, but the model's answer is its #%d of %d", res.Translations[0].Text, i+1, res.Total)
+		}
+	}
+	return res.Translations[0].Text + "  ≠ differs"
 }

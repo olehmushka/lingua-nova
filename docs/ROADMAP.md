@@ -7,10 +7,17 @@ previous one is "done", even if done means small.
 
 _Keep this section current: it's where every new session starts._
 
-1. **Phase 5 LLM translation**: grammar + relevant dictionary entries in the
-   prompt, the Phase 4 analyzer/glosser checks the output. Decide the
-   prompt shape and the retry loop first. The rule-based translator is a
-   baseline to compare against (and a source of eval sentences).
+1. **Decide how to close the validator gaps** that the first LLM runs
+   exposed (see SESSION-LOG 2026-10-17 "LLM translation"). Most answers
+   *pass* the glosser but are wrong:
+   - form gaps (glosser rules): a clause with no finite verb (`Huro
+     baugir`), `na` after the verb, a possessive pronoun as subject,
+     question-word agreement (`ifa naraxis`);
+   - meaning gaps: wrong word (`lirma` white for big), changed subject
+     (`Selah` for we), wrong tense. Candidate: check the model's claimed
+     `lexicon_id`s and features against what the English words retrieve.
+2. Then **Tool use** (Phase 5): the model calls `lookup` / `inflect` /
+   `analyze` instead of guessing.
 
 ## Phase 0 — Learn the basics (reading, ~1–2 weeks alongside Phase 1)
 
@@ -177,9 +184,17 @@ the derivation.
 
 **Done when:** the app glosses any sentence you write and translates simple English sentences correctly. → Done (2026-10-17).
 
-## Phase 5 — AI layer (Claude API via the Go SDK)
+## Phase 5 — AI layer (local model: Ollama + Python service in `llm/`)
 
-- [ ] **LLM translation**: grammar + relevant dictionary entries in the prompt, then the Phase 4 analyzer checks the output. Retry with the errors if it fails.
+- [x] **LLM translation**: grammar + relevant dictionary entries in the prompt, then the Phase 4 analyzer checks the output. Retry with the errors if it fails.
+  → `llm/` FastAPI service (pydantic schema as Ollama `format`, Jinja
+  prompts) in front of `qwen2.5:7b-instruct-q4_K_M`; `internal/llm`
+  builds the context (`full`: all 323 entries; `retrieved`: closed classes +
+  what the English words point to), checks each answer (glosser + the
+  model's claimed ids/features) and retries with the gloss and problems
+  (max 3). `lnova llm [-ctx] [-model] [-attempts] [-compare]`.
+  First runs: almost everything passes, but only grammar.md's own examples
+  are right. The validator checks form, not meaning (see Next up).
 - [ ] **Tool use**: the LLM calls your Go functions (`lookup`, `inflect`, `analyze`) instead of guessing.
 - [ ] **Coin new words**: the LLM proposes roots for missing concepts, and the validator + sound change engine accept or reject them.
 - [ ] **Semantic search** with embeddings ("words related to the sea").

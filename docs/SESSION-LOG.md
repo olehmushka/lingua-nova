@@ -6,6 +6,112 @@ why, and where to pick up. The task list itself lives in `ROADMAP.md` →
 
 ---
 
+## 2026-10-17: Phase 5 LLM translation (local model)
+
+### Done
+
+- **`llm/`**: a Python FastAPI service (managed with `uv`) in front of
+  Ollama. One request = one attempt. It renders `prompts/system.j2`
+  (rules, grammar.md, morphology.yaml, grammar.md's examples, then the
+  dictionary as `id | word | pos | gender | gloss | definition` lines),
+  calls `ollama.chat` with the pydantic `Answer` schema as `format`, at
+  temperature 0, and validates the reply. `GET /health`; pytest covers
+  prompts, message order and schema with a fake Ollama client.
+- **`internal/llm`**: `client.go` (stdlib HTTP, start hint when the
+  service is down), `context.go` (`Full` / `Retrieved`), `check.go`
+  (`Checker.Verify`), `loop.go` (`Translator.Translate`: generate →
+  check → resend the whole conversation with feedback, max 3). The context
+  window `num_ctx` is sized from the prompt (≈3 bytes/token + room).
+- **`lnova llm [-ctx retrieved|full] [-model] [-attempts] [-url] [-compare]`**
+  shows every attempt with its problems (`!`), remarks (`~`) and the
+  model's notes, then the gloss and the rule-based verdict.
+- **Glosser bug fixed**: a word with *no* reading (`blomp`) got the notes
+  "is a second verb in the clause" and "is SBJ after the verb", because
+  `remove` treated "no readings at all" like "would remove the last one".
+  Regression test added.
+
+### Key decisions (the user's choices)
+
+| Area | Decision | Why |
+|---|---|---|
+| Model | **Local only**: Ollama + `qwen2.5:7b-instruct-q4_K_M` | No external API; RTX 3060 6 GB |
+| Python | **Wrapper service** in `llm/` | Python's LLM ecosystem for later steps (embeddings, tools) |
+| Context | **Switchable**: `full` / `retrieved` | Compare full context with RAG-style retrieval |
+| Output | **Structured JSON** (translation + per-word id/features + notes) | Lets the checker compare claims with the analyzer |
+| Retry | **Glosser feedback, max 3**, every attempt shown | See the model correct itself (or not) |
+
+Smaller choices (easy to change): the Go side owns the loop and
+correctness, Python is stateless; retrieved = closed classes
+(function.yaml, pronouns.yaml) + tagger/lemmatizer entries + dictionary
+search for unknown words (top 3, word match or better); a claimed id that
+isn't in the lexicon or wrong features are *remarks*, a claimed id that's
+a different real entry is a *problem*.
+
+### First measurements (informal, 7 sentences)
+
+| | retrieved (≈5K tokens) | full (≈9.8K tokens) |
+|---|---|---|
+| passed the checker | 7/7 (2 after a retry) | 6/6 (1 after a retry) |
+| actually right | 3/7 | 2/6 |
+| first attempt | 5–20 s | ~30 s, 18% of the model on CPU |
+| retry | 4–9 s | 9 s |
+
+The only right ones are grammar.md's three examples, **which are in the
+prompt** (few-shot). New sentences all passed and were all wrong:
+
+- `The dog eats the bread.` → `Huro baugir lu gurna.`: infinitive as the
+  verb, no article. The glosser only checks a clause that *has* a finite verb.
+- `She didn't see the big house.` → `Hane na nara gumo hoida.`:
+  possessive `hane` as subject, present not past, adjective before the
+  noun, no article. (Full mode: `nara na`, NEG after the verb, `lirma` = white.)
+- `Who saw the men?` → `ifa naraxis dubroh`: 2SG verb with *who*.
+- `We will love the god.` → first `Muh noidareh` (agreement error,
+  caught). The model then fixed it by **changing the subject** to `Selah`
+  (polite you) rather than the verb: it satisfied the check but changed
+  the meaning.
+
+### Concepts
+
+- **Constrained decoding**: Ollama turns the JSON schema into a grammar
+  (llama.cpp GBNF) and masks every token that would break it while
+  sampling. The reply always parses, but the *content* isn't checked.
+  Same idea as the Earley parser, used to generate instead of recognize.
+- **RAG vs. full context**: retrieval cut 323 entries to ~26 and the
+  prompt by half. The grammar (~4.5K tokens) is now most of it.
+  Retrieval can only miss what the tagger misses.
+- **KV cache and prefix reuse**: retries are 3–5× faster than first
+  attempts because the prompt prefix is already in the KV cache. Changing
+  `num_ctx` reloads the model, which is why alternating modes was slow.
+  The 9.8K `full` prompt needed a 14K window (784 MiB of KV cache) and pushed
+  18% of the layers to the CPU.
+- **Few-shot contamination**: a test sentence that appears in the prompt
+  measures copying, not translating. Evals need held-out sentences.
+- **Goodhart's law / validator gaming**: feedback that only names the
+  broken rule invites the cheapest fix that silences it (`Muh` → `Selah`).
+  A form checker is necessary but not sufficient; meaning needs its own
+  check (claimed ids vs. the English, or the rule-based translation).
+- **Self-correction loops**: the model sees its answer and the analyzer's
+  reading (gloss lines). That fixed made-up words (`xumo` → `gumo`) and
+  agreement in one step.
+
+### Start next session here
+
+1. `ROADMAP.md` → "▶ Next up": decide which validator gaps to close
+   (glosser rules for form; a claimed-ids-vs-English check for meaning).
+2. Run: `ollama serve`, `cd llm && uv run uvicorn app:app --port 8765`,
+   then `lnova llm -compare "…"` (`-ctx full` for the whole dictionary).
+3. Everything from this session is committed (`Phase 5: LLM translation
+   with a local model`).
+4. Before measuring anything again: use sentences that are **not** in
+   grammar.md (those are in the prompt). They'll seed the Phase 5 evals step.
+
+Notes: `uv` picked Python 3.12 from the venv (fine; needs ≥3.12). The
+answer schema lives in `llm/app.py` (`Answer`) and is mirrored in
+`internal/llm/client.go`: change both together. A nil Go slice is sent as
+JSON `null`, which pydantic rejects, so optional lists use `omitempty`.
+
+---
+
 ## 2026-10-17: Phase 4 English → Rifatian
 
 ### Done

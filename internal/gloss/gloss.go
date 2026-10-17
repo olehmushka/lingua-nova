@@ -236,7 +236,7 @@ func (w *Word) remove(rule string, match func(morph.Analysis) bool) bool {
 			keep = append(keep, an)
 		}
 	}
-	if len(keep) == 0 {
+	if len(keep) == 0 && len(out) > 0 {
 		return false
 	}
 	w.Readings, w.Removed = keep, append(w.Removed, out...)

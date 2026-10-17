@@ -47,6 +47,9 @@ Rules:
 
 - Go (see `go.mod`), stdlib-first. External deps only when clearly worth it
   (a YAML parser is fine).
-- Layout: `cmd/lnova` (CLI), `cmd/server` (web, Phase 3), `internal/...`.
+- Layout: `cmd/lnova` (CLI), `cmd/server` (web, Phase 3), `internal/...`,
+  `llm/` (Python FastAPI service in front of a **local** Ollama model; no
+  external LLM APIs). `lnova llm` needs `ollama serve` + the service (see
+  `llm/README.md`); the Go tests use a fake service and don't.
 - Table-driven tests. The lexicon itself is a test fixture.
-- `go test ./...` must pass before calling a step done.
+- `go test ./...` (and `cd llm && uv run pytest`) must pass before calling a step done.

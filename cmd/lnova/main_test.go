@@ -2,6 +2,9 @@ package main
 
 import (
 	"bytes"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -232,5 +235,64 @@ func TestEvolveBroken(t *testing.T) {
 	}
 	if !strings.HasSuffix(stdout.String(), "esia → exa\n  want esa\n") {
 		t.Errorf("trace stdout = %q, want a want line", stdout.String())
+	}
+}
+
+// TestLLM runs lnova llm against a fake llm/ service that answers each
+// request with the next scripted translation.
+func TestLLM(t *testing.T) {
+	serve := func(answers ...string) *httptest.Server {
+		n := 0
+		return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			text := answers[min(n, len(answers)-1)]
+			n++
+			fmt.Fprintf(w, `{"answer": {"translation": %q, "words": [], "notes": ""}, "prompt_tokens": 900, "eval_tokens": 40, "duration_ms": 1200}`, text)
+		}))
+	}
+	good := serve("Lu mena nara lu trubo.")
+	defer good.Close()
+	retry := serve("Lu mena nara lu blomp.", "Lu mena nara lu trubo.")
+	defer retry.Close()
+	bad := serve("Lu mena nara lu blomp.")
+	defer bad.Close()
+	down := httptest.NewServer(http.NotFoundHandler())
+	down.Close()
+
+	const en = "The woman sees the river."
+	tests := []struct {
+		name   string
+		args   []string
+		code   int
+		stdout []string
+		stderr string
+	}{
+		{"first try", []string{"llm", "-url", good.URL, "-compare", en}, 0, []string{
+			"retrieved context:", "attempt 1  Lu mena nara lu trubo.  ✓  1.2s, 900+40 tokens",
+			"the  woman  see-TH.3SG  the  river", "rule-based: Lu mena nara lu trubo.  = same"}, ""},
+		{"retry", []string{"llm", "-url", retry.URL, "-ctx", "full", en}, 0, []string{
+			"full context:", "attempt 1  Lu mena nara lu blomp.  ✗", "   ! blomp: not a form of any dictionary word",
+			"attempt 2  Lu mena nara lu trubo.  ✓"}, ""},
+		{"gives up", []string{"llm", "-url", bad.URL, "-attempts", "2", en}, 1, []string{
+			"attempt 2", "no valid translation in 2 attempts"}, ""},
+		{"service down", []string{"llm", "-url", down.URL, en}, 1, nil, "uv run uvicorn"},
+		{"no args", []string{"llm"}, 2, nil, "usage: lnova llm"},
+		{"bad ctx", []string{"llm", "-ctx", "some", en}, 2, nil, "usage: lnova llm"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			code := run(append([]string{"-lang", "../../language"}, tt.args...), &stdout, &stderr)
+			if code != tt.code {
+				t.Errorf("exit code = %d, want %d (stderr: %s)", code, tt.code, stderr.String())
+			}
+			for _, want := range tt.stdout {
+				if !strings.Contains(stdout.String(), want) {
+					t.Errorf("stdout =\n%s\nwant it to contain %q", stdout.String(), want)
+				}
+			}
+			if !strings.Contains(stderr.String(), tt.stderr) {
+				t.Errorf("stderr = %q, want it to contain %q", stderr.String(), tt.stderr)
+			}
+		})
 	}
 }
