@@ -6,6 +6,102 @@ why, and where to pick up. The task list itself lives in `ROADMAP.md` →
 
 ---
 
+## 2026-10-17: Phase 4 English → Rifatian
+
+### Done
+
+- **`internal/earley`**: grammar file parser (`A -> B C | D`, `#`
+  comments, line numbers in errors) and an Earley parser that returns
+  **every** tree (capped), with tokens that can carry several categories.
+  Left recursion works; empty rules aren't allowed.
+- **`internal/english`**: the prose Treebank tokenizer (`didn't` → `did
+  n't`, `woman's` → `woman 's`) and averaged-perceptron tagger, plus
+  **`language/english/words.yaml`**, which overrides the tagger for function
+  words and archaic forms (`thou`, `didst`, `her` = Pron or Poss, `you` =
+  4 pronouns) and lists irregular pasts and plurals. Open-class words are
+  lemmatized by suffix stripping (`-s -es -ies -ed`, doubled consonants,
+  archaic `-est -eth`) and looked up by the lexicon's gloss head
+  (`love` → the five `love.*` verbs). Each word also gets a reading for
+  every category its lemma has in the lexicon, so a tagger mistake can't
+  block the parse.
+- **`language/english/grammar.cfg`**: statements, `Aux`/`Neg` predicates,
+  yes/no questions, subject and object wh-questions, wh-adverbs, `'s` and
+  possessive determiners, adjectives, bare plurals.
+- **`internal/translate`**: tree → clause (wh, subject, aux, neg, verb,
+  object) → Rifatian: auxiliary dropped and its tense moved to the verb,
+  `na` before the verb (also for a `nothing` object: double negation),
+  question word first, adjectives after the noun, `-s` on the possessor's
+  noun, pronoun case by position, verb agreement (sela → 3SG via
+  `agrees`). Every combination of trees × word choices is generated,
+  deduplicated, ranked, and **glossed back** to check it.
+- **`lnova parse`** (tokens with PTB tags and categories, then every tree
+  with its tagger score), **`lnova translate [-n] [-tree]`**, the
+  **`/translate`** page (live htmx, words linked to entries, gloss of the
+  best translation; hot-reload watches `english/`), and **`lnova
+  validate`** checks words.yaml ids and categories against the lexicon and
+  the grammar.
+- `gloss.Examples` (moved from the glosser's test): **grammar.md's
+  examples are golden tests for the translator too**. Every one comes out
+  exactly.
+
+### Key decisions (the user's choices)
+
+| Area | Decision | Why |
+|---|---|---|
+| Tagger | **prose** (statistical, Penn Treebank) | A first contact with statistical NLP; the word table covers its blind spots |
+| Parser | **Earley chart parser + CFG file** | The core parsing algorithm; the grammar is data, ambiguity gives several trees |
+| Scope | SVO, negation, questions, archaic thou | Covers every example in grammar.md |
+| Ambiguity | **All translations, ranked** | Nothing hidden; shows how fast ambiguity multiplies (`You love them.` = 40) |
+
+Smaller choices made while coding (easy to change): ranking is (tagger
+agreement of the tree, sum of each word's choice index, tree order); the
+web page shows 20; an exact gloss ranks before a dotted sense; "you" ranks
+informal singular first; unknown English words become `?word` (exit 1).
+prose v1.2.1 is archived upstream but stable; its model is embedded.
+
+### Concepts
+
+- **POS tagging as classification**: the averaged perceptron scores each
+  tag from features (the word, its suffix, the previous two tags). It was
+  trained on news text, so it tags `Didst` as a proper noun and `thou` as a
+  noun. And one unknown word (`dragon`) can derail its neighbours (`eats`
+  → plural noun, `bread` → verb). Hence the hybrid design: a statistical
+  guess, a table for the closed classes, and the grammar as the judge.
+- **Earley's algorithm**: predict / scan / complete over a chart of
+  dotted items; O(n³) at worst, works on any CFG without converting to
+  Chomsky Normal Form (which CYK needs). Trees are read back from the
+  completed items. The PP-attachment test (`saw the man with the
+  telescope`) shows why parsers return forests. Two PPs give 5 trees: the
+  Catalan numbers.
+- **Transfer-based MT**: analysis → transfer → generation, the
+  pre-statistical architecture (SYSTRAN, 1960s on). The transfer rules
+  are exactly the English/Rifatian differences in grammar.md's overview.
+- **Gaps**: in `What did you see?` the object is fronted, leaving a gap
+  after `see`. English needs a special rule for it (`Gap`); Rifatian
+  doesn't move anything except the question word.
+- **Generate-and-test** again: every output is glossed back by the
+  Constraint Grammar glosser, the same trick as the analyzer.
+
+### Language decisions (the user's, recorded in grammar.md)
+
+| Question | Decision |
+|---|---|
+| Possessor with an adjective | **-s on the noun**: `lu mena-s lirma huro` |
+| Several adjectives | **Any order** after the noun |
+| Negative word before the verb | **No na**, as in Portuguese *Nada caiu*: `Zunhu zuvixe.` |
+
+The translator already did all three; the "undecided" note is gone and
+each has a test.
+
+Out of scope for now: copula (`is big`), prepositional phrases, -ing
+forms, modals other than will, more than one sentence per input.
+
+### Start next session here
+
+1. `ROADMAP.md` → "▶ Next up": Phase 5, LLM translation.
+
+---
+
 ## 2026-10-17: Phase 4 interlinear glossing
 
 ### Done

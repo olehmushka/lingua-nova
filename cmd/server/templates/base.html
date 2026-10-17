@@ -10,7 +10,8 @@
   a { color: #1a5fb4; }
   header { display: flex; gap: 1rem; align-items: baseline; border-bottom: 1px solid #ddd; margin-bottom: 1rem; }
   header a { font-weight: bold; text-decoration: none; color: inherit; }
-  header .nav { font-weight: normal; color: #1a5fb4; margin-left: auto; }
+  header .nav { margin-left: auto; color: #666; }
+  header .nav a { font-weight: normal; color: #1a5fb4; }
   input[type=search] { font: inherit; padding: .3rem .5rem; width: min(24rem, 100%); }
   table { border-collapse: collapse; width: 100%; }
   th, td { text-align: left; padding: .25rem .6rem .25rem 0; vertical-align: top; }
@@ -27,10 +28,13 @@
   .banner-warn { background: #fff6d9; border-color: #c90; }
   table.gloss { width: auto; margin-top: 1rem; }
   .remarks { font-size: 14px; padding-left: 1.2rem; }
+  .translations { padding-left: 1.6rem; }
+  .translations > li { margin: .2rem 0; }
+  .translations .remarks { margin: 0; }
 </style>
 </head>
 <body>
-<header><a href="/">rifacha</a><span class="muted">Rifatian dictionary</span><a href="/gloss" class="nav">Gloss</a></header>
+<header><a href="/">rifacha</a><span class="muted">Rifatian dictionary</span><span class="nav"><a href="/gloss">Gloss</a> · <a href="/translate">Translate</a></span></header>
 {{with .Err}}<div class="banner banner-error"><strong>The last edit doesn't load</strong>; showing the data from before it.
 <pre>{{.}}</pre></div>{{end}}
 {{with .Problems}}<div class="banner banner-warn"><strong>lnova validate</strong> finds problems:

@@ -7,9 +7,10 @@ previous one is "done", even if done means small.
 
 _Keep this section current: it's where every new session starts._
 
-1. **Phase 4 English → Rifatian** for simple SVO sentences: tokenize, tag,
-   build a small tree, reorder per grammar, inflect. Decide on the English
-   side first: a hand-written word list + tagger, or something else.
+1. **Phase 5 LLM translation**: grammar + relevant dictionary entries in the
+   prompt, the Phase 4 analyzer/glosser checks the output. Decide the
+   prompt shape and the retry loop first. The rule-based translator is a
+   baseline to compare against (and a source of eval sentences).
 
 ## Phase 0 — Learn the basics (reading, ~1–2 weeks alongside Phase 1)
 
@@ -164,9 +165,17 @@ the derivation.
   agreement; never removes a word's last reading, notes it instead).
   `lnova gloss`, `/gloss` page with live htmx; grammar.md's examples are
   golden tests.
-- [ ] **English → conlang** for a controlled subset (simple SVO sentences): tokenize, tag, build a small tree, reorder per grammar, inflect.
+- [x] **English → conlang** for a controlled subset (simple SVO sentences): tokenize, tag, build a small tree, reorder per grammar, inflect.
+  → prose tagger (averaged perceptron) + `language/english/words.yaml`
+  for function words and archaic forms; `internal/earley` parses with
+  `language/english/grammar.cfg` (all trees); `internal/translate`
+  transfers (drop do-support, tense onto the verb, na, wh first,
+  adjectives after the noun), inflects with agreement, lists **every**
+  translation ranked, and verifies each with the glosser.
+  `lnova parse`, `lnova translate`, `/translate` page; grammar.md's
+  examples are golden tests.
 
-**Done when:** the app glosses any sentence you write and translates simple English sentences correctly.
+**Done when:** the app glosses any sentence you write and translates simple English sentences correctly. → Done (2026-10-17).
 
 ## Phase 5 — AI layer (Claude API via the Go SDK)
 

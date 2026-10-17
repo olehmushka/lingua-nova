@@ -1,0 +1,31 @@
+{{define "title"}}Translate · Rifatian dictionary{{end}}
+
+{{define "content"}}
+<form action="/translate" method="get">
+  <input type="search" name="s" value="{{.Sentence}}" placeholder="The woman sees the river." autofocus
+    hx-get="/translate" hx-trigger="input changed delay:200ms, search" hx-target="#translation" hx-push-url="true">
+  <button>Translate</button>
+</form>
+<div id="translation">{{template "translation" .}}</div>
+{{end}}
+
+{{/* translation is the part live translation replaces: the ranked
+     translations, each word linked to its entry, then the gloss of the
+     best one. */}}
+{{define "translation"}}
+{{with .Problem}}
+  <p class="bad">{{.}}</p>
+{{else}}{{with .Result}}
+  <ol class="translations">
+  {{range .Translations}}
+    <li>{{range $i, $w := .Words}}{{if $i}} {{end}}{{if .Entry}}<a href="/entry/{{.Entry.ID}}">{{.Text}}</a>{{else}}<span class="bad">{{.Text}}</span>{{end}}{{end}}{{$.Result.Input.End}}
+      {{with .Notes}}<ul class="remarks muted">{{range .}}<li>{{.}}</li>{{end}}</ul>{{end}}</li>
+  {{end}}
+  </ol>
+  <p class="muted">{{if lt (len .Translations) .Total}}{{len .Translations}} of {{.Total}} translations{{else if eq .Total 1}}1 translation{{else}}{{.Total}} translations{{end}}</p>
+  {{with index .Translations 0}}{{with .Gloss}}{{template "interlinear" .}}{{end}}{{end}}
+{{else}}
+  <p class="muted">Type a simple English sentence: <a href="/translate?s=Didst+thou+see+the+woman%27s+dog%3F">Didst thou see the woman's dog?</a>
+  or <a href="/translate?s=I+love+you.">I love you.</a></p>
+{{end}}{{end}}
+{{end}}

@@ -1,6 +1,6 @@
 // Command server is the Rifatian dictionary web app: search in both
 // directions, an entry page with IPA and the sound-change derivation, and
-// an interlinear glosser.
+// an interlinear glosser and an English → Rifatian translator.
 //
 //	go run ./cmd/server [-lang language] [-addr :8080] [-poll 500ms]
 //
@@ -31,6 +31,7 @@ import (
 	"github.com/olehmushka/lingua-nova/internal/morph"
 	"github.com/olehmushka/lingua-nova/internal/phon"
 	"github.com/olehmushka/lingua-nova/internal/sound"
+	"github.com/olehmushka/lingua-nova/internal/translate"
 )
 
 //go:embed templates/*.html
@@ -121,6 +122,7 @@ type data struct {
 	info     map[string]*entryInfo // by id
 	analyzer *morph.Analyzer
 	glosser  *gloss.Glosser
+	trans    *translate.Translator
 	problems []lexicon.Problem // what lnova validate reports
 }
 
@@ -133,8 +135,8 @@ func newHandler(langDir string) (*server, error) {
 	s := &server{langDir: langDir, pages: map[string]*template.Template{}}
 	s.state.Store(&state{d: d})
 
-	for _, page := range []string{"search", "entry", "gloss", "notfound"} {
-		t, err := template.ParseFS(templateFS, "templates/base.html", "templates/"+page+".html")
+	for _, page := range []string{"search", "entry", "gloss", "translate", "notfound"} {
+		t, err := template.ParseFS(templateFS, "templates/base.html", "templates/interlinear.html", "templates/"+page+".html")
 		if err != nil {
 			return nil, err
 		}
@@ -145,6 +147,7 @@ func newHandler(langDir string) (*server, error) {
 	s.mux.HandleFunc("GET /{$}", s.handleSearch)
 	s.mux.HandleFunc("GET /entry/{id}", s.handleEntry)
 	s.mux.HandleFunc("GET /gloss", s.handleGloss)
+	s.mux.HandleFunc("GET /translate", s.handleTranslate)
 	static, _ := fs.Sub(staticFS, "static")
 	s.mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServerFS(static)))
 	s.mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -176,12 +179,19 @@ func load(langDir string) (*data, error) {
 		return nil, err
 	}
 
+	grammar, words, err := translate.LoadEnglish(langDir)
+	if err != nil {
+		return nil, err
+	}
+
 	probs := append(lexicon.Validate(lex, inv), morph.Check(lex, morphRules)...)
+	probs = append(probs, translate.Check(grammar, words, lex)...)
 	slices.SortStableFunc(probs, func(a, b lexicon.Problem) int {
 		return cmp.Or(cmp.Compare(a.File, b.File), cmp.Compare(a.Line, b.Line))
 	})
 	analyzer := morph.NewAnalyzer(morphRules, lex)
-	d := &data{lex: lex, info: map[string]*entryInfo{}, analyzer: analyzer, glosser: gloss.New(analyzer), problems: probs}
+	d := &data{lex: lex, info: map[string]*entryInfo{}, analyzer: analyzer, glosser: gloss.New(analyzer), problems: probs,
+		trans: translate.New(grammar, words, lex, morphRules, analyzer)}
 	byModern := map[string][]*lexicon.Entry{}
 	for _, e := range lex.Entries {
 		byModern[e.Modern] = append(byModern[e.Modern], e)
@@ -246,7 +256,7 @@ type stamp struct {
 // map too. A file that can't be stat'ed is left out; load reports it.
 func stamps(langDir string) map[string]stamp {
 	files, _ := filepath.Glob(filepath.Join(langDir, "lexicon", "*.yaml"))
-	for _, f := range []string{"phonology.yaml", "sound-changes.txt", "morphology.yaml"} {
+	for _, f := range []string{"phonology.yaml", "sound-changes.txt", "morphology.yaml", "english/grammar.cfg", "english/words.yaml"} {
 		files = append(files, filepath.Join(langDir, f))
 	}
 	m := map[string]stamp{}
@@ -349,6 +359,26 @@ func (s *server) handleGloss(w http.ResponseWriter, r *http.Request) {
 	}
 	s.render(w, http.StatusOK, "gloss", data)
 }
+
+// handleTranslate translates the English sentence in ?s, live like
+// gloss.
+func (s *server) handleTranslate(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query().Get("s")
+	data := map[string]any{"Sentence": q}
+	if strings.TrimSpace(q) != "" {
+		res, err := s.state.Load().d.trans.Translate(q, maxTranslations)
+		data["Result"], data["Problem"] = res, err
+	}
+	w.Header().Add("Vary", "HX-Request")
+	if r.Header.Get("HX-Request") == "true" {
+		s.execute(w, http.StatusOK, "translate", "translation", data)
+		return
+	}
+	s.render(w, http.StatusOK, "translate", data)
+}
+
+// maxTranslations is how many translations the page lists.
+const maxTranslations = 20
 
 func (s *server) handleEntry(w http.ResponseWriter, r *http.Request) {
 	info, ok := s.state.Load().d.info[r.PathValue("id")]

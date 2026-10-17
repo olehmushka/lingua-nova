@@ -1,0 +1,14 @@
+{{/* interlinear is a glossed sentence (*gloss.Result): one column per
+     word, the morphemes over their glosses, then the remarks. Used by the
+     gloss and translate pages. */}}
+{{define "interlinear"}}
+  <table class="gloss">
+    <tr>{{range .Words}}<td>{{template "word" .}}</td>{{end}}</tr>
+    <tr>{{range .Words}}<td class="muted">{{.Gloss}}</td>{{end}}</tr>
+  </table>
+  {{with .Remarks}}<ul class="remarks muted">{{range .}}<li>{{.}}</li>{{end}}</ul>{{end}}
+{{end}}
+
+{{/* word links a known root to its entry; a guess is muted, a word with
+     no reading red. */}}
+{{define "word"}}{{.Lead}}{{with .Top}}{{if .Entry}}<a href="/entry/{{.Entry.ID}}" title="{{.Lemma}}">{{$.Morphs}}</a>{{else}}<span class="muted" title="?{{.Lemma}}: not in the lexicon">{{$.Morphs}}</span>{{end}}{{else}}<span class="bad">{{.Text}}</span>{{end}}{{.Punct}}{{end}}

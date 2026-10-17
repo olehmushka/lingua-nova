@@ -56,6 +56,9 @@ Articles never change: `lu hoida`, `lu hoidah`.
 
 They come after the noun and never change: `lu hoida lirma`, `lu hoidah lirma`.
 
+Several adjectives can follow in **any order**: `lu huro gumo bujo` and
+`lu huro bujo gumo` both mean "the big black dog".
+
 ## Possession (draft)
 
 Like English *'s*: **possessor + -s + possessed thing**. After a consonant or plural -h, use **-es**.
@@ -68,6 +71,9 @@ Like English *'s*: **possessor + -s + possessed thing**. After a consonant or pl
 
 As in English, the article belongs to the possessor: `lu menas hoida` = "[the woman]'s house".
 Possessive pronouns also come before the noun: `me hoida` = "my house".
+
+The **-s goes on the possessor noun**, even when adjectives follow it:
+`lu mena`**`s`**` lirma huro` = "the white woman's dog" (not *lu mena lirmas huro*).
 
 
 ## Pronouns (draft forms)
@@ -158,8 +164,10 @@ As in Romance history (Latin *cantare habeo* → Portuguese *cantarei*):
 
 - The particle **na** (draft) goes directly **before the verb**, like *não*:
   `Mu na naraxu chi.` = "I didn't see thee."
-- **Double negation** is required with negative words, as in *Não vi nada*:
+- **Double negation** is required with negative words **after the verb**, as in *Não vi nada*:
   `Na naraxu zunhu.` = "I saw nothing."
+- A negative word **before the verb** needs no **na**, as in Portuguese *Nada caiu*:
+  `Zunhu zuvixe.` = "Nothing fell."
 - Optional emphatic final **na**, as in Brazilian *Não sei não*:
   `Na naraxu chi, na.` = "I really didn't see thee."
 

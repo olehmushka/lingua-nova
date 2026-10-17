@@ -21,6 +21,7 @@ import (
 	"github.com/olehmushka/lingua-nova/internal/morph"
 	"github.com/olehmushka/lingua-nova/internal/phon"
 	"github.com/olehmushka/lingua-nova/internal/sound"
+	"github.com/olehmushka/lingua-nova/internal/translate"
 )
 
 const usage = `usage: lnova [-lang dir] <command> [args]
@@ -44,6 +45,11 @@ commands:
   gloss <sentence>
                   interlinear gloss: each word split into morphemes over
                   their glosses, ambiguity resolved by word order and agreement
+  parse <english sentence>
+                  tag an English sentence and show its parse trees
+  translate [-n 20] [-tree] <english sentence>
+                  translate simple English into Rifatian: every translation,
+                  ranked, with the gloss of the best one
 `
 
 func main() {
@@ -81,6 +87,10 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return cmdAnalyze(*langDir, rest, stdout, stderr)
 	case "gloss":
 		return cmdGloss(*langDir, rest, stdout, stderr)
+	case "parse":
+		return cmdParse(*langDir, rest, stdout, stderr)
+	case "translate":
+		return cmdTranslate(*langDir, rest, stdout, stderr)
 	default:
 		fmt.Fprintf(stderr, "lnova: unknown command %q\n%s", cmd, usage)
 		return 2
@@ -152,6 +162,14 @@ func cmdValidate(langDir string, args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 	probs := append(lexicon.Validate(lex, inv), morph.Check(lex, rules)...)
+	if _, err := os.Stat(filepath.Join(langDir, "english")); err == nil {
+		g, w, err := translate.LoadEnglish(langDir)
+		if err != nil {
+			fmt.Fprintf(stderr, "lnova: %v\n", err)
+			return 1
+		}
+		probs = append(probs, translate.Check(g, w, lex)...)
+	}
 	slices.SortStableFunc(probs, func(a, b lexicon.Problem) int {
 		return cmp.Or(cmp.Compare(a.File, b.File), cmp.Compare(a.Line, b.Line))
 	})
@@ -643,4 +661,103 @@ func cmdGloss(langDir string, args []string, stdout, stderr io.Writer) int {
 		}
 	}
 	return 0
+}
+
+// cmdParse shows how the translator reads an English sentence: each
+// token with the tagger's Penn Treebank tag and the categories it can
+// have, then every parse tree, best first. A tree's score is how many of
+// its leaves have the category the tagger chose.
+//
+//	Didst/NNP:Aux  thou/NN:Pron  see/VB:V  ...
+//	1 tree
+//	7/7  (S (YN (Aux Didst) (NP (Pron thou)) (VP (V see) ...)))
+func cmdParse(langDir string, args []string, stdout, stderr io.Writer) int {
+	if len(args) == 0 {
+		fmt.Fprintln(stderr, "usage: lnova parse <english sentence>")
+		return 2
+	}
+	tr, err := translate.Load(langDir)
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	s, parses := tr.Parse(strings.Join(args, " "))
+	toks := make([]string, len(s.Tokens))
+	for i, t := range s.Tokens {
+		toks[i] = t.Text + "/" + t.Tag + ":" + strings.Join(t.Cats(), "|")
+	}
+	fmt.Fprintln(stdout, strings.Join(toks, "  "))
+	noun := "trees"
+	if len(parses) == 1 {
+		noun = "tree"
+	}
+	fmt.Fprintf(stdout, "%d %s\n", len(parses), noun)
+	for _, p := range parses {
+		fmt.Fprintf(stdout, "%d/%d  %s\n", p.Score, len(s.Tokens), p.Tree.Bracketed(s.Words()))
+	}
+	if len(parses) == 0 {
+		return 1
+	}
+	return 0
+}
+
+// cmdTranslate prints the ranked translations, then the gloss of the best
+// one:
+//
+//	1  Chu naraxis lu menas huro?
+//	1 translation
+//
+//	Chu  nar-a-x-is      lu   mena-s      huro?
+//	2SG  see-TH-PST-2SG  the  woman-POSS  dog
+//
+// Exits 1 if the sentence doesn't parse or has words not in the lexicon.
+func cmdTranslate(langDir string, args []string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet("translate", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	n := fs.Int("n", 20, "show at most `N` translations (0 = all)")
+	tree := fs.Bool("tree", false, "show each translation's English parse tree")
+	usage := func() { fmt.Fprintln(stderr, "usage: lnova translate [-n 20] [-tree] <english sentence>") }
+	fs.Usage = usage
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
+	if fs.NArg() == 0 || *n < 0 {
+		usage()
+		return 2
+	}
+	tr, err := translate.Load(langDir)
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	res, err := tr.Translate(strings.Join(fs.Args(), " "), *n)
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	code := 0
+	for i, x := range res.Translations {
+		fmt.Fprintf(stdout, "%d  %s\n", i+1, x.Text)
+		if *tree {
+			fmt.Fprintf(stdout, "   %s\n", x.Tree.Bracketed(res.Input.Words()))
+		}
+		for _, note := range x.Notes {
+			fmt.Fprintf(stdout, "   ! %s\n", note)
+		}
+		if len(x.Unknown) > 0 {
+			code = 1
+		}
+	}
+	switch shown := len(res.Translations); {
+	case res.Total == 1:
+		fmt.Fprintln(stdout, "1 translation")
+	case shown < res.Total:
+		fmt.Fprintf(stdout, "%d of %d translations (-n 0 shows all)\n", shown, res.Total)
+	default:
+		fmt.Fprintf(stdout, "%d translations\n", res.Total)
+	}
+	if g := res.Translations[0].Gloss; g != nil {
+		fmt.Fprintf(stdout, "\n%s", g)
+	}
+	return code
 }

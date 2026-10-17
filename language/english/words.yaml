@@ -1,0 +1,150 @@
+# English words for the translator (internal/english), read alongside the
+# Rifatian lexicon. This file describes English, the source language.
+#
+# Open-class words (nouns, verbs, adjectives) need no entry here: the
+# tagger guesses their category, suffix rules find the lemma (sees → see),
+# and the lemma is looked up by the lexicon's `gloss`. This file covers
+# what that can't handle.
+
+# words: function words and archaic forms. An entry replaces the tagger
+# for that word. Each reading has a category (a preterminal of grammar.cfg)
+# and the lexicon ids it can translate to, best first. A word with several
+# readings is ambiguous ("her": object pronoun or possessive), and the
+# parser keeps the ones that fit the sentence.
+#
+#   num:   SG or PL, for pronouns and possessives (the English form doesn't
+#          always tell: "you" is both, so it has both readings)
+#   tense: PRS, PST or FUT, for auxiliaries
+#
+# Case (I/me) isn't listed: Rifatian case comes from the word's position
+# in the translated sentence.
+words:
+  # Articles and demonstratives
+  the:   [{cat: Det, ids: [the]}]
+  a:     [{cat: Det, ids: [a]}]
+  an:    [{cat: Det, ids: [a]}]
+  this:  [{cat: Det, ids: [this]}]
+  that:  [{cat: Det, ids: [that]}]
+
+  # Personal pronouns. "you" is ambiguous four ways in Rifatian: informal
+  # or polite, singular or plural. Informal singular is listed first.
+  i:     [{cat: Pron, ids: [i], num: SG}]
+  me:    [{cat: Pron, ids: [i], num: SG}]
+  thou:  [{cat: Pron, ids: [thou], num: SG}]
+  thee:  [{cat: Pron, ids: [thou], num: SG}]
+  you:
+    - {cat: Pron, ids: [thou, you_polite], num: SG}
+    - {cat: Pron, ids: [thou, you_polite], num: PL}
+  ye:    [{cat: Pron, ids: [thou], num: PL}]
+  he:    [{cat: Pron, ids: [he], num: SG}]
+  him:   [{cat: Pron, ids: [he], num: SG}]
+  she:   [{cat: Pron, ids: [she], num: SG}]
+  her:
+    - {cat: Pron, ids: [she], num: SG}
+    - {cat: Poss, ids: [she], num: SG}
+  it:    [{cat: Pron, ids: [it], num: SG}]
+  we:    [{cat: Pron, ids: [i], num: PL}]
+  us:    [{cat: Pron, ids: [i], num: PL}]
+  they:  [{cat: Pron, ids: [he, she], num: PL}]
+  them:  [{cat: Pron, ids: [he, she], num: PL}]
+  nothing: [{cat: Pron, ids: [nothing]}]
+
+  # Possessives
+  my:    [{cat: Poss, ids: [i], num: SG}]
+  thy:   [{cat: Poss, ids: [thou], num: SG}]
+  thine: [{cat: Poss, ids: [thou], num: SG}]
+  your:
+    - {cat: Poss, ids: [thou, you_polite], num: SG}
+    - {cat: Poss, ids: [thou, you_polite], num: PL}
+  his:   [{cat: Poss, ids: [he], num: SG}]
+  its:   [{cat: Poss, ids: [it], num: SG}]
+  our:   [{cat: Poss, ids: [i], num: PL}]
+  their: [{cat: Poss, ids: [he, she], num: PL}]
+  "'s":  [{cat: Gen}]
+  "'":   [{cat: Gen}]
+
+  # Question words
+  who:   [{cat: WhP, ids: [who]}]
+  whom:  [{cat: WhP, ids: [who]}]
+  what:  [{cat: WhP, ids: [what]}]
+  where: [{cat: WhAdv, ids: [where]}]
+  when:  [{cat: WhAdv, ids: [when]}]
+  how:   [{cat: WhAdv, ids: [how]}]
+  why:   [{cat: WhAdv, ids: [why]}]
+
+  # Auxiliaries: they carry tense in English, and disappear in Rifatian,
+  # where the tense is an ending on the verb. The tokenizer splits
+  # "won't" into wo + n't.
+  do:    [{cat: Aux, tense: PRS}]
+  does:  [{cat: Aux, tense: PRS}]
+  dost:  [{cat: Aux, tense: PRS}]
+  doth:  [{cat: Aux, tense: PRS}]
+  did:   [{cat: Aux, tense: PST}]
+  didst: [{cat: Aux, tense: PST}]
+  will:  [{cat: Aux, tense: FUT}]
+  wilt:  [{cat: Aux, tense: FUT}]
+  shall: [{cat: Aux, tense: FUT}]
+  shalt: [{cat: Aux, tense: FUT}]
+  wo:    [{cat: Aux, tense: FUT}]
+
+  # Negation
+  not:   [{cat: Neg, ids: [not]}]
+  "n't": [{cat: Neg, ids: [not]}]
+
+# past: irregular past tenses → the verb (lemma). Archaic -est is removed
+# first (sawest → saw). A past that looks like its verb (cut, put) is
+# found through the tagger instead.
+past:
+  ate: eat
+  bought: buy
+  built: build
+  burnt: burn
+  came: come
+  drank: drink
+  fell: fall
+  felt: feel
+  flew: fly
+  forgot: forget
+  found: find
+  gave: give
+  had: have
+  heard: hear
+  held: hold
+  knew: know
+  lay: lie
+  learnt: learn
+  made: make
+  ran: run
+  sang: sing
+  sat: sit
+  saw: see
+  said: say
+  sold: sell
+  slept: sleep
+  slew: kill
+  smelt: smell
+  spake: say
+  spoke: say
+  stood: stand
+  swam: swim
+  taught: teach
+  thought: think
+  threw: throw
+  took: take
+  understood: understand
+  went: go
+  wept: weep
+
+# plural: irregular plurals → the noun.
+plural:
+  children: child
+  feet: foot
+  geese: goose
+  knives: knife
+  leaves: leaf
+  men: man
+  mice: mouse
+  teeth: tooth
+  wives: wife
+  wolves: wolf
+  women: woman

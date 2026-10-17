@@ -49,6 +49,12 @@ func TestPages(t *testing.T) {
 		{"/gloss?s=Mu+pumaxu+xxxx", true, 200, []string{`title="?pumar: not in the lexicon">pum-a-x-u</span>`, `<span class="bad">xxxx</span>`, "???", "xxxx: no analysis"}, nil},
 		{"/gloss?s=Mu+nara.", true, 200, []string{"mu (1SG) doesn&#39;t agree with nara (3SG)"}, nil},
 		{"/gloss?s=<b>", true, 200, nil, []string{"<b>"}},
+		{"/translate", false, 200, []string{`name="s"`, `hx-get="/translate"`, "Type a simple English sentence", `href="/translate"`}, nil},
+		{"/translate?s=Didst+thou+see+the+woman%27s+dog%3F", false, 200, []string{`<div id="translation">`, `<a href="/entry/thou">Chu</a> <a href="/entry/see">naraxis</a>`, `<a href="/entry/dog">huro</a>?`, "1 translation", "see-TH-PST-2SG"}, nil},
+		{"/translate?s=You+love+them.", true, 200, []string{"20 of 40 translations", `<a href="/entry/love_agape">eluves</a>`}, []string{"<!doctype", `name="s"`}},
+		{"/translate?s=The+dragon+sleeps", true, 200, []string{`<span class="bad">?dragon</span>`, "dragon: not in the lexicon"}, []string{`class="gloss"`}},
+		{"/translate?s=the+the", true, 200, []string{`<p class="bad">the grammar has no tree for: the/Det the/Det</p>`}, nil},
+		{"/translate?s=<b>", true, 200, nil, []string{"<b>"}},
 		{"/static/htmx.min.js", false, 200, []string{"htmx"}, nil},
 	}
 	for _, tt := range tests {
@@ -229,5 +235,49 @@ func TestStamps(t *testing.T) {
 			t.Errorf("%s: stamps unchanged", e.name)
 		}
 		prev = cur
+	}
+}
+
+// TestReloadEnglish edits english/words.yaml: a new English word
+// translates after the reload, and an id the lexicon lacks is a problem.
+func TestReloadEnglish(t *testing.T) {
+	dir := copyLang(t)
+	s, err := newHandler(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	file := filepath.Join(dir, "english", "words.yaml")
+	orig, err := os.ReadFile(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	add := func(line string) string {
+		return strings.Replace(string(orig), "words:\n", "words:\n"+line+"\n", 1)
+	}
+	steps := []struct {
+		name, file string
+		want, not  []string
+	}{
+		{"before: the tagger guesses an adjective", string(orig), []string{`<span class="bad">?yonder</span>`}, nil},
+		{"new word", add("  yonder: [{cat: Det, ids: [that]}]"), []string{`<a href="/entry/that">zou</a>`}, []string{`class="banner`}},
+		{"bad id", add("  yonder: [{cat: Det, ids: [nope]}]"), []string{`class="banner banner-warn"`, `no lexicon entry &#34;nope&#34;`}, nil},
+		{"broken keeps old", add("  yonder: [{cat: Det, num: DU}]"), []string{`class="banner banner-error"`, "words.yaml"}, nil},
+	}
+	for _, st := range steps {
+		if err := os.WriteFile(file, []byte(st.file), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		s.reload()
+		body := get(t, s, "/translate?s=I+see+yonder+dog")
+		for _, w := range st.want {
+			if !strings.Contains(body, w) {
+				t.Errorf("%s: body lacks %q", st.name, w)
+			}
+		}
+		for _, n := range st.not {
+			if strings.Contains(body, n) {
+				t.Errorf("%s: body contains %q", st.name, n)
+			}
+		}
 	}
 }

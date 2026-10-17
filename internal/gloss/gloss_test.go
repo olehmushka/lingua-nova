@@ -3,7 +3,6 @@ package gloss
 import (
 	"os"
 	"path/filepath"
-	"regexp"
 	"slices"
 	"strings"
 	"testing"
@@ -40,31 +39,23 @@ func lines(r *Result) (string, string) {
 }
 
 // TestGrammarExamples glosses every interlinear example in grammar.md: a
-// code block of segmented line, gloss line, "translation". The sentence
-// is the segmented line without its hyphens.
+// code block of segmented line, gloss line, "translation" (see Examples).
 func TestGrammarExamples(t *testing.T) {
 	g := glosser(t)
 	md, err := os.ReadFile(filepath.Join(langDir, "grammar.md"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	var examples [][]string
-	for _, block := range regexp.MustCompile("(?s)```\n(.*?)```").FindAllStringSubmatch(string(md), -1) {
-		for _, para := range strings.Split(strings.TrimSpace(block[1]), "\n\n") {
-			if l := strings.Split(para, "\n"); len(l) == 3 && strings.HasPrefix(l[2], `"`) {
-				examples = append(examples, l)
-			}
-		}
-	}
+	examples := Examples(string(md))
 	if len(examples) < 5 {
 		t.Fatalf("found %d examples in grammar.md, want at least 5", len(examples))
 	}
-	for _, b := range examples {
-		wantSeg, wantGloss := strings.Join(strings.Fields(b[0]), " "), strings.Join(strings.Fields(b[1]), " ")
-		res := g.Gloss(strings.ReplaceAll(wantSeg, "-", ""))
+	for _, ex := range examples {
+		wantSeg, wantGloss := ex.Segmented, ex.Gloss
+		res := g.Gloss(ex.Sentence())
 		seg, gloss := lines(res)
 		if seg != wantSeg || gloss != wantGloss {
-			t.Errorf("Gloss(%q) =\n  %s\n  %s\nwant\n  %s\n  %s", strings.ReplaceAll(wantSeg, "-", ""), seg, gloss, wantSeg, wantGloss)
+			t.Errorf("Gloss(%q) =\n  %s\n  %s\nwant\n  %s\n  %s", ex.Sentence(), seg, gloss, wantSeg, wantGloss)
 		}
 		if rs := res.Remarks(); len(rs) > 0 {
 			t.Errorf("Gloss(%q): unexpected remarks %q", wantSeg, rs)

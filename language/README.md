@@ -14,6 +14,8 @@ these files, and you edit them by hand.
 | `grammar.md` | Word order, morphology, syntax |
 | `morphology.yaml` | The inflection tables of `grammar.md` as data, for `lnova inflect` and `lnova analyze` (keep in sync with `grammar.md`) |
 | `lexicon/*.yaml` | Dictionary entries, grouped by topic |
+| `english/grammar.cfg` | The English the translator accepts, as a context-free grammar (`lnova parse`, `lnova translate`) |
+| `english/words.yaml` | English function words, archaic forms and irregular inflections, mapped to lexicon ids |
 
 ## Lexicon entry format (draft, expect it to change)
 
@@ -39,6 +41,10 @@ The modern word is normally *derived* by running `proto` through
 Phase 2's `lnova evolve` checks every entry against it, so the lexicon
 doubles as the sound-change engine's test table. If you change a rule,
 expect some `modern` values to need updating too.
+
+Open-class English words (nouns, verbs, adjectives) need no entry in
+`english/words.yaml`: the translator finds them by the lexicon's `gloss`
+(or the part before its first dot: `love.eros` answers to "love").
 
 Run `go run ./cmd/lnova validate` after editing. It checks required fields
 (`id proto modern pos gloss definition`), duplicate ids, `pos` (one of
