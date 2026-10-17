@@ -237,9 +237,21 @@ func capitalize(s string) string {
 	return strings.ToUpper(s[:1]) + s[1:]
 }
 
-// New wires a translator from loaded data. The glosser verifies outputs.
+// New wires a translator from loaded data. The glosser verifies outputs;
+// it learns the question words from words.yaml (WhP, WhAdv).
 func New(g *earley.Grammar, w *english.Words, lex *lexicon.Lexicon, r *morph.Rules, a *morph.Analyzer) *Translator {
-	return &Translator{Tagger: english.New(w, lex), Grammar: g, Rules: r, Glosser: gloss.New(a)}
+	gl := gloss.New(a)
+	gl.Wh = map[string]bool{}
+	for _, rs := range w.Words {
+		for _, r := range rs {
+			if r.Cat == "WhP" || r.Cat == "WhAdv" {
+				for _, id := range r.IDs {
+					gl.Wh[id] = true
+				}
+			}
+		}
+	}
+	return &Translator{Tagger: english.New(w, lex), Grammar: g, Rules: r, Glosser: gl}
 }
 
 // Load reads everything a translator needs from a language directory:

@@ -255,6 +255,8 @@ func TestLLM(t *testing.T) {
 	defer retry.Close()
 	bad := serve("Lu mena nara lu blomp.")
 	defer bad.Close()
+	wrong := serve("Lu huro nara lu trubo.", "Lu mena nara lu trubo.")
+	defer wrong.Close()
 	down := httptest.NewServer(http.NotFoundHandler())
 	down.Close()
 
@@ -267,10 +269,14 @@ func TestLLM(t *testing.T) {
 		stderr string
 	}{
 		{"first try", []string{"llm", "-url", good.URL, "-compare", en}, 0, []string{
-			"retrieved context:", "attempt 1  Lu mena nara lu trubo.  ✓  1.2s, 900+40 tokens",
+			"retrieved context:", "meaning check: frame, 1 reference(s)",
+			"attempt 1  Lu mena nara lu trubo.  ✓  1.2s, 900+40 tokens",
 			"the  woman  see-TH.3SG  the  river", "rule-based: Lu mena nara lu trubo.  = same"}, ""},
 		{"retry", []string{"llm", "-url", retry.URL, "-ctx", "full", en}, 0, []string{
 			"full context:", "attempt 1  Lu mena nara lu blomp.  ✗", "   ! blomp: not a form of any dictionary word",
+			"attempt 2  Lu mena nara lu trubo.  ✓"}, ""},
+		{"wrong meaning", []string{"llm", "-url", wrong.URL, en}, 0, []string{
+			"attempt 1  Lu huro nara lu trubo.  ✗", `   ! subject: the English needs "the woman"; you have "the dog"`,
 			"attempt 2  Lu mena nara lu trubo.  ✓"}, ""},
 		{"gives up", []string{"llm", "-url", bad.URL, "-attempts", "2", en}, 1, []string{
 			"attempt 2", "no valid translation in 2 attempts"}, ""},

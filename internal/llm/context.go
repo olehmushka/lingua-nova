@@ -111,29 +111,40 @@ func (b *Builder) Full() Context {
 func (b *Builder) Retrieved(sentence string) Context {
 	want := map[string]bool{}
 	for _, tok := range b.Tagger.Tag(sentence).Tokens {
-		found := false
-		for _, r := range tok.Readings {
-			for _, e := range r.Entries {
-				want[e.ID], found = true, true
-			}
-		}
-		if found {
-			continue
-		}
-		lemma := strings.ToLower(tok.Text)
-		if len(tok.Readings) > 0 {
-			lemma = tok.Readings[0].Lemma
-		}
-		for i, h := range b.Lex.Search(lemma) {
-			if i == 3 || h.Match > lexicon.MatchWord {
-				break
-			}
-			want[h.Entry.ID] = true
+		for _, id := range candidates(b.Lex, tok) {
+			want[id] = true
 		}
 	}
 	return b.context(func(e *lexicon.Entry) bool {
 		return want[e.ID] || slices.Contains(closedFiles, filepath.Base(e.File))
 	})
+}
+
+// candidates are the entries an English token can translate to: its
+// readings' entries, or for a word with none, the top dictionary hits.
+func candidates(lex *lexicon.Lexicon, tok english.Token) []string {
+	var ids []string
+	for _, r := range tok.Readings {
+		for _, e := range r.Entries {
+			if !slices.Contains(ids, e.ID) {
+				ids = append(ids, e.ID)
+			}
+		}
+	}
+	if len(ids) > 0 {
+		return ids
+	}
+	lemma := strings.ToLower(tok.Text)
+	if len(tok.Readings) > 0 {
+		lemma = tok.Readings[0].Lemma
+	}
+	for i, h := range lex.Search(lemma) {
+		if i == 3 || h.Match > lexicon.MatchWord {
+			break
+		}
+		ids = append(ids, h.Entry.ID)
+	}
+	return ids
 }
 
 func (b *Builder) context(keep func(*lexicon.Entry) bool) Context {

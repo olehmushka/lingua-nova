@@ -44,7 +44,7 @@ func setup(t *testing.T) (*Builder, *Checker) {
 		for _, e := range lex.Entries {
 			ids[e.ID] = true
 		}
-		sChecker = &Checker{Glosser: tr.Glosser, Known: func(id string) bool { return ids[id] }}
+		sChecker = &Checker{Glosser: tr.Glosser, Known: func(id string) bool { return ids[id] }, Ref: tr, Lex: lex}
 	})
 	if setupErr != nil {
 		t.Fatal(setupErr)
@@ -128,7 +128,7 @@ func TestVerify(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := k.Verify(tt.answer)
+			c := k.Verify(tt.answer, nil)
 			probs, rems := strings.Join(c.Problems, "\n"), strings.Join(c.Remarks, "\n")
 			if tt.problem == "" && !c.OK() {
 				t.Errorf("want pass, got problems:\n%s", probs)
@@ -143,19 +143,82 @@ func TestVerify(t *testing.T) {
 	}
 }
 
-// Every interlinear example in grammar.md is a known-good answer.
+// Every interlinear example in grammar.md is a known-good answer, in
+// form and in meaning.
 func TestVerifyGrammarExamples(t *testing.T) {
 	b, k := setup(t)
 	for _, ex := range b.Examples {
-		if c := k.Verify(Answer{Translation: ex.Rifatian}); !c.OK() {
+		if c := k.Verify(Answer{Translation: ex.Rifatian}, k.Expect(ex.English)); !c.OK() {
 			t.Errorf("%q: %v", ex.Rifatian, c.Problems)
 		}
 	}
 }
 
+// TestMeaning: answers that are good Rifatian but say something else. The
+// bad answers are the local model's from the first runs (SESSION-LOG
+// 2026-10-17); each passed the form check alone.
+func TestMeaning(t *testing.T) {
+	_, k := setup(t)
+	tests := []struct {
+		english, answer string
+		kind            string   // prefix of Expectation.Kind
+		want            []string // substrings of the meaning problems; none = must pass
+	}{
+		// Right, including a dropped subject pronoun.
+		{"The dog eats the bread.", "Lu huro bauge lu gurna.", "frame", nil},
+		{"We will love the god.", "Muh noidaremu lu ouri.", "frame", nil},
+		{"We will love the god.", "Noidaremu lu ouri.", "frame", nil},
+		{"I saw nothing.", "Na naraxu zunhu.", "frame", nil},
+		{"Who saw the men?", "Ifa naraxe lu dubroh?", "frame", nil},
+		// Infinitive for the verb, no article.
+		{"The dog eats the bread.", "Huro baugir lu gurna.", "frame",
+			[]string{"no conjugated verb; the English needs eat-TH.3SG"}},
+		// Possessive as subject, present for past, adjective first, no article.
+		{"She didn't see the big house.", "Hane na nara gumo hoida.", "frame",
+			[]string{`subject: the English needs "3SG.F"; you have "3SG.F.POSS"`,
+				"verb: the English needs see-TH-PST-3SG; you have see-TH.3SG",
+				`object: the English needs "the house big", in this order; you have "big house"`}},
+		// na after the verb, white for big.
+		{"She didn't see the big house.", "Hana naraxe na lu hoida lirma.", "frame",
+			[]string{"negation: the English is negative; NEG goes right before the verb",
+				`you have "NEG the house white"`}},
+		// Changed subject to satisfy agreement.
+		{"We will love the god.", "Selah noidareh lu ouri.", "frame",
+			[]string{`subject: the English needs "1PL"; you have "2PL.POL"`}},
+		// Wrong ending on one of the five "love" verbs: the feedback is
+		// about the ending, not about choosing another verb.
+		{"We will love the god.", "Muh noidareh lu ouri.", "frame",
+			[]string{"verb: the English needs love.storge-TH-FUT-1PL; you have love.storge-TH-FUT-3PL"}},
+		// Wrong tense only.
+		{"Who saw the men?", "Ifa nara lu dubroh?", "frame", []string{"verb: the English needs see-TH-PST-3SG"}},
+		// No parse (an adverb): only the words are checked.
+		{"The dog sleeps quickly.", "Lu huro sile.", "lexical", nil},
+		{"The dog sleeps quickly.", "Lu mena sile.", "lexical",
+			[]string{`"dog" is missing`, "mena (woman): no English word means this"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.english+" "+tt.answer, func(t *testing.T) {
+			x := k.Expect(tt.english)
+			if !strings.HasPrefix(x.Kind(), tt.kind) {
+				t.Fatalf("kind %q, want %s", x.Kind(), tt.kind)
+			}
+			c := k.Verify(Answer{Translation: tt.answer}, x)
+			got := strings.Join(c.Meaning, "\n")
+			if len(tt.want) == 0 && !c.OK() {
+				t.Errorf("want pass, got problems:\n%s", strings.Join(c.Problems, "\n"))
+			}
+			for _, w := range tt.want {
+				if !strings.Contains(got, w) {
+					t.Errorf("want a meaning problem containing %q, got:\n%s", w, got)
+				}
+			}
+		})
+	}
+}
+
 func TestFeedback(t *testing.T) {
 	_, k := setup(t)
-	fb := k.Verify(Answer{Translation: "Lu mena nara lu blomp."}).Feedback()
+	fb := k.Verify(Answer{Translation: "Lu mena nara lu blomp."}, nil).Feedback()
 	for _, want := range []string{"see-TH.3SG", "Problems:", "- blomp: not a form of any dictionary word"} {
 		if !strings.Contains(fb, want) {
 			t.Errorf("feedback missing %q:\n%s", want, fb)
@@ -194,17 +257,22 @@ func (f *fakeService) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 func TestTranslateLoop(t *testing.T) {
 	b, k := setup(t)
 	const bad, good = "Lu mena nara lu blomp.", "Lu mena nara lu trubo."
+	const blomp = "blomp: not a form of any dictionary word"
 	tests := []struct {
 		name     string
 		answers  []string
 		attempts int
 		ok       bool
 		err      string
+		feedback string // in every retry
 	}{
-		{"first try", []string{good}, 1, true, ""},
-		{"fixed after feedback", []string{bad, good}, 2, true, ""},
-		{"gives up", []string{bad}, 3, false, ""},
-		{"malformed reply", []string{bad, "!malformed"}, 1, false, "not a valid answer"},
+		{"first try", []string{good}, 1, true, "", ""},
+		{"fixed after feedback", []string{bad, good}, 2, true, "", blomp},
+		{"gives up", []string{bad}, 3, false, "", blomp},
+		{"malformed reply", []string{bad, "!malformed"}, 1, false, "not a valid answer", blomp},
+		// Good Rifatian, wrong meaning (the dog, not the woman).
+		{"fixed after meaning feedback", []string{"Lu huro nara lu trubo.", good}, 2, true, "",
+			`subject: the English needs "the woman"; you have "the dog"`},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -231,7 +299,7 @@ func TestTranslateLoop(t *testing.T) {
 				if req.Model != DefaultModel || req.NumCtx == 0 || len(req.Context.Entries) != len(ctx.Entries) {
 					t.Errorf("request %d: model %q, num_ctx %d, %d entries", i, req.Model, req.NumCtx, len(req.Context.Entries))
 				}
-				if i > 0 && !strings.Contains(req.History[i-1].Feedback, "blomp: not a form of any dictionary word") {
+				if i > 0 && !strings.Contains(req.History[i-1].Feedback, tt.feedback) {
 					t.Errorf("request %d feedback:\n%s", i, req.History[i-1].Feedback)
 				}
 			}

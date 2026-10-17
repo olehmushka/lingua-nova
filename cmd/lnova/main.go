@@ -820,13 +820,14 @@ func cmdLLM(langDir string, args []string, stdout, stderr io.Writer) int {
 	}
 	lt := &llm.Translator{
 		Client:  llm.NewClient(*url),
-		Checker: &llm.Checker{Glosser: tr.Glosser, Known: func(id string) bool { return ids[id] }},
+		Checker: &llm.Checker{Glosser: tr.Glosser, Known: func(id string) bool { return ids[id] }, Ref: tr, Lex: lex},
 	}
 
 	c := b.Build(*mode, sentence)
 	opt := llm.Options{Model: *model, MaxAttempts: *attempts}
 	fmt.Fprintf(stdout, "%s context: %d entries, %s\n", *mode, len(c.Entries), *model)
 	res, err := lt.Translate(context.Background(), sentence, c, opt)
+	fmt.Fprintf(stdout, "meaning check: %s\n", res.Expect.Kind())
 	tw := tabwriter.NewWriter(stdout, 0, 0, 2, ' ', 0)
 	for i, a := range res.Attempts {
 		mark := "✗"

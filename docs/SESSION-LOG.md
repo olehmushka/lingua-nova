@@ -6,6 +6,79 @@ why, and where to pick up. The task list itself lives in `ROADMAP.md` →
 
 ---
 
+## 2026-10-17: Meaning check for LLM answers
+
+### Done
+
+- **Glosser rule** (`internal/gloss/gloss.go`): a pronoun without case
+  forms (`ifa` who, `itu` what, `zunhu` nothing) as the subject agrees 3SG,
+  **only when the verb has an object**. Without one, `Ifa naraxis?` is
+  "whom did you see?" (fronted object + pro-drop) and stays valid.
+- **Frames** (`internal/gloss/frame.go`): `Result.Clauses()` cuts each
+  clause into Wh / Subject / Neg / Verb / Object, each word as entry id +
+  features. Question-word ids come from `english/words.yaml` (WhP, WhAdv)
+  via `translate.New` → `Glosser.Wh`.
+- **Meaning check** (`internal/llm/meaning.go`): `Checker.Expect(english)`
+  runs once per sentence. If the English parses, every rule-based
+  translation is a reference, and the answer's clauses must equal one of
+  them (a dropped subject pronoun is fine). Otherwise a **lexical**
+  fallback: each English content word needs one of its entries, and the
+  answer adds no content words. Meaning problems fail the answer and go
+  back as feedback, naming glosses (`see-TH-PST-3SG`), not spelled words.
+  Ties between references go to the one sharing the most entries with the
+  answer. `lnova llm` prints `meaning check: frame, N reference(s)`.
+- `candidates()` factored out of `Builder.Retrieved`: retrieval and the
+  lexical check share it.
+
+### Key decisions (the user's choices)
+
+| Area | Decision |
+|---|---|
+| Meaning | Frame comparison against the rule-based translations, lexical fallback when the English doesn't parse |
+| Form rules | Only the question-word 3SG rule; the other gaps (no finite verb, `na` after the verb, possessive subject, adjective order) are caught by the frame check when the English parses |
+| Severity | Meaning mismatches fail the answer and are fed back |
+
+### Measurements (same 7 sentences as last session)
+
+| | retrieved | full |
+|---|---|---|
+| passed, before | 7/7 | 6/6 |
+| passed, now | 3/7 | 3/7 |
+| passed and right, now | 3/7 | 3/7 |
+
+No false passes now. The 3 that pass are still grammar.md's examples
+(in the prompt). On the 4 new sentences the model fixes the slots it's
+told about (articles, `hane` → `hana`, adjective after the noun) but
+**can't inflect the verb** even when given the exact gloss: it produces
+`baugiru` for eat-TH.3SG, `eluvirxu`/`eluvareh` for love-FUT-1PL. A
+7B model doesn't learn a paradigm from a table in the prompt. That's
+the case for the next step, tool use: let it call `inflect`.
+
+### Concepts
+
+- **Predicate–argument structure**: who did what to whom, when, negated
+  or not. Two sentences mean the same if those slots match, whatever the
+  spelling. Reading both the answer and the reference through the *same*
+  glosser keeps the comparison symmetric.
+- **Reference-based evaluation with many references**: "you" × "love"
+  gives up to 20 correct translations; an answer must match one, and the
+  feedback compares it with the closest one (as BLEU uses multiple
+  references, but with exact slots instead of n-grams).
+- **Precise feedback isn't enough**: the model knew what it needed
+  (eat-TH.3SG) and still couldn't produce the form. Knowing vs. doing:
+  the gap tools are meant to close.
+
+### Start next session here
+
+1. `ROADMAP.md` → "▶ Next up": Tool use.
+2. Decided: `ifa` stays invariable (no who/whom/whose forms, like
+   Portuguese *quem*); as subject it takes 3SG; without an object the
+   ambiguity is left to context. Written into grammar.md → Questions.
+3. The lexical fallback only runs on English the Phase 4 grammar rejects;
+   it's tested but hasn't been seen on a real model answer yet.
+
+---
+
 ## 2026-10-17: Phase 5 LLM translation (local model)
 
 ### Done

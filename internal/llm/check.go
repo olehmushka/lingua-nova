@@ -6,7 +6,9 @@ import (
 	"strings"
 
 	"github.com/olehmushka/lingua-nova/internal/gloss"
+	"github.com/olehmushka/lingua-nova/internal/lexicon"
 	"github.com/olehmushka/lingua-nova/internal/morph"
+	"github.com/olehmushka/lingua-nova/internal/translate"
 )
 
 // Check is the validator's verdict on one answer.
@@ -14,6 +16,7 @@ type Check struct {
 	Gloss    *gloss.Result
 	Problems []string // fail the answer; sent back to the model
 	Remarks  []string // worth showing, but don't fail it
+	Meaning  []string // the problems that are about meaning, not form
 }
 
 // OK reports whether the answer passed.
@@ -23,23 +26,30 @@ func (c *Check) OK() bool { return len(c.Problems) == 0 }
 type Checker struct {
 	Glosser *gloss.Glosser
 	Known   func(id string) bool // is id a dictionary entry? nil: every id is
+
+	// For the meaning check (Expect); nil Ref: form only.
+	Ref *translate.Translator
+	Lex *lexicon.Lexicon
 }
 
 // Verify glosses the answer's translation and compares the result with
-// what the model claimed about each word.
+// what the model claimed about each word, and with what the English
+// means (x, from Expect; nil skips that).
 //
 // What fails an answer:
 //   - a word that isn't spelled with Rifatian letters, has no analysis,
 //     or only analyzes as an unknown root (the model made it up);
 //   - a grammar note from the glosser (agreement, two verbs);
 //   - a word the model says is a form of entry X, when the analyzer finds
-//     it's a form of some other entry Y and never of X.
+//     it's a form of some other entry Y and never of X;
+//   - a meaning that differs from the English: a slot of the clause
+//     (subject, verb, tense, negation, object) that matches no reference
+//     translation, or a missing or extra content word. This runs only
+//     once every word is a real one, so the feedback fixes words first.
 //
 // A claimed id that isn't in the lexicon, or claimed features that don't
 // match, are only remarks: the sentence can be right with its labels wrong.
-// What this can't catch: a valid sentence that means something else.
-// The glosser checks form, not meaning.
-func (k *Checker) Verify(a Answer) *Check {
+func (k *Checker) Verify(a Answer, x *Expectation) *Check {
 	c := &Check{}
 	if strings.TrimSpace(a.Translation) == "" {
 		c.Problems = append(c.Problems, "the translation is empty")
@@ -77,7 +87,11 @@ func (k *Checker) Verify(a Answer) *Check {
 		used[i] = true
 		k.claim(c, word, w.Readings, a.Words[i])
 	}
+	if len(c.Problems) == 0 {
+		c.Meaning = x.problems(c.Gloss)
+	}
 	c.Problems = append(c.Problems, c.Gloss.Notes...)
+	c.Problems = append(c.Problems, c.Meaning...)
 	return c
 }
 

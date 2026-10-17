@@ -24,6 +24,7 @@ type Attempt struct {
 // Result is every attempt at one sentence; the last one passed if OK.
 type Result struct {
 	Context  Context
+	Expect   *Expectation // what the answer must mean; nil: not checked
 	Attempts []Attempt
 	OK       bool
 }
@@ -63,7 +64,7 @@ func (t *Translator) Translate(ctx context.Context, english string, c Context, o
 	if opt.NumCtx == 0 {
 		opt.NumCtx = numCtx(c)
 	}
-	res := &Result{Context: c}
+	res := &Result{Context: c, Expect: t.Checker.Expect(english)}
 	var history []Turn
 	for range opt.MaxAttempts {
 		resp, err := t.Client.Translate(ctx, Request{
@@ -72,7 +73,7 @@ func (t *Translator) Translate(ctx context.Context, english string, c Context, o
 		if err != nil {
 			return res, err
 		}
-		chk := t.Checker.Verify(resp.Answer)
+		chk := t.Checker.Verify(resp.Answer, res.Expect)
 		res.Attempts = append(res.Attempts, Attempt{
 			Answer: resp.Answer, Check: chk,
 			PromptTokens: resp.PromptTokens, EvalTokens: resp.EvalTokens,

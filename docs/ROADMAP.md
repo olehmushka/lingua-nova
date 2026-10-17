@@ -7,17 +7,10 @@ previous one is "done", even if done means small.
 
 _Keep this section current: it's where every new session starts._
 
-1. **Decide how to close the validator gaps** that the first LLM runs
-   exposed (see SESSION-LOG 2026-10-17 "LLM translation"). Most answers
-   *pass* the glosser but are wrong:
-   - form gaps (glosser rules): a clause with no finite verb (`Huro
-     baugir`), `na` after the verb, a possessive pronoun as subject,
-     question-word agreement (`ifa naraxis`);
-   - meaning gaps: wrong word (`lirma` white for big), changed subject
-     (`Selah` for we), wrong tense. Candidate: check the model's claimed
-     `lexicon_id`s and features against what the English words retrieve.
-2. Then **Tool use** (Phase 5): the model calls `lookup` / `inflect` /
-   `analyze` instead of guessing.
+1. **Tool use** (Phase 5): the model calls `lookup` / `inflect` /
+   `analyze` instead of guessing. The meaning check (see SESSION-LOG
+   2026-10-17 "Meaning check") now says *what* is wrong; tools let the
+   model look up the fix instead of guessing again.
 
 ## Phase 0 — Learn the basics (reading, ~1–2 weeks alongside Phase 1)
 
@@ -194,7 +187,13 @@ the derivation.
   model's claimed ids/features) and retries with the gloss and problems
   (max 3). `lnova llm [-ctx] [-model] [-attempts] [-compare]`.
   First runs: almost everything passes, but only grammar.md's own examples
-  are right. The validator checks form, not meaning (see Next up).
+  are right. The validator checks form, not meaning.
+  → **Meaning check**: when the English parses, the rule-based
+  translations are references and the answer's clauses (wh, subject, na,
+  verb, object; `gloss.Result.Clauses`) must equal one of them; otherwise
+  a lexical check (every English content word's entry present, none
+  added). Meaning problems fail the answer and go back as feedback.
+  Glosser: a question word as subject agrees 3SG when the verb has an object.
 - [ ] **Tool use**: the LLM calls your Go functions (`lookup`, `inflect`, `analyze`) instead of guessing.
 - [ ] **Coin new words**: the LLM proposes roots for missing concepts, and the validator + sound change engine accept or reject them.
 - [ ] **Semantic search** with embeddings ("words related to the sea").

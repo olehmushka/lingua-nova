@@ -77,30 +77,47 @@ func (w Word) Gloss() string {
 type Result struct {
 	Words []Word
 	Notes []string // grammar problems the rules found: agreement
+
+	wh map[string]bool // the glosser's question words, for Clauses
 }
 
 // Glosser glosses sentences with an analyzer.
-type Glosser struct{ a *morph.Analyzer }
+type Glosser struct {
+	a *morph.Analyzer
+	// Wh holds the entry ids of the question words (who, where…), which
+	// Result.Clauses puts in their own slot. The lexicon doesn't mark
+	// them, so the caller says which they are.
+	Wh map[string]bool
+}
 
-func New(a *morph.Analyzer) *Glosser { return &Glosser{a} }
+func New(a *morph.Analyzer) *Glosser { return &Glosser{a: a} }
 
 // Gloss analyzes every word, then disambiguates clause by clause.
 func (g *Glosser) Gloss(sentence string) *Result {
-	res := &Result{Words: Tokenize(sentence)}
+	res := &Result{Words: Tokenize(sentence), wh: g.Wh}
 	for i := range res.Words {
 		w := &res.Words[i]
 		w.Readings, w.Err = g.a.Analyze(w.Text)
 	}
-	ws := res.Words
+	for _, c := range clauses(res.Words) {
+		res.Notes = append(res.Notes, g.clause(c)...)
+	}
+	return res
+}
+
+// clauses splits words at clause boundaries; the clauses share ws's
+// backing array, so the rules can change their readings in place.
+func clauses(ws []Word) [][]Word {
+	var out [][]Word
 	for start := 0; start < len(ws); {
 		end := start + 1
 		for end < len(ws) && !boundary(ws, end-1) {
 			end++
 		}
-		res.Notes = append(res.Notes, g.clause(ws[start:end])...)
+		out = append(out, ws[start:end])
 		start = end
 	}
-	return res
+	return out
 }
 
 // clauseEnd is punctuation that ends a clause after a word.
@@ -120,7 +137,11 @@ func boundary(ws []Word, i int) bool {
 //  2. a subject pronoun comes before the verb, an object pronoun after;
 //  3. the subject agrees with the verb in person and number. The subject
 //     is the nearest word before the verb, skipping negation and
-//     adjectives; a clause can have none (pro-drop: Naraxu chi).
+//     adjectives; a clause can have none (pro-drop: Naraxu chi). A pronoun
+//     without case forms (ifa who, itu what, zunhu nothing) agrees in 3SG,
+//     as in English, but only when the verb has an object: otherwise it
+//     can be a fronted object with the subject dropped (Ifa naraxis? =
+//     whom did you see?).
 //
 // A clause without a verb (Na.) is left as the analyzer read it.
 func (g *Glosser) clause(ws []Word) (notes []string) {
@@ -150,14 +171,23 @@ func (g *Glosser) clause(ws []Word) (notes []string) {
 		}
 	}
 
-	s := subject(g.a, ws[:v])
+	agree := g.a.Agreement
+	if slices.ContainsFunc(ws[v+1:], isArgument) {
+		agree = func(an morph.Analysis) (string, bool) {
+			if bare(an) {
+				return "3SG", true
+			}
+			return g.a.Agreement(an)
+		}
+	}
+	s := subject(agree, ws[:v])
 	if s < 0 {
 		return notes
 	}
 	sw, vw := &ws[s], &ws[v]
-	verbPersons, subjPersons := persons(vw.Readings, morph.Analysis.Finite), persons(sw.Readings, g.a.Agreement)
+	verbPersons, subjPersons := persons(vw.Readings, morph.Analysis.Finite), persons(sw.Readings, agree)
 	sw.remove(fmt.Sprintf("the verb %s is %s", vw.Text, strings.Join(verbPersons, "/")), func(an morph.Analysis) bool {
-		p, ok := g.a.Agreement(an)
+		p, ok := agree(an)
 		return ok && !slices.Contains(verbPersons, p)
 	})
 	vw.remove(fmt.Sprintf("the subject %s is %s", sw.Text, strings.Join(subjPersons, "/")), func(an morph.Analysis) bool {
@@ -165,7 +195,7 @@ func (g *Glosser) clause(ws []Word) (notes []string) {
 		return ok && !slices.Contains(subjPersons, p)
 	})
 
-	sp, sok := g.a.Agreement(*sw.Top())
+	sp, sok := agree(*sw.Top())
 	vp, vok := vw.Top().Finite()
 	if sok && vok && sp != vp {
 		notes = append(notes, fmt.Sprintf("%s (%s) doesn't agree with %s (%s)", strings.ToLower(sw.Text), sp, strings.ToLower(vw.Text), vp))
@@ -189,7 +219,8 @@ func verb(ws []Word) int {
 }
 
 // subject finds the subject among the words before the verb, or -1.
-func subject(a *morph.Analyzer, before []Word) int {
+// agree is the person a reading can be the subject of.
+func subject(agree func(morph.Analysis) (string, bool), before []Word) int {
 	for i := len(before) - 1; i >= 0; i-- {
 		rs := before[i].Readings
 		skip := len(rs) > 0 && !slices.ContainsFunc(rs, func(an morph.Analysis) bool {
@@ -198,12 +229,24 @@ func subject(a *morph.Analyzer, before []Word) int {
 		if skip {
 			continue
 		}
-		if slices.ContainsFunc(rs, func(an morph.Analysis) bool { _, ok := a.Agreement(an); return ok }) {
+		if slices.ContainsFunc(rs, func(an morph.Analysis) bool { _, ok := agree(an); return ok }) {
 			return i
 		}
 		return -1
 	}
 	return -1
+}
+
+// bare reports whether an is a pronoun without case forms: ifa, itu, zunhu.
+func bare(an morph.Analysis) bool {
+	return an.POS == "pronoun" && an.Entry != nil && len(an.Form.Feats) == 0
+}
+
+// isArgument reports whether w can be a verb's object: a noun or pronoun.
+func isArgument(w Word) bool {
+	return slices.ContainsFunc(w.Readings, func(an morph.Analysis) bool {
+		return an.POS == "noun" || an.POS == "pronoun"
+	})
 }
 
 // persons collects the persons readings agree in: 1SG, 3SG.

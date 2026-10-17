@@ -86,6 +86,18 @@ func TestGloss(t *testing.T) {
 		{"Lu menah narah.", "Lu mena-h nar-a-h.", "the woman-PL see-TH-3PL", nil},
 		{"Lu mena lirma nara.", "Lu mena lirma nar-a.", "the woman white see-TH.3SG", nil}, // adjective skipped
 		{"Lu menas huro nara.", "Lu mena-s huro nar-a.", "the woman-POSS dog see-TH.3SG", nil},
+		// A question word or zunhu as the subject takes a 3SG verb, but only
+		// with an object: without one it can be a fronted object (whom did
+		// you see?).
+		{"Ifa naraxe lu dubroh?", "Ifa nar-a-x-e lu dubro-h?", "who see-TH-PST-3SG the man-PL", nil},
+		{"Ifa naraxis lu dubroh?", "Ifa nar-a-x-is lu dubro-h?", "who see-TH-PST-2SG the man-PL",
+			[]string{"ifa (3SG) doesn't agree with naraxis (2SG)"}},
+		{"Ifa na naraxis lu dubroh?", "Ifa na nar-a-x-is lu dubro-h?", "who NEG see-TH-PST-2SG the man-PL",
+			[]string{"ifa (3SG) doesn't agree with naraxis (2SG)"}},
+		{"Ifa naraxis?", "Ifa nar-a-x-is?", "who see-TH-PST-2SG", nil},
+		{"Itu naraxis?", "Itu nar-a-x-is?", "what see-TH-PST-2SG", nil},
+		{"Itu chu naraxis?", "Itu chu nar-a-x-is?", "what 2SG see-TH-PST-2SG", nil},
+		{"Zunhu zuvixe.", "Zunhu zuv-i-x-e.", "nothing fall-TH-PST-3SG", nil},
 		// Pro-drop, and a clause without a verb: no subject, no note.
 		{"Naraxu chi.", "Nar-a-x-u chi.", "see-TH-PST-1SG 2SG.OBJ", nil},
 		{"Na.", "Na.", "NEG", nil},
@@ -156,6 +168,47 @@ func TestTokenize(t *testing.T) {
 		}
 		if !slices.Equal(got, tt.want) {
 			t.Errorf("Tokenize(%q) = %q, want %q", tt.in, got, tt.want)
+		}
+	}
+}
+
+func TestClauses(t *testing.T) {
+	g := glosser(t)
+	g.Wh = map[string]bool{"who": true, "what": true}
+	str := func(ts []Tok) string {
+		var out []string
+		for _, t := range ts {
+			out = append(out, t.ID+":"+t.Feats)
+		}
+		return strings.Join(out, " ")
+	}
+	one := func(t *Tok) string {
+		if t == nil {
+			return "-"
+		}
+		return str([]Tok{*t})
+	}
+	tests := []struct {
+		sentence string
+		want     []string // per clause: wh | subject | neg | verb | object
+	}{
+		{"Lu mena nara lu trubo.", []string{"- | the: woman:SG | - | see:PRS.3SG | the: river:SG"}},
+		{"Ifa naraxe lu dubroh?", []string{"who: |  | - | see:PST.3SG | the: man:PL"}},
+		{"Itu chu naraxis?", []string{"what: | thou:SG.SBJ | - | see:PST.2SG | "}},
+		{"Mu na naraxu zunhu.", []string{"- | i:SG.SBJ | not: | see:PST.1SG | nothing:"}},
+		// No finite verb: everything is Subject.
+		{"Huro baugir lu gurna.", []string{"- | dog:SG eat:INF the: bread:SG | - | - | "}},
+		// na after the verb lands in the object.
+		{"Hana nara na lu hoida.", []string{"- | she:SG.SBJ | - | see:PRS.3SG | not: the: house:SG"}},
+		{"Naraxis honi? — Naraxu.", []string{"- |  | - | see:PST.2SG | he:SG.OBJ", "- |  | - | see:PST.1SG | "}},
+	}
+	for _, tt := range tests {
+		var got []string
+		for _, c := range g.Gloss(tt.sentence).Clauses() {
+			got = append(got, strings.Join([]string{one(c.Wh), str(c.Subject), one(c.Neg), one(c.Verb), str(c.Object)}, " | "))
+		}
+		if !slices.Equal(got, tt.want) {
+			t.Errorf("Clauses(%q) =\n  %s\nwant\n  %s", tt.sentence, strings.Join(got, "\n  "), strings.Join(tt.want, "\n  "))
 		}
 	}
 }

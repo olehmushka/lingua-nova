@@ -181,6 +181,11 @@ As in Romance history (Latin *cantare habeo* → Portuguese *cantarei*):
   - **cu-** for circumstances: `cuda` when, `cuxa` how, `cupe` why
 
   Example: `Cuda chu naraxis hani?` = "When didst thou see her?"
+- **Question words don't inflect**: `ifa` is who, whom and whose, like
+  Portuguese *quem*. As the subject it takes a **3sg** verb:
+  `Ifa naraxe lu dubroh?` = "Who saw the men?" With no object, context
+  decides: `Ifa naraxis?` = "Whom didst thou see?" (subject dropped), not
+  "Who saw?" (that would be `Ifa naraxe?`).
 - **Answering yes**: repeat the verb, as Portuguese does (*Viste? — Vi.*):
   `Naraxis honi? — Naraxu.` = "Did you see him? — Yes (I saw)."
 - No answer: `Na.` or `Na naraxu.`
