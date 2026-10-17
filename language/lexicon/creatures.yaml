@@ -1,0 +1,418 @@
+# Other animals: reptiles, amphibians, spiders, crustaceans, molluscs, worms, sea creatures.
+
+- id: lizard
+  proto: seuvima
+  modern: seuvima
+  pos: noun
+  gender: f
+  gloss: lizard
+  definition: "A lizard."
+
+- id: gecko
+  proto: seuvimitta
+  modern: seuvimita
+  pos: noun
+  gender: f
+  gloss: gecko
+  definition: "A gecko."
+  notes: "*seuvimitta → seuvimita (rule 3: tt > t). Diminutive: lizard *seuvima + -itta."
+
+- id: iguana
+  proto: gautilo
+  modern: gaudilo
+  pos: noun
+  gender: m
+  gloss: iguana
+  definition: "An iguana."
+  notes: "*gautilo → gaudilo (rule 2: t > d / V_V)."
+
+- id: chameleon
+  proto: fippoba
+  modern: fipoba
+  pos: noun
+  gender: f
+  gloss: chameleon
+  definition: "A chameleon."
+  notes: "*fippoba → fipoba (rule 3: pp > p)."
+
+- id: crocodile
+  proto: cluzi
+  modern: cluzi
+  pos: noun
+  gender: m
+  gloss: crocodile
+  definition: "A crocodile."
+  notes: "Gender listed: -i is unmarked."
+
+- id: caiman
+  proto: cluzitto
+  modern: cluzito
+  pos: noun
+  gender: m
+  gloss: caiman
+  definition: "A caiman."
+  notes: "*cluzitto → cluzito (rule 3: tt > t). Diminutive: crocodile *cluzi + -itto."
+
+- id: alligator
+  proto: sauclio
+  modern: saulho
+  pos: noun
+  gender: m
+  gloss: alligator
+  definition: "An alligator."
+  notes: "*sauclio → saulho (rule 1: li > lh / _V; rule 6: c > ∅ / _lh)."
+
+- id: turtle
+  proto: beura
+  modern: beura
+  pos: noun
+  gender: f
+  gloss: turtle
+  definition: "A turtle."
+
+- id: tortoise
+  proto: beurabauna
+  modern: beurabauna
+  pos: noun
+  gender: f
+  gloss: tortoise
+  definition: "A tortoise (\"earth turtle\")."
+  notes: "Compound: turtle *beura + earth *bauna."
+
+- id: viper
+  proto: arsola
+  modern: arsola
+  pos: noun
+  gender: f
+  gloss: viper
+  definition: "A viper."
+
+- id: cobra
+  proto: dauvabe
+  modern: dauvabe
+  pos: noun
+  gender: m
+  gloss: cobra
+  definition: "A cobra."
+  notes: "Gender listed: -e is unmarked."
+
+- id: mamba
+  proto: criza
+  modern: criza
+  pos: noun
+  gender: f
+  gloss: mamba
+  definition: "A mamba."
+
+- id: python
+  proto: euse
+  modern: euse
+  pos: noun
+  gender: m
+  gloss: python
+  definition: "A python."
+  notes: "Gender listed: -e is unmarked."
+
+- id: boa
+  proto: siziaron
+  modern: sijaro
+  pos: noun
+  gender: m
+  gloss: boa
+  definition: "A boa."
+  notes: "*siziaron → sijaro (rule 1: zi > j / _V; rule 4: n > ∅ / _#). Augmentative: snake *sizio + -aron."
+
+- id: anaconda
+  proto: siziaronaron
+  modern: sijaronaro
+  pos: noun
+  gender: m
+  gloss: anaconda
+  definition: "An anaconda."
+  notes: "*siziaronaron → sijaronaro (rule 1: zi > j / _V; rule 4: n > ∅ / _#). Augmentative: boa *siziaron + -aron."
+
+- id: rattlesnake
+  proto: siziorusca
+  modern: sijorusca
+  pos: noun
+  gender: m
+  gloss: rattlesnake
+  definition: "A rattlesnake (\"tail snake\")."
+  notes: "*siziorusca → sijorusca (rule 1: zi > j / _V). Compound: snake *sizio + tail *rusca; gender from the head (snake)."
+
+- id: frog
+  proto: maldo
+  modern: maldo
+  pos: noun
+  gender: m
+  gloss: frog
+  definition: "A frog."
+
+- id: toad
+  proto: maldaron
+  modern: maldaro
+  pos: noun
+  gender: m
+  gloss: toad
+  definition: "A toad."
+  notes: "*maldaron → maldaro (rule 4: n > ∅ / _#). Augmentative: frog *maldo + -aron."
+
+- id: tadpole
+  proto: malditto
+  modern: maldito
+  pos: noun
+  gender: m
+  gloss: tadpole
+  definition: "A tadpole."
+  notes: "*malditto → maldito (rule 3: tt > t). Diminutive: frog *maldo + -itto."
+
+- id: salamander
+  proto: haunogo
+  modern: haunogo
+  pos: noun
+  gender: m
+  gloss: salamander
+  definition: "A salamander."
+
+- id: newt
+  proto: haunogitto
+  modern: haunogito
+  pos: noun
+  gender: m
+  gloss: newt
+  definition: "A newt."
+  notes: "*haunogitto → haunogito (rule 3: tt > t). Diminutive: salamander *haunogo + -itto."
+
+- id: axolotl
+  proto: haunogesia
+  modern: haunogexa
+  pos: noun
+  gender: m
+  gloss: axolotl
+  definition: "An axolotl (\"water salamander\")."
+  notes: "*haunogesia → haunogexa (rule 1: si > x / _V). Compound: salamander *haunogo + water *esia; gender from the head (salamander)."
+
+- id: spider
+  proto: murgada
+  modern: murgada
+  pos: noun
+  gender: f
+  gloss: spider
+  definition: "A spider."
+
+- id: tarantula
+  proto: murgadaran
+  modern: murgadara
+  pos: noun
+  gender: f
+  gloss: tarantula
+  definition: "A tarantula."
+  notes: "*murgadaran → murgadara (rule 4: n > ∅ / _#). Augmentative: spider *murgada + -aran."
+
+- id: scorpion
+  proto: savaza
+  modern: savaza
+  pos: noun
+  gender: f
+  gloss: scorpion
+  definition: "A scorpion."
+
+- id: tick
+  proto: zauco
+  modern: zaugo
+  pos: noun
+  gender: m
+  gloss: tick.animal
+  definition: "A tick."
+  notes: "*zauco → zaugo (rule 2: c > g / V_V)."
+
+- id: mite
+  proto: zaucitto
+  modern: zaugito
+  pos: noun
+  gender: m
+  gloss: mite
+  definition: "A mite."
+  notes: "*zaucitto → zaugito (rule 2: c > g / V_V; rule 3: tt > t). Diminutive: tick *zauco + -itto."
+
+- id: centipede
+  proto: vaslo
+  modern: vaslo
+  pos: noun
+  gender: m
+  gloss: centipede
+  definition: "A centipede."
+
+- id: millipede
+  proto: vaslaron
+  modern: vaslaro
+  pos: noun
+  gender: m
+  gloss: millipede
+  definition: "A millipede."
+  notes: "*vaslaron → vaslaro (rule 4: n > ∅ / _#). Augmentative: centipede *vaslo + -aron."
+
+- id: earthworm
+  proto: cerbobauna
+  modern: cerbobauna
+  pos: noun
+  gender: m
+  gloss: earthworm
+  definition: "An earthworm (\"earth worm\")."
+  notes: "Compound: worm *cerbo + earth *bauna; gender from the head (worm)."
+
+- id: leech
+  proto: hocoha
+  modern: hogoha
+  pos: noun
+  gender: f
+  gloss: leech
+  definition: "A leech."
+  notes: "*hocoha → hogoha (rule 2: c > g / V_V)."
+
+- id: snail
+  proto: paite
+  modern: paide
+  pos: noun
+  gender: m
+  gloss: snail
+  definition: "A snail."
+  notes: "*paite → paide (rule 2: t > d / V_V). Gender listed: -e is unmarked."
+
+- id: slug
+  proto: gaze
+  modern: gaze
+  pos: noun
+  gender: m
+  gloss: slug
+  definition: "A slug."
+  notes: "Gender listed: -e is unmarked."
+
+- id: crab
+  proto: varnora
+  modern: varnora
+  pos: noun
+  gender: f
+  gloss: crab
+  definition: "A crab."
+
+- id: lobster
+  proto: loduza
+  modern: loduza
+  pos: noun
+  gender: f
+  gloss: lobster
+  definition: "A lobster."
+
+- id: shrimp
+  proto: loduzitta
+  modern: loduzita
+  pos: noun
+  gender: f
+  gloss: shrimp
+  definition: "A shrimp."
+  notes: "*loduzitta → loduzita (rule 3: tt > t). Diminutive: lobster *loduza + -itta."
+
+- id: crayfish
+  proto: loduzatrupo
+  modern: loduzatrubo
+  pos: noun
+  gender: f
+  gloss: crayfish
+  definition: "A crayfish (\"river lobster\")."
+  notes: "*loduzatrupo → loduzatrubo (rule 2: p > b / V_V). Compound: lobster *loduza + river *trupo; gender from the head (lobster)."
+
+- id: octopus
+  proto: rarza
+  modern: rarza
+  pos: noun
+  gender: f
+  gloss: octopus
+  definition: "An octopus."
+
+- id: squid
+  proto: trusa
+  modern: trusa
+  pos: noun
+  gender: f
+  gloss: squid
+  definition: "A squid."
+
+- id: cuttlefish
+  proto: trusitta
+  modern: trusita
+  pos: noun
+  gender: f
+  gloss: cuttlefish
+  definition: "A cuttlefish."
+  notes: "*trusitta → trusita (rule 3: tt > t). Diminutive: squid *trusa + -itta."
+
+- id: oyster
+  proto: mizama
+  modern: mizama
+  pos: noun
+  gender: f
+  gloss: oyster
+  definition: "An oyster."
+
+- id: mussel
+  proto: geire
+  modern: geire
+  pos: noun
+  gender: m
+  gloss: mussel
+  definition: "A mussel."
+  notes: "Gender listed: -e is unmarked."
+
+- id: clam
+  proto: auvafan
+  modern: auvafa
+  pos: noun
+  gender: f
+  gloss: clam
+  definition: "A clam."
+  notes: "*auvafan → auvafa (rule 4: n > ∅ / _#)."
+
+- id: conch
+  proto: hehu
+  modern: hehu
+  pos: noun
+  gender: m
+  gloss: conch
+  definition: "A conch."
+  notes: "Gender listed: -u is unmarked."
+
+- id: cowrie
+  proto: podita
+  modern: podida
+  pos: noun
+  gender: f
+  gloss: cowrie
+  definition: "A cowrie, whose shells were money in Africa and Asia."
+  notes: "*podita → podida (rule 2: t > d / V_V)."
+
+- id: jellyfish
+  proto: vilmi
+  modern: vilmi
+  pos: noun
+  gender: m
+  gloss: jellyfish
+  definition: "A jellyfish."
+  notes: "Gender listed: -i is unmarked."
+
+- id: coral
+  proto: geulana
+  modern: geulana
+  pos: noun
+  gender: f
+  gloss: coral
+  definition: "Coral."
+
+- id: urchin
+  proto: tefazahor
+  modern: tefazahor
+  pos: noun
+  gender: f
+  gloss: urchin
+  definition: "A sea urchin (\"sea hedgehog\")."
+  notes: "Compound: hedgehog *tefa + sea *zahor."

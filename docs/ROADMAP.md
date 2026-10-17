@@ -14,6 +14,8 @@ _Keep this section current: it's where every new session starts._
    concepts; the validator + sound change engine accept or reject them.
    Consider doing **Evals** first: the 7-sentence script from this session
    is already most of one.
+3. Open question from the lexicon growth (SESSION-LOG 2026-10-18, later):
+   re-seed the generator weights from roots only, not derived words?
 
 ## Phase 0 — Learn the basics (reading, ~1–2 weeks alongside Phase 1)
 

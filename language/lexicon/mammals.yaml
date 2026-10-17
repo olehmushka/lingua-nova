@@ -1,0 +1,978 @@
+# Mammals.
+
+- id: animal
+  proto: tizita
+  modern: tizida
+  pos: noun
+  gender: f
+  gloss: animal
+  definition: "An animal, a beast."
+  notes: "*tizita → tizida (rule 2: t > d / V_V)."
+
+- id: lion
+  proto: sersebo
+  modern: sersebo
+  pos: noun
+  gender: m
+  gloss: lion
+  definition: "A lion."
+
+- id: tiger
+  proto: oisu
+  modern: oisu
+  pos: noun
+  gender: m
+  gloss: tiger
+  definition: "A tiger."
+  notes: "Gender listed: -u is unmarked."
+
+- id: leopard
+  proto: sersebitto
+  modern: sersebito
+  pos: noun
+  gender: m
+  gloss: leopard
+  definition: "A leopard."
+  notes: "*sersebitto → sersebito (rule 3: tt > t). Diminutive: lion *sersebo + -itto."
+
+- id: jaguar
+  proto: zalza
+  modern: zalza
+  pos: noun
+  gender: f
+  gloss: jaguar
+  definition: "A jaguar, the great spotted cat of the Americas."
+
+- id: ocelot
+  proto: zalzitta
+  modern: zalzita
+  pos: noun
+  gender: f
+  gloss: ocelot
+  definition: "An ocelot."
+  notes: "*zalzitta → zalzita (rule 3: tt > t). Diminutive: jaguar *zalza + -itta."
+
+- id: panther
+  proto: nuziobuzio
+  modern: nujobujo
+  pos: noun
+  gender: m
+  gloss: panther
+  definition: "A panther, a black leopard or jaguar."
+  notes: "*nuziobuzio → nujobujo (rule 1: zi > j / _V). Compound: cat *nuzio + black *buzio."
+
+- id: cheetah
+  proto: plole
+  modern: plole
+  pos: noun
+  gender: m
+  gloss: cheetah
+  definition: "A cheetah."
+  notes: "Gender listed: -e is unmarked."
+
+- id: lynx
+  proto: tarazen
+  modern: taraze
+  pos: noun
+  gender: m
+  gloss: lynx
+  definition: "A lynx."
+  notes: "*tarazen → taraze (rule 4: n > ∅ / _#). Gender listed: -e is unmarked."
+
+- id: puma
+  proto: tappeha
+  modern: tapeha
+  pos: noun
+  gender: f
+  gloss: puma
+  definition: "A puma, a cougar."
+  notes: "*tappeha → tapeha (rule 3: pp > p)."
+
+- id: kitten
+  proto: nuzitto
+  modern: nuzito
+  pos: noun
+  gender: m
+  gloss: kitten
+  definition: "A kitten."
+  notes: "*nuzitto → nuzito (rule 3: tt > t). Diminutive: cat *nuzio + -itto."
+
+- id: puppy
+  proto: huritto
+  modern: hurito
+  pos: noun
+  gender: m
+  gloss: puppy
+  definition: "A puppy."
+  notes: "*huritto → hurito (rule 3: tt > t). Diminutive: dog *huro + -itto."
+
+- id: hyena
+  proto: atrola
+  modern: atrola
+  pos: noun
+  gender: f
+  gloss: hyena
+  definition: "A hyena."
+
+- id: jackal
+  proto: hurlitto
+  modern: hurlito
+  pos: noun
+  gender: m
+  gloss: jackal
+  definition: "A jackal."
+  notes: "*hurlitto → hurlito (rule 3: tt > t). Diminutive: wolf *hurlo + -itto."
+
+- id: fox
+  proto: brittan
+  modern: brita
+  pos: noun
+  gender: f
+  gloss: fox
+  definition: "A fox."
+  notes: "*brittan → brita (rule 3: tt > t; rule 4: n > ∅ / _#)."
+
+- id: coyote
+  proto: purbro
+  modern: purbro
+  pos: noun
+  gender: m
+  gloss: coyote
+  definition: "A coyote."
+
+- id: cub
+  proto: dorvitto
+  modern: dorvito
+  pos: noun
+  gender: m
+  gloss: cub
+  definition: "A bear cub; the young of a bear or a big cat."
+  notes: "*dorvitto → dorvito (rule 3: tt > t). Diminutive: bear *dorvo + -itto."
+
+- id: elephant
+  proto: irdan
+  modern: irda
+  pos: noun
+  gender: f
+  gloss: elephant
+  definition: "An elephant."
+  notes: "*irdan → irda (rule 4: n > ∅ / _#)."
+
+- id: mammoth
+  proto: irdanaron
+  modern: irdanaro
+  pos: noun
+  gender: m
+  gloss: mammoth
+  definition: "A mammoth."
+  notes: "*irdanaron → irdanaro (rule 4: n > ∅ / _#). Augmentative: elephant *irdan + -aron."
+
+- id: rhinoceros
+  proto: heni
+  modern: heni
+  pos: noun
+  gender: m
+  gloss: rhinoceros
+  definition: "A rhinoceros."
+  notes: "Gender listed: -i is unmarked."
+
+- id: hippopotamus
+  proto: breccotrupo
+  modern: brecotrubo
+  pos: noun
+  gender: m
+  gloss: hippopotamus
+  definition: "A hippopotamus (\"river horse\")."
+  notes: "*breccotrupo → brecotrubo (rule 2: p > b / V_V; rule 3: cc > c). Compound: horse *brecco + river *trupo."
+
+- id: giraffe
+  proto: sevimi
+  modern: sevimi
+  pos: noun
+  gender: m
+  gloss: giraffe
+  definition: "A giraffe."
+  notes: "Gender listed: -i is unmarked."
+
+- id: zebra
+  proto: tausota
+  modern: tausoda
+  pos: noun
+  gender: f
+  gloss: zebra
+  definition: "A zebra."
+  notes: "*tausota → tausoda (rule 2: t > d / V_V)."
+
+- id: okapi
+  proto: zobra
+  modern: zobra
+  pos: noun
+  gender: f
+  gloss: okapi
+  definition: "An okapi."
+
+- id: camel
+  proto: lalca
+  modern: lalca
+  pos: noun
+  gender: f
+  gloss: camel
+  definition: "A camel."
+
+- id: llama
+  proto: cinovo
+  modern: cinovo
+  pos: noun
+  gender: m
+  gloss: llama
+  definition: "A llama."
+
+- id: alpaca
+  proto: cinovitto
+  modern: cinovito
+  pos: noun
+  gender: m
+  gloss: alpaca
+  definition: "An alpaca."
+  notes: "*cinovitto → cinovito (rule 3: tt > t). Diminutive: llama *cinovo + -itto."
+
+- id: donkey
+  proto: sippi
+  modern: sipi
+  pos: noun
+  gender: m
+  gloss: donkey
+  definition: "A donkey."
+  notes: "*sippi → sipi (rule 3: pp > p). Gender listed: -i is unmarked."
+
+- id: mule
+  proto: frilso
+  modern: frilso
+  pos: noun
+  gender: m
+  gloss: mule
+  definition: "A mule."
+
+- id: mare
+  proto: vaupuza
+  modern: vaubuza
+  pos: noun
+  gender: f
+  gloss: mare
+  definition: "A mare."
+  notes: "*vaupuza → vaubuza (rule 2: p > b / V_V)."
+
+- id: foal
+  proto: breccitto
+  modern: brecito
+  pos: noun
+  gender: m
+  gloss: foal
+  definition: "A foal."
+  notes: "*breccitto → brecito (rule 3: tt > t; rule 3: cc > c). Diminutive: horse *brecco + -itto."
+
+- id: pony
+  proto: breccopippo
+  modern: brecobipo
+  pos: noun
+  gender: m
+  gloss: pony
+  definition: "A pony."
+  notes: "*breccopippo → brecobipo (rule 2: p > b / V_V; rule 3: pp > p; rule 3: cc > c). Compound: horse *brecco + small *pippo."
+
+- id: ox
+  proto: hasno
+  modern: hasno
+  pos: noun
+  gender: m
+  gloss: ox
+  definition: "An ox."
+
+- id: bull
+  proto: lauhevo
+  modern: lauhevo
+  pos: noun
+  gender: m
+  gloss: bull
+  definition: "A bull."
+
+- id: calf
+  proto: ulditta
+  modern: uldita
+  pos: noun
+  gender: f
+  gloss: calf
+  definition: "A calf."
+  notes: "*ulditta → uldita (rule 3: tt > t). Diminutive: cow *ulda + -itta."
+
+- id: buffalo
+  proto: hasnaron
+  modern: hasnaro
+  pos: noun
+  gender: m
+  gloss: buffalo
+  definition: "A buffalo."
+  notes: "*hasnaron → hasnaro (rule 4: n > ∅ / _#). Augmentative: ox *hasno + -aron."
+
+- id: bison
+  proto: hosbi
+  modern: hosbi
+  pos: noun
+  gender: m
+  gloss: bison
+  definition: "A bison."
+  notes: "Gender listed: -i is unmarked."
+
+- id: yak
+  proto: hasnovelda
+  modern: hasnovelda
+  pos: noun
+  gender: m
+  gloss: yak
+  definition: "A yak (\"mountain ox\")."
+  notes: "Compound: ox *hasno + mountain *velda; gender from the head (ox)."
+
+- id: zebu
+  proto: euti
+  modern: eudi
+  pos: noun
+  gender: m
+  gloss: zebu
+  definition: "A zebu, the humped cattle of India and Africa."
+  notes: "*euti → eudi (rule 2: t > d / V_V). Gender listed: -i is unmarked."
+
+- id: ram
+  proto: souvizom
+  modern: souvizo
+  pos: noun
+  gender: m
+  gloss: ram
+  definition: "A ram."
+  notes: "*souvizom → souvizo (rule 4: m > ∅ / _#)."
+
+- id: lamb
+  proto: meutitta
+  modern: meudita
+  pos: noun
+  gender: f
+  gloss: lamb
+  definition: "A lamb."
+  notes: "*meutitta → meudita (rule 2: t > d / V_V; rule 3: tt > t). Diminutive: sheep *meuta + -itta."
+
+- id: kid
+  proto: zeccitto
+  modern: zecito
+  pos: noun
+  gender: m
+  gloss: kid.goat
+  definition: "A kid, a young goat."
+  notes: "*zeccitto → zecito (rule 3: tt > t; rule 3: cc > c). Diminutive: goat *zecco + -itto."
+
+- id: ibex
+  proto: zeccovelda
+  modern: zecovelda
+  pos: noun
+  gender: m
+  gloss: ibex
+  definition: "An ibex (\"mountain goat\")."
+  notes: "*zeccovelda → zecovelda (rule 3: cc > c). Compound: goat *zecco + mountain *velda; gender from the head (goat)."
+
+- id: piglet
+  proto: gorsitto
+  modern: gorsito
+  pos: noun
+  gender: m
+  gloss: piglet
+  definition: "A piglet."
+  notes: "*gorsitto → gorsito (rule 3: tt > t). Diminutive: pig *gorsu + -itto."
+
+- id: boar
+  proto: gorsaron
+  modern: gorsaro
+  pos: noun
+  gender: m
+  gloss: boar
+  definition: "A wild boar."
+  notes: "*gorsaron → gorsaro (rule 4: n > ∅ / _#). Augmentative: pig *gorsu + -aron."
+
+- id: warthog
+  proto: veugi
+  modern: veugi
+  pos: noun
+  gender: m
+  gloss: warthog
+  definition: "A warthog."
+  notes: "Gender listed: -i is unmarked."
+
+- id: peccary
+  proto: gorsusulpa
+  modern: gorsusulpa
+  pos: noun
+  gender: m
+  gloss: peccary
+  definition: "A peccary (\"forest pig\")."
+  notes: "Compound: pig *gorsu + forest *sulpa; gender from the head (pig)."
+
+- id: aardvark
+  proto: gorsubauna
+  modern: gorsubauna
+  pos: noun
+  gender: m
+  gloss: aardvark
+  definition: "An aardvark (\"earth pig\")."
+  notes: "Compound: pig *gorsu + earth *bauna; gender from the head (pig)."
+
+- id: capybara
+  proto: gorsesia
+  modern: gorsexa
+  pos: noun
+  gender: m
+  gloss: capybara
+  definition: "A capybara (\"water pig\")."
+  notes: "*gorsesia → gorsexa (rule 1: si > x / _V). Compound: pig *gorsu + water *esia; gender from the head (pig)."
+
+- id: antelope
+  proto: deuba
+  modern: deuba
+  pos: noun
+  gender: f
+  gloss: antelope
+  definition: "An antelope."
+
+- id: gazelle
+  proto: deubitta
+  modern: deubita
+  pos: noun
+  gender: f
+  gloss: gazelle
+  definition: "A gazelle."
+  notes: "*deubitta → deubita (rule 3: tt > t). Diminutive: antelope *deuba + -itta."
+
+- id: impala
+  proto: gottoto
+  modern: gotodo
+  pos: noun
+  gender: m
+  gloss: impala
+  definition: "An impala."
+  notes: "*gottoto → gotodo (rule 2: t > d / V_V; rule 3: tt > t)."
+
+- id: gnu
+  proto: grodo
+  modern: grodo
+  pos: noun
+  gender: m
+  gloss: gnu
+  definition: "A gnu, a wildebeest."
+
+- id: stag
+  proto: nerbra
+  modern: nerbra
+  pos: noun
+  gender: f
+  gloss: stag
+  definition: "A stag, a male deer."
+
+- id: fawn
+  proto: ceuritta
+  modern: ceurita
+  pos: noun
+  gender: f
+  gloss: fawn
+  definition: "A fawn."
+  notes: "*ceuritta → ceurita (rule 3: tt > t). Diminutive: deer *ceuria + -itta."
+
+- id: elk
+  proto: ceuriaran
+  modern: ceuriara
+  pos: noun
+  gender: f
+  gloss: elk
+  definition: "An elk, a moose."
+  notes: "*ceuriaran → ceuriara (rule 4: n > ∅ / _#). Augmentative: deer *ceuria + -aran."
+
+- id: reindeer
+  proto: ceuriazeinia
+  modern: ceuriazeinha
+  pos: noun
+  gender: f
+  gloss: reindeer
+  definition: "A reindeer (\"snow deer\")."
+  notes: "*ceuriazeinia → ceuriazeinha (rule 1: ni > nh / _V). Compound: deer *ceuria + snow *zeinia."
+
+- id: hare
+  proto: mizu
+  modern: mizu
+  pos: noun
+  gender: m
+  gloss: hare
+  definition: "A hare."
+  notes: "Gender listed: -u is unmarked."
+
+- id: rabbit
+  proto: mizitto
+  modern: mizito
+  pos: noun
+  gender: m
+  gloss: rabbit
+  definition: "A rabbit."
+  notes: "*mizitto → mizito (rule 3: tt > t). Diminutive: hare *mizu + -itto."
+
+- id: squirrel
+  proto: meroda
+  modern: meroda
+  pos: noun
+  gender: f
+  gloss: squirrel
+  definition: "A squirrel."
+
+- id: chipmunk
+  proto: meroditta
+  modern: merodita
+  pos: noun
+  gender: f
+  gloss: chipmunk
+  definition: "A chipmunk."
+  notes: "*meroditta → merodita (rule 3: tt > t). Diminutive: squirrel *meroda + -itta."
+
+- id: rat
+  proto: sirparon
+  modern: sirparo
+  pos: noun
+  gender: m
+  gloss: rat
+  definition: "A rat."
+  notes: "*sirparon → sirparo (rule 4: n > ∅ / _#). Augmentative: mouse *sirpo + -aron."
+
+- id: shrew
+  proto: sirpitto
+  modern: sirpito
+  pos: noun
+  gender: m
+  gloss: shrew
+  definition: "A shrew."
+  notes: "*sirpitto → sirpito (rule 3: tt > t). Diminutive: mouse *sirpo + -itto."
+
+- id: bat
+  proto: sirpopelsa
+  modern: sirpobelsa
+  pos: noun
+  gender: m
+  gloss: bat.animal
+  definition: "A bat (\"wing mouse\")."
+  notes: "*sirpopelsa → sirpobelsa (rule 2: p > b / V_V). Compound: mouse *sirpo + wing *pelsa; gender from the head (mouse)."
+
+- id: hamster
+  proto: lelso
+  modern: lelso
+  pos: noun
+  gender: m
+  gloss: hamster
+  definition: "A hamster."
+
+- id: marmot
+  proto: gilmeta
+  modern: gilmeda
+  pos: noun
+  gender: f
+  gloss: marmot
+  definition: "A marmot."
+  notes: "*gilmeta → gilmeda (rule 2: t > d / V_V)."
+
+- id: beaver
+  proto: cildipo
+  modern: cildibo
+  pos: noun
+  gender: m
+  gloss: beaver
+  definition: "A beaver."
+  notes: "*cildipo → cildibo (rule 2: p > b / V_V)."
+
+- id: porcupine
+  proto: porza
+  modern: porza
+  pos: noun
+  gender: f
+  gloss: porcupine
+  definition: "A porcupine."
+
+- id: hedgehog
+  proto: tefa
+  modern: tefa
+  pos: noun
+  gender: f
+  gloss: hedgehog
+  definition: "A hedgehog."
+
+- id: mole
+  proto: mulna
+  modern: mulna
+  pos: noun
+  gender: f
+  gloss: mole.animal
+  definition: "A mole."
+
+- id: chinchilla
+  proto: coulati
+  modern: couladi
+  pos: noun
+  gender: m
+  gloss: chinchilla
+  definition: "A chinchilla."
+  notes: "*coulati → couladi (rule 2: t > d / V_V). Gender listed: -i is unmarked."
+
+- id: monkey
+  proto: ceira
+  modern: ceira
+  pos: noun
+  gender: f
+  gloss: monkey
+  definition: "A monkey."
+
+- id: marmoset
+  proto: ceiritta
+  modern: ceirita
+  pos: noun
+  gender: f
+  gloss: marmoset
+  definition: "A marmoset."
+  notes: "*ceiritta → ceirita (rule 3: tt > t). Diminutive: monkey *ceira + -itta."
+
+- id: howler
+  proto: ceiracalio
+  modern: ceiragalho
+  pos: noun
+  gender: f
+  gloss: howler
+  definition: "A howler monkey (\"voice monkey\")."
+  notes: "*ceiracalio → ceiragalho (rule 1: li > lh / _V; rule 2: c > g / V_V). Compound: monkey *ceira + voice *calio; gender from the head (monkey)."
+
+- id: ape
+  proto: ceiraran
+  modern: ceirara
+  pos: noun
+  gender: f
+  gloss: ape
+  definition: "An ape."
+  notes: "*ceiraran → ceirara (rule 4: n > ∅ / _#). Augmentative: monkey *ceira + -aran."
+
+- id: gorilla
+  proto: reccen
+  modern: rece
+  pos: noun
+  gender: m
+  gloss: gorilla
+  definition: "A gorilla."
+  notes: "*reccen → rece (rule 3: cc > c; rule 4: n > ∅ / _#). Gender listed: -e is unmarked."
+
+- id: chimpanzee
+  proto: rata
+  modern: rada
+  pos: noun
+  gender: f
+  gloss: chimpanzee
+  definition: "A chimpanzee."
+  notes: "*rata → rada (rule 2: t > d / V_V)."
+
+- id: orangutan
+  proto: ezosulpa
+  modern: ezosulpa
+  pos: noun
+  gender: m
+  gloss: orangutan
+  definition: "An orangutan (\"forest person\", as in Malay)."
+  notes: "Compound: person *ezo + forest *sulpa; gender from the head (person)."
+
+- id: baboon
+  proto: cursa
+  modern: cursa
+  pos: noun
+  gender: f
+  gloss: baboon
+  definition: "A baboon."
+
+- id: lemur
+  proto: soina
+  modern: soina
+  pos: noun
+  gender: f
+  gloss: lemur
+  definition: "A lemur."
+
+- id: sloth
+  proto: tippasan
+  modern: tipasa
+  pos: noun
+  gender: f
+  gloss: sloth
+  definition: "A sloth."
+  notes: "*tippasan → tipasa (rule 3: pp > p; rule 4: n > ∅ / _#)."
+
+- id: armadillo
+  proto: crudoma
+  modern: crudoma
+  pos: noun
+  gender: f
+  gloss: armadillo
+  definition: "An armadillo."
+
+- id: anteater
+  proto: ceuposa
+  modern: ceubosa
+  pos: noun
+  gender: f
+  gloss: anteater
+  definition: "An anteater."
+  notes: "*ceuposa → ceubosa (rule 2: p > b / V_V)."
+
+- id: tapir
+  proto: coco
+  modern: cogo
+  pos: noun
+  gender: m
+  gloss: tapir
+  definition: "A tapir."
+  notes: "*coco → cogo (rule 2: c > g / V_V)."
+
+- id: coati
+  proto: drabo
+  modern: drabo
+  pos: noun
+  gender: m
+  gloss: coati
+  definition: "A coati."
+
+- id: opossum
+  proto: lopana
+  modern: lobana
+  pos: noun
+  gender: f
+  gloss: opossum
+  definition: "An opossum."
+  notes: "*lopana → lobana (rule 2: p > b / V_V)."
+
+- id: raccoon
+  proto: talite
+  modern: talide
+  pos: noun
+  gender: m
+  gloss: raccoon
+  definition: "A raccoon."
+  notes: "*talite → talide (rule 2: t > d / V_V). Gender listed: -e is unmarked."
+
+- id: skunk
+  proto: naita
+  modern: naida
+  pos: noun
+  gender: f
+  gloss: skunk
+  definition: "A skunk."
+  notes: "*naita → naida (rule 2: t > d / V_V)."
+
+- id: kangaroo
+  proto: tizoco
+  modern: tizogo
+  pos: noun
+  gender: m
+  gloss: kangaroo
+  definition: "A kangaroo."
+  notes: "*tizoco → tizogo (rule 2: c > g / V_V)."
+
+- id: koala
+  proto: vasana
+  modern: vasana
+  pos: noun
+  gender: f
+  gloss: koala
+  definition: "A koala."
+
+- id: platypus
+  proto: surda
+  modern: surda
+  pos: noun
+  gender: f
+  gloss: platypus
+  definition: "A platypus."
+
+- id: panda
+  proto: peilo
+  modern: peilo
+  pos: noun
+  gender: m
+  gloss: panda
+  definition: "A panda."
+
+- id: otter
+  proto: cuno
+  modern: cuno
+  pos: noun
+  gender: m
+  gloss: otter
+  definition: "An otter."
+
+- id: weasel
+  proto: holrasim
+  modern: holrasi
+  pos: noun
+  gender: m
+  gloss: weasel
+  definition: "A weasel."
+  notes: "*holrasim → holrasi (rule 4: m > ∅ / _#). Gender listed: -i is unmarked."
+
+- id: ermine
+  proto: holrasilirma
+  modern: holrasilirma
+  pos: noun
+  gender: m
+  gloss: ermine
+  definition: "An ermine, a stoat in its white winter coat (\"white weasel\")."
+  notes: "Compound: weasel *holrasim + white *lirma; gender from the head (weasel)."
+
+- id: wolverine
+  proto: holrasimaron
+  modern: holrasimaro
+  pos: noun
+  gender: m
+  gloss: wolverine
+  definition: "A wolverine."
+  notes: "*holrasimaron → holrasimaro (rule 4: n > ∅ / _#). Augmentative: weasel *holrasim + -aron."
+
+- id: marten
+  proto: veutre
+  modern: veutre
+  pos: noun
+  gender: m
+  gloss: marten
+  definition: "A marten."
+  notes: "Gender listed: -e is unmarked."
+
+- id: sable
+  proto: ilnozo
+  modern: ilnozo
+  pos: noun
+  gender: m
+  gloss: sable
+  definition: "A sable."
+
+- id: mink
+  proto: dreugo
+  modern: dreugo
+  pos: noun
+  gender: m
+  gloss: mink
+  definition: "A mink."
+
+- id: badger
+  proto: vulzato
+  modern: vulzado
+  pos: noun
+  gender: m
+  gloss: badger
+  definition: "A badger."
+  notes: "*vulzato → vulzado (rule 2: t > d / V_V)."
+
+- id: mongoose
+  proto: maupica
+  modern: maubiga
+  pos: noun
+  gender: f
+  gloss: mongoose
+  definition: "A mongoose."
+  notes: "*maupica → maubiga (rule 2: p > b / V_V; rule 2: c > g / V_V)."
+
+- id: meerkat
+  proto: maupicitta
+  modern: maubigita
+  pos: noun
+  gender: f
+  gloss: meerkat
+  definition: "A meerkat."
+  notes: "*maupicitta → maubigita (rule 2: p > b / V_V; rule 2: c > g / V_V; rule 3: tt > t). Diminutive: mongoose *maupica + -itta."
+
+- id: civet
+  proto: rolgi
+  modern: rolgi
+  pos: noun
+  gender: m
+  gloss: civet
+  definition: "A civet."
+  notes: "Gender listed: -i is unmarked."
+
+- id: pangolin
+  proto: ploma
+  modern: ploma
+  pos: noun
+  gender: f
+  gloss: pangolin
+  definition: "A pangolin."
+
+- id: seal
+  proto: vogrizu
+  modern: vogrizu
+  pos: noun
+  gender: m
+  gloss: seal.animal
+  definition: "A seal."
+  notes: "Gender listed: -u is unmarked."
+
+- id: walrus
+  proto: vogrizugruha
+  modern: vogrizugruha
+  pos: noun
+  gender: m
+  gloss: walrus
+  definition: "A walrus (\"tooth seal\")."
+  notes: "Compound: seal *vogrizu + tooth *gruha; gender from the head (seal)."
+
+- id: whale
+  proto: vausove
+  modern: vausove
+  pos: noun
+  gender: m
+  gloss: whale
+  definition: "A whale."
+  notes: "Gender listed: -e is unmarked."
+
+- id: narwhal
+  proto: vausoveticco
+  modern: vausovedico
+  pos: noun
+  gender: m
+  gloss: narwhal
+  definition: "A narwhal (\"horn whale\")."
+  notes: "*vausoveticco → vausovedico (rule 2: t > d / V_V; rule 3: cc > c). Compound: whale *vausove + horn *ticco."
+
+- id: dolphin
+  proto: frazulo
+  modern: frazulo
+  pos: noun
+  gender: m
+  gloss: dolphin
+  definition: "A dolphin."
+
+- id: orca
+  proto: frazularon
+  modern: frazularo
+  pos: noun
+  gender: m
+  gloss: orca
+  definition: "An orca, a killer whale (the largest dolphin)."
+  notes: "*frazularon → frazularo (rule 4: n > ∅ / _#). Augmentative: dolphin *frazulo + -aron."
+
+- id: porpoise
+  proto: frazulitto
+  modern: frazulito
+  pos: noun
+  gender: m
+  gloss: porpoise
+  definition: "A porpoise."
+  notes: "*frazulitto → frazulito (rule 3: tt > t). Diminutive: dolphin *frazulo + -itto."
+
+- id: manatee
+  proto: uldazahor
+  modern: uldazahor
+  pos: noun
+  gender: f
+  gloss: manatee
+  definition: "A manatee (\"sea cow\")."
+  notes: "Compound: cow *ulda + sea *zahor."

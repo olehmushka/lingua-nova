@@ -583,3 +583,10 @@
   pos: verb
   gloss: find
   definition: "To find."
+
+- id: hate
+  proto: povisar
+  modern: povisar
+  pos: verb
+  gloss: hate
+  definition: "To hate."

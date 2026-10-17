@@ -1,0 +1,670 @@
+# Birds.
+
+- id: eagle
+  proto: ducca
+  modern: duca
+  pos: noun
+  gender: f
+  gloss: eagle
+  definition: "An eagle."
+  notes: "*ducca → duca (rule 3: cc > c)."
+
+- id: harpy
+  proto: duccaran
+  modern: ducara
+  pos: noun
+  gender: f
+  gloss: harpy
+  definition: "A harpy eagle."
+  notes: "*duccaran → ducara (rule 3: cc > c; rule 4: n > ∅ / _#). Augmentative: eagle *ducca + -aran."
+
+- id: hawk
+  proto: lotia
+  modern: locha
+  pos: noun
+  gender: f
+  gloss: hawk
+  definition: "A hawk."
+  notes: "*lotia → locha (rule 1: ti > ch / _V)."
+
+- id: falcon
+  proto: lotitta
+  modern: lodita
+  pos: noun
+  gender: f
+  gloss: falcon
+  definition: "A falcon."
+  notes: "*lotitta → lodita (rule 2: t > d / V_V; rule 3: tt > t). Diminutive: hawk *lotia + -itta."
+
+- id: kestrel
+  proto: lotittitta
+  modern: loditita
+  pos: noun
+  gender: f
+  gloss: kestrel
+  definition: "A kestrel."
+  notes: "*lotittitta → loditita (rule 2: t > d / V_V; rule 3: tt > t). Diminutive: falcon *lotitta + -itta."
+
+- id: buzzard
+  proto: friti
+  modern: fridi
+  pos: noun
+  gender: m
+  gloss: buzzard
+  definition: "A buzzard."
+  notes: "*friti → fridi (rule 2: t > d / V_V). Gender listed: -i is unmarked."
+
+- id: kite
+  proto: lalze
+  modern: lalze
+  pos: noun
+  gender: m
+  gloss: kite.bird
+  definition: "A kite (the bird of prey)."
+  notes: "Gender listed: -e is unmarked."
+
+- id: osprey
+  proto: lotianauca
+  modern: lochanauga
+  pos: noun
+  gender: f
+  gloss: osprey
+  definition: "An osprey (\"fish hawk\")."
+  notes: "*lotianauca → lochanauga (rule 1: ti > ch / _V; rule 2: c > g / V_V). Compound: hawk *lotia + fish *nauca."
+
+- id: vulture
+  proto: zarva
+  modern: zarva
+  pos: noun
+  gender: f
+  gloss: vulture
+  definition: "A vulture."
+
+- id: condor
+  proto: zarvaran
+  modern: zarvara
+  pos: noun
+  gender: f
+  gloss: condor
+  definition: "A condor."
+  notes: "*zarvaran → zarvara (rule 4: n > ∅ / _#). Augmentative: vulture *zarva + -aran."
+
+- id: owl
+  proto: eidihan
+  modern: eidiha
+  pos: noun
+  gender: f
+  gloss: owl
+  definition: "An owl."
+  notes: "*eidihan → eidiha (rule 4: n > ∅ / _#)."
+
+- id: crow
+  proto: crofe
+  modern: crofe
+  pos: noun
+  gender: m
+  gloss: crow.bird
+  definition: "A crow."
+  notes: "Gender listed: -e is unmarked."
+
+- id: raven
+  proto: crofaron
+  modern: crofaro
+  pos: noun
+  gender: m
+  gloss: raven
+  definition: "A raven."
+  notes: "*crofaron → crofaro (rule 4: n > ∅ / _#). Augmentative: crow *crofe + -aron."
+
+- id: jackdaw
+  proto: crofitto
+  modern: crofito
+  pos: noun
+  gender: m
+  gloss: jackdaw
+  definition: "A jackdaw."
+  notes: "*crofitto → crofito (rule 3: tt > t). Diminutive: crow *crofe + -itto."
+
+- id: magpie
+  proto: gesvipa
+  modern: gesviba
+  pos: noun
+  gender: f
+  gloss: magpie
+  definition: "A magpie."
+  notes: "*gesvipa → gesviba (rule 2: p > b / V_V)."
+
+- id: jay
+  proto: pauzu
+  modern: pauzu
+  pos: noun
+  gender: m
+  gloss: jay
+  definition: "A jay."
+  notes: "Gender listed: -u is unmarked."
+
+- id: sparrow
+  proto: maigo
+  modern: maigo
+  pos: noun
+  gender: m
+  gloss: sparrow
+  definition: "A sparrow."
+
+- id: finch
+  proto: maigitto
+  modern: maigito
+  pos: noun
+  gender: m
+  gloss: finch
+  definition: "A finch."
+  notes: "*maigitto → maigito (rule 3: tt > t). Diminutive: sparrow *maigo + -itto."
+
+- id: goldfinch
+  proto: maigittilcun
+  modern: maigitilcu
+  pos: noun
+  gender: m
+  gloss: goldfinch
+  definition: "A goldfinch."
+  notes: "*maigittilcun → maigitilcu (rule 3: tt > t; rule 4: n > ∅ / _#). Compound: finch *maigitto + gold *ilcun."
+
+- id: bullfinch
+  proto: maigittoheuzio
+  modern: maigitoheujo
+  pos: noun
+  gender: m
+  gloss: bullfinch
+  definition: "A bullfinch (\"red finch\")."
+  notes: "*maigittoheuzio → maigitoheujo (rule 1: zi > j / _V; rule 3: tt > t). Compound: finch *maigitto + red *heuzio."
+
+- id: canary
+  proto: friniazeulo
+  modern: frinhazeulo
+  pos: noun
+  gender: f
+  gloss: canary
+  definition: "A canary (\"yellow bird\")."
+  notes: "*friniazeulo → frinhazeulo (rule 1: ni > nh / _V). Compound: bird *frinia + yellow *zeulo; gender from the head (bird)."
+
+- id: cardinal
+  proto: friniaheuzio
+  modern: frinhaheujo
+  pos: noun
+  gender: f
+  gloss: cardinal.bird
+  definition: "A cardinal (\"red bird\")."
+  notes: "*friniaheuzio → frinhaheujo (rule 1: ni > nh / _V; rule 1: zi > j / _V). Compound: bird *frinia + red *heuzio; gender from the head (bird)."
+
+- id: swallow
+  proto: lasti
+  modern: lasti
+  pos: noun
+  gender: m
+  gloss: swallow.bird
+  definition: "A swallow."
+  notes: "Gender listed: -i is unmarked."
+
+- id: swift
+  proto: lastitto
+  modern: lastito
+  pos: noun
+  gender: m
+  gloss: swift.bird
+  definition: "A swift."
+  notes: "*lastitto → lastito (rule 3: tt > t). Diminutive: swallow *lasti + -itto."
+
+- id: lark
+  proto: calga
+  modern: calga
+  pos: noun
+  gender: f
+  gloss: lark
+  definition: "A lark."
+
+- id: thrush
+  proto: fiza
+  modern: fiza
+  pos: noun
+  gender: f
+  gloss: thrush
+  definition: "A thrush."
+
+- id: blackbird
+  proto: fizabuzio
+  modern: fizabujo
+  pos: noun
+  gender: f
+  gloss: blackbird
+  definition: "A blackbird (\"black thrush\")."
+  notes: "*fizabuzio → fizabujo (rule 1: zi > j / _V). Compound: thrush *fiza + black *buzio; gender from the head (thrush)."
+
+- id: robin
+  proto: bideto
+  modern: bidedo
+  pos: noun
+  gender: m
+  gloss: robin
+  definition: "A robin."
+  notes: "*bideto → bidedo (rule 2: t > d / V_V)."
+
+- id: wren
+  proto: plato
+  modern: plado
+  pos: noun
+  gender: m
+  gloss: wren
+  definition: "A wren."
+  notes: "*plato → plado (rule 2: t > d / V_V)."
+
+- id: starling
+  proto: zoumi
+  modern: zoumi
+  pos: noun
+  gender: m
+  gloss: starling
+  definition: "A starling."
+  notes: "Gender listed: -i is unmarked."
+
+- id: nightingale
+  proto: friniilma
+  modern: frinhilma
+  pos: noun
+  gender: f
+  gloss: nightingale
+  definition: "A nightingale (\"night bird\")."
+  notes: "*friniilma → frinhilma (rule 1: ni > nh / _V). Compound: bird *frinia + night *ilma."
+
+- id: bulbul
+  proto: trapa
+  modern: traba
+  pos: noun
+  gender: f
+  gloss: bulbul
+  definition: "A bulbul, the songbird of Persian and Indian poetry."
+  notes: "*trapa → traba (rule 2: p > b / V_V)."
+
+- id: mynah
+  proto: urliso
+  modern: urliso
+  pos: noun
+  gender: m
+  gloss: mynah
+  definition: "A mynah."
+
+- id: oriole
+  proto: friniilcun
+  modern: frinhilcu
+  pos: noun
+  gender: f
+  gloss: oriole
+  definition: "An oriole (\"gold bird\")."
+  notes: "*friniilcun → frinhilcu (rule 1: ni > nh / _V; rule 4: n > ∅ / _#). Compound: bird *frinia + gold *ilcun."
+
+- id: cuckoo
+  proto: treisa
+  modern: treisa
+  pos: noun
+  gender: f
+  gloss: cuckoo
+  definition: "A cuckoo."
+
+- id: hoopoe
+  proto: oltova
+  modern: oltova
+  pos: noun
+  gender: f
+  gloss: hoopoe
+  definition: "A hoopoe."
+
+- id: woodpecker
+  proto: friniazeppo
+  modern: frinhazepo
+  pos: noun
+  gender: f
+  gloss: woodpecker
+  definition: "A woodpecker (\"tree bird\")."
+  notes: "*friniazeppo → frinhazepo (rule 1: ni > nh / _V; rule 3: pp > p). Compound: bird *frinia + tree *zeppo; gender from the head (bird)."
+
+- id: kingfisher
+  proto: frinianauca
+  modern: frinhanauga
+  pos: noun
+  gender: f
+  gloss: kingfisher
+  definition: "A kingfisher (\"fish bird\")."
+  notes: "*frinianauca → frinhanauga (rule 1: ni > nh / _V; rule 2: c > g / V_V). Compound: bird *frinia + fish *nauca."
+
+- id: hornbill
+  proto: friniaticco
+  modern: frinhadico
+  pos: noun
+  gender: f
+  gloss: hornbill
+  definition: "A hornbill (\"horn bird\")."
+  notes: "*friniaticco → frinhadico (rule 1: ni > nh / _V; rule 2: t > d / V_V; rule 3: cc > c). Compound: bird *frinia + horn *ticco; gender from the head (bird)."
+
+- id: hummingbird
+  proto: friniamirsia
+  modern: frinhamirxa
+  pos: noun
+  gender: f
+  gloss: hummingbird
+  definition: "A hummingbird (\"flower bird\")."
+  notes: "*friniamirsia → frinhamirxa (rule 1: ni > nh / _V; rule 1: si > x / _V). Compound: bird *frinia + flower *mirsia."
+
+- id: roadrunner
+  proto: friniavetta
+  modern: frinhaveta
+  pos: noun
+  gender: f
+  gloss: roadrunner
+  definition: "A roadrunner (\"road bird\")."
+  notes: "*friniavetta → frinhaveta (rule 1: ni > nh / _V; rule 3: tt > t). Compound: bird *frinia + road *vetta."
+
+- id: pigeon
+  proto: aunilun
+  modern: aunilu
+  pos: noun
+  gender: m
+  gloss: pigeon
+  definition: "A pigeon."
+  notes: "*aunilun → aunilu (rule 4: n > ∅ / _#). Gender listed: -u is unmarked."
+
+- id: dove
+  proto: aunilunitto
+  modern: aunilunito
+  pos: noun
+  gender: m
+  gloss: dove
+  definition: "A dove."
+  notes: "*aunilunitto → aunilunito (rule 3: tt > t). Diminutive: pigeon *aunilun + -itto."
+
+- id: parrot
+  proto: dalson
+  modern: dalso
+  pos: noun
+  gender: m
+  gloss: parrot
+  definition: "A parrot."
+  notes: "*dalson → dalso (rule 4: n > ∅ / _#)."
+
+- id: macaw
+  proto: dalsonaron
+  modern: dalsonaro
+  pos: noun
+  gender: m
+  gloss: macaw
+  definition: "A macaw."
+  notes: "*dalsonaron → dalsonaro (rule 4: n > ∅ / _#). Augmentative: parrot *dalson + -aron."
+
+- id: parakeet
+  proto: dalsonitto
+  modern: dalsonito
+  pos: noun
+  gender: m
+  gloss: parakeet
+  definition: "A parakeet."
+  notes: "*dalsonitto → dalsonito (rule 3: tt > t). Diminutive: parrot *dalson + -itto."
+
+- id: quetzal
+  proto: zoza
+  modern: zoza
+  pos: noun
+  gender: f
+  gloss: quetzal
+  definition: "A quetzal, the sacred green bird of Mesoamerica."
+
+- id: toucan
+  proto: tisri
+  modern: tisri
+  pos: noun
+  gender: m
+  gloss: toucan
+  definition: "A toucan."
+  notes: "Gender listed: -i is unmarked."
+
+- id: rooster
+  proto: crehuda
+  modern: crehuda
+  pos: noun
+  gender: f
+  gloss: rooster
+  definition: "A rooster, a cock."
+
+- id: chick
+  proto: dolitta
+  modern: dolita
+  pos: noun
+  gender: f
+  gloss: chick
+  definition: "A chick."
+  notes: "*dolitta → dolita (rule 3: tt > t). Diminutive: hen *dolia + -itta."
+
+- id: turkey
+  proto: bolcuvu
+  modern: bolcuvu
+  pos: noun
+  gender: m
+  gloss: turkey.bird
+  definition: "A turkey."
+  notes: "Gender listed: -u is unmarked."
+
+- id: peacock
+  proto: zalvanom
+  modern: zalvano
+  pos: noun
+  gender: m
+  gloss: peacock
+  definition: "A peacock."
+  notes: "*zalvanom → zalvano (rule 4: m > ∅ / _#)."
+
+- id: pheasant
+  proto: rido
+  modern: rido
+  pos: noun
+  gender: m
+  gloss: pheasant
+  definition: "A pheasant."
+
+- id: partridge
+  proto: vitti
+  modern: viti
+  pos: noun
+  gender: m
+  gloss: partridge
+  definition: "A partridge."
+  notes: "*vitti → viti (rule 3: tt > t). Gender listed: -i is unmarked."
+
+- id: quail
+  proto: vittitto
+  modern: vitito
+  pos: noun
+  gender: m
+  gloss: quail
+  definition: "A quail."
+  notes: "*vittitto → vitito (rule 3: tt > t). Diminutive: partridge *vitti + -itto."
+
+- id: grouse
+  proto: taupeva
+  modern: taubeva
+  pos: noun
+  gender: f
+  gloss: grouse
+  definition: "A grouse."
+  notes: "*taupeva → taubeva (rule 2: p > b / V_V)."
+
+- id: guineafowl
+  proto: vilconu
+  modern: vilconu
+  pos: noun
+  gender: m
+  gloss: guineafowl
+  definition: "A guineafowl."
+  notes: "Gender listed: -u is unmarked."
+
+- id: duck
+  proto: gigi
+  modern: gigi
+  pos: noun
+  gender: m
+  gloss: duck.bird
+  definition: "A duck."
+  notes: "Gender listed: -i is unmarked."
+
+- id: duckling
+  proto: gigitto
+  modern: gigito
+  pos: noun
+  gender: m
+  gloss: duckling
+  definition: "A duckling."
+  notes: "*gigitto → gigito (rule 3: tt > t). Diminutive: duck *gigi + -itto."
+
+- id: goose
+  proto: zucciso
+  modern: zuciso
+  pos: noun
+  gender: m
+  gloss: goose
+  definition: "A goose."
+  notes: "*zucciso → zuciso (rule 3: cc > c)."
+
+- id: gosling
+  proto: zuccisitto
+  modern: zucisito
+  pos: noun
+  gender: m
+  gloss: gosling
+  definition: "A gosling."
+  notes: "*zuccisitto → zucisito (rule 3: tt > t; rule 3: cc > c). Diminutive: goose *zucciso + -itto."
+
+- id: swan
+  proto: cucodru
+  modern: cugodru
+  pos: noun
+  gender: m
+  gloss: swan
+  definition: "A swan."
+  notes: "*cucodru → cugodru (rule 2: c > g / V_V). Gender listed: -u is unmarked."
+
+- id: heron
+  proto: glirfa
+  modern: glirfa
+  pos: noun
+  gender: f
+  gloss: heron
+  definition: "A heron."
+
+- id: egret
+  proto: glirfalirma
+  modern: glirfalirma
+  pos: noun
+  gender: f
+  gloss: egret
+  definition: "An egret (\"white heron\")."
+  notes: "Compound: heron *glirfa + white *lirma."
+
+- id: stork
+  proto: peccan
+  modern: peca
+  pos: noun
+  gender: f
+  gloss: stork
+  definition: "A stork."
+  notes: "*peccan → peca (rule 3: cc > c; rule 4: n > ∅ / _#)."
+
+- id: crane
+  proto: culdra
+  modern: culdra
+  pos: noun
+  gender: f
+  gloss: crane.bird
+  definition: "A crane (the bird)."
+
+- id: ibis
+  proto: sicita
+  modern: sigida
+  pos: noun
+  gender: f
+  gloss: ibis
+  definition: "An ibis."
+  notes: "*sicita → sigida (rule 2: t > d / V_V; rule 2: c > g / V_V)."
+
+- id: flamingo
+  proto: friniihitu
+  modern: frinhihidu
+  pos: noun
+  gender: f
+  gloss: flamingo
+  definition: "A flamingo (\"fire bird\")."
+  notes: "*friniihitu → frinhihidu (rule 1: ni > nh / _V; rule 2: t > d / V_V). Compound: bird *frinia + fire *ihitu."
+
+- id: pelican
+  proto: vuni
+  modern: vuni
+  pos: noun
+  gender: m
+  gloss: pelican
+  definition: "A pelican."
+  notes: "Gender listed: -i is unmarked."
+
+- id: cormorant
+  proto: tasa
+  modern: tasa
+  pos: noun
+  gender: f
+  gloss: cormorant
+  definition: "A cormorant."
+
+- id: gull
+  proto: poro
+  modern: poro
+  pos: noun
+  gender: m
+  gloss: gull
+  definition: "A gull."
+
+- id: tern
+  proto: poritto
+  modern: porito
+  pos: noun
+  gender: m
+  gloss: tern
+  definition: "A tern."
+  notes: "*poritto → porito (rule 3: tt > t). Diminutive: gull *poro + -itto."
+
+- id: albatross
+  proto: poraron
+  modern: poraro
+  pos: noun
+  gender: m
+  gloss: albatross
+  definition: "An albatross."
+  notes: "*poraron → poraro (rule 4: n > ∅ / _#). Augmentative: gull *poro + -aron."
+
+- id: penguin
+  proto: proza
+  modern: proza
+  pos: noun
+  gender: f
+  gloss: penguin
+  definition: "A penguin."
+
+- id: ostrich
+  proto: murbi
+  modern: murbi
+  pos: noun
+  gender: m
+  gloss: ostrich
+  definition: "An ostrich."
+  notes: "Gender listed: -i is unmarked."
+
+- id: emu
+  proto: murbitto
+  modern: murbito
+  pos: noun
+  gender: m
+  gloss: emu
+  definition: "An emu."
+  notes: "*murbitto → murbito (rule 3: tt > t). Diminutive: ostrich *murbi + -itto."

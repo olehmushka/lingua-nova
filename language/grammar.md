@@ -17,6 +17,7 @@ is decided; the exact sounds can still change.
 | Verbs | **Romance-style conjugation, 3 classes**; endings for person and tense; subject pronouns can be dropped |
 | Negation | **Portuguese-style**: particle before the verb, double negation |
 | Questions | **Portuguese-style**: same order as statements, rising intonation |
+| Word formation | **Proto-level** suffixes (diminutive, augmentative, adjective, deverbal noun) and head-first compounds |
 
 The inflection tables below also exist as data in `morphology.yaml`
 (`lnova inflect <id>` prints a word's paradigm). Keep the two in sync.
@@ -58,6 +59,40 @@ They come after the noun and never change: `lu hoida lirma`, `lu hoidah lirma`.
 
 Several adjectives can follow in **any order**: `lu huro gumo bujo` and
 `lu huro bujo gumo` both mean "the big black dog".
+
+## Word formation (draft)
+
+New words are built from old ones **in the proto-language**: the suffix or
+second root is added to the proto form, and the sound changes then apply to
+the whole word. So a derived word shows the same alternations as any other:
+*\*nesca* + *-io* → *\*nescio* → **nescho**, with the palatal of rule 1.
+Derivation is a lexicon matter: the dictionary lists each derived word, and
+its `notes` say how it was made. The analyzer does not take these words apart.
+
+The **stem** is the proto root without its final vowel: *\*sersebo* →
+*serseb-*. An *-ia/-io* root keeps its *i* (*\*nuzio* → *nuzi-*), and before
+a suffix that starts with *i* the two *i*'s merge. A root ending in a
+consonant is its own stem (*\*ilcun*).
+
+| Process | Proto suffix | Meaning | Example |
+|---|---|---|---|
+| Diminutive | **-itto** (m), **-itta** (f) | a smaller kind of X; the young of X | lion *\*sersebo* → leopard *\*sersebitto* → **sersebito**; dog → puppy **hurito** |
+| Augmentative | **-aron** (m), **-aran** (f) | a bigger kind of X | crow *\*crofe* → raven **crofaro**; pig *\*gorsu* → boar *\*gorsaron* → **gorsaro** |
+| Adjective | **-io** | made of X, X-coloured | gold *\*ilcun* → golden *\*ilcunio* → **ilcunho** |
+| Deverbal noun | infinitive minus *-r*, + **-tia** | the feeling or act of V-ing | hate *\*povisar* → hatred *\*povisatia* → **povisacha** |
+| Compound | head root + modifier root, one word | an X that is (or has to do with) Y | horse + river → hippopotamus **brecotrubo**; cat + black → panther **nujobujo** |
+
+- The suffixes are chosen to show the sound changes at work: *-itto* keeps a
+  voiceless *t* thanks to the geminate (rule 3), *-aron* hides a lost *n*
+  (rule 4), *-io* and *-tia* palatalize (rule 1).
+- Diminutives and augmentatives keep the gender of their base. Deverbal
+  nouns are feminine.
+- **Compounds** put the head first, like noun + adjective in a phrase
+  (*brecotrubo* "horse-river"). The compound takes the **gender of the
+  head**, even when its last root ends in the other gender's vowel:
+  fish *\*nauca* (f) + cat *\*nuzio* → catfish **nauganujo** is feminine. If the
+  modifier starts with a vowel, the head loses its final vowel; a final
+  *n/m* of the head is dropped (proto codas are only *r l s*).
 
 ## Possession (draft)
 

@@ -283,3 +283,12 @@
   gender: f
   gloss: war
   definition: "War, a war."
+
+- id: hatred
+  proto: povisatia
+  modern: povisacha
+  pos: noun
+  gender: f
+  gloss: hatred
+  definition: "Hatred, hate."
+  notes: "*povisatia → povisacha (rule 1: ti > ch / _V). Deverbal noun: hate *povisar → *povisa- + -tia."

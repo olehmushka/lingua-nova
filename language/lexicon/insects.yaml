@@ -1,0 +1,290 @@
+# Insects.
+
+- id: insect
+  proto: inita
+  modern: inida
+  pos: noun
+  gender: f
+  gloss: insect
+  definition: "An insect, a bug."
+  notes: "*inita → inida (rule 2: t > d / V_V)."
+
+- id: fly_insect
+  proto: soufo
+  modern: soufo
+  pos: noun
+  gender: m
+  gloss: fly.insect
+  definition: "A fly."
+
+- id: gnat
+  proto: soufitto
+  modern: soufito
+  pos: noun
+  gender: m
+  gloss: gnat
+  definition: "A gnat."
+  notes: "*soufitto → soufito (rule 3: tt > t). Diminutive: fly *soufo + -itto."
+
+- id: horsefly
+  proto: soufobrecco
+  modern: soufobreco
+  pos: noun
+  gender: m
+  gloss: horsefly
+  definition: "A horsefly (\"horse fly\")."
+  notes: "*soufobrecco → soufobreco (rule 3: cc > c). Compound: fly *soufo + horse *brecco."
+
+- id: mayfly
+  proto: soufoseida
+  modern: soufoseida
+  pos: noun
+  gender: m
+  gloss: mayfly
+  definition: "A mayfly (\"day fly\")."
+  notes: "Compound: fly *soufo + day *seida; gender from the head (fly)."
+
+- id: tsetse
+  proto: frizo
+  modern: frizo
+  pos: noun
+  gender: m
+  gloss: tsetse
+  definition: "A tsetse fly."
+
+- id: mosquito
+  proto: arnuha
+  modern: arnuha
+  pos: noun
+  gender: f
+  gloss: mosquito
+  definition: "A mosquito."
+
+- id: ant
+  proto: risbio
+  modern: risbio
+  pos: noun
+  gender: m
+  gloss: ant
+  definition: "An ant."
+
+- id: termite
+  proto: risbiolirma
+  modern: risbiolirma
+  pos: noun
+  gender: m
+  gloss: termite
+  definition: "A termite (\"white ant\")."
+  notes: "Compound: ant *risbio + white *lirma; gender from the head (ant)."
+
+- id: wasp
+  proto: fruco
+  modern: frugo
+  pos: noun
+  gender: m
+  gloss: wasp
+  definition: "A wasp."
+  notes: "*fruco → frugo (rule 2: c > g / V_V)."
+
+- id: hornet
+  proto: frucaron
+  modern: frugaro
+  pos: noun
+  gender: m
+  gloss: hornet
+  definition: "A hornet."
+  notes: "*frucaron → frugaro (rule 2: c > g / V_V; rule 4: n > ∅ / _#). Augmentative: wasp *fruco + -aron."
+
+- id: bumblebee
+  proto: zumaran
+  modern: zumara
+  pos: noun
+  gender: f
+  gloss: bumblebee
+  definition: "A bumblebee."
+  notes: "*zumaran → zumara (rule 4: n > ∅ / _#). Augmentative: bee *zuma + -aran."
+
+- id: butterfly
+  proto: blisla
+  modern: blisla
+  pos: noun
+  gender: f
+  gloss: butterfly
+  definition: "A butterfly."
+
+- id: moth
+  proto: blislilma
+  modern: blislilma
+  pos: noun
+  gender: f
+  gloss: moth
+  definition: "A moth (\"night butterfly\")."
+  notes: "Compound: butterfly *blisla + night *ilma."
+
+- id: caterpillar
+  proto: soso
+  modern: soso
+  pos: noun
+  gender: m
+  gloss: caterpillar
+  definition: "A caterpillar."
+
+- id: silkworm
+  proto: cerboleuza
+  modern: cerboleuza
+  pos: noun
+  gender: m
+  gloss: silkworm
+  definition: "A silkworm (\"cloth worm\")."
+  notes: "Compound: worm *cerbo + cloth *leuza; gender from the head (worm)."
+
+- id: maggot
+  proto: cerbosoufo
+  modern: cerbosoufo
+  pos: noun
+  gender: m
+  gloss: maggot
+  definition: "A maggot (\"fly worm\")."
+  notes: "Compound: worm *cerbo + fly *soufo."
+
+- id: glowworm
+  proto: cerbeiva
+  modern: cerbeiva
+  pos: noun
+  gender: m
+  gloss: glowworm
+  definition: "A glowworm (\"light worm\")."
+  notes: "Compound: worm *cerbo + light *eiva; gender from the head (worm)."
+
+- id: beetle
+  proto: selsuso
+  modern: selsuso
+  pos: noun
+  gender: m
+  gloss: beetle
+  definition: "A beetle."
+
+- id: scarab
+  proto: selsusaron
+  modern: selsusaro
+  pos: noun
+  gender: m
+  gloss: scarab
+  definition: "A scarab, a dung beetle."
+  notes: "*selsusaron → selsusaro (rule 4: n > ∅ / _#). Augmentative: beetle *selsuso + -aron."
+
+- id: ladybug
+  proto: selsusoheuzio
+  modern: selsusoheujo
+  pos: noun
+  gender: m
+  gloss: ladybug
+  definition: "A ladybug (\"red beetle\")."
+  notes: "*selsusoheuzio → selsusoheujo (rule 1: zi > j / _V). Compound: beetle *selsuso + red *heuzio."
+
+- id: firefly
+  proto: soufeiva
+  modern: soufeiva
+  pos: noun
+  gender: m
+  gloss: firefly
+  definition: "A firefly (\"light fly\")."
+  notes: "Compound: fly *soufo + light *eiva; gender from the head (fly)."
+
+- id: cricket
+  proto: ottito
+  modern: otido
+  pos: noun
+  gender: m
+  gloss: cricket.insect
+  definition: "A cricket."
+  notes: "*ottito → otido (rule 2: t > d / V_V; rule 3: tt > t)."
+
+- id: grasshopper
+  proto: moru
+  modern: moru
+  pos: noun
+  gender: m
+  gloss: grasshopper
+  definition: "A grasshopper."
+  notes: "Gender listed: -u is unmarked."
+
+- id: locust
+  proto: moraron
+  modern: moraro
+  pos: noun
+  gender: m
+  gloss: locust
+  definition: "A locust."
+  notes: "*moraron → moraro (rule 4: n > ∅ / _#). Augmentative: grasshopper *moru + -aron."
+
+- id: cicada
+  proto: caccu
+  modern: cacu
+  pos: noun
+  gender: m
+  gloss: cicada
+  definition: "A cicada."
+  notes: "*caccu → cacu (rule 3: cc > c). Gender listed: -u is unmarked."
+
+- id: mantis
+  proto: zaucuge
+  modern: zauguge
+  pos: noun
+  gender: m
+  gloss: mantis
+  definition: "A praying mantis."
+  notes: "*zaucuge → zauguge (rule 2: c > g / V_V). Gender listed: -e is unmarked."
+
+- id: dragonfly
+  proto: forbi
+  modern: forbi
+  pos: noun
+  gender: m
+  gloss: dragonfly
+  definition: "A dragonfly."
+  notes: "Gender listed: -i is unmarked."
+
+- id: cockroach
+  proto: vadone
+  modern: vadone
+  pos: noun
+  gender: m
+  gloss: cockroach
+  definition: "A cockroach."
+  notes: "Gender listed: -e is unmarked."
+
+- id: louse
+  proto: morti
+  modern: morti
+  pos: noun
+  gender: m
+  gloss: louse
+  definition: "A louse."
+  notes: "Gender listed: -i is unmarked."
+
+- id: bedbug
+  proto: mortibauso
+  modern: mortibauso
+  pos: noun
+  gender: m
+  gloss: bedbug
+  definition: "A bedbug (\"bed louse\")."
+  notes: "Compound: louse *morti + bed *bauso."
+
+- id: flea
+  proto: blora
+  modern: blora
+  pos: noun
+  gender: f
+  gloss: flea
+  definition: "A flea."
+
+- id: cochineal
+  proto: geubaco
+  modern: geubago
+  pos: noun
+  gender: m
+  gloss: cochineal
+  definition: "A cochineal, the Mesoamerican insect that gives red dye."
+  notes: "*geubaco → geubago (rule 2: c > g / V_V)."
