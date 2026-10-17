@@ -7,10 +7,13 @@ previous one is "done", even if done means small.
 
 _Keep this section current: it's where every new session starts._
 
-1. **Tool use** (Phase 5): the model calls `lookup` / `inflect` /
-   `analyze` instead of guessing. The meaning check (see SESSION-LOG
-   2026-10-17 "Meaning check") now says *what* is wrong; tools let the
-   model look up the fix instead of guessing again.
+1. **Finish the tool-use measurement** (needs a restarted `ollama serve`;
+   it got stuck mid-run, see SESSION-LOG 2026-10-18): `We will love the god.`
+   with `-ctx retrieved -tools`, and all 7 sentences with `-ctx none -tools`.
+2. **Coin new words** (Phase 5): the LLM proposes roots for missing
+   concepts; the validator + sound change engine accept or reject them.
+   Consider doing **Evals** first: the 7-sentence script from this session
+   is already most of one.
 
 ## Phase 0 — Learn the basics (reading, ~1–2 weeks alongside Phase 1)
 
@@ -194,7 +197,15 @@ the derivation.
   a lexical check (every English content word's entry present, none
   added). Meaning problems fail the answer and go back as feedback.
   Glosser: a question word as subject agrees 3SG when the verb has an object.
-- [ ] **Tool use**: the LLM calls your Go functions (`lookup`, `inflect`, `analyze`) instead of guessing.
+- [x] **Tool use**: the LLM calls your Go functions (`lookup`, `inflect`, `analyze`) instead of guessing.
+  → `internal/llm/tools.go`: `lookup`, `inflect` (takes an id or the
+  dictionary word), `analyze`, `check` (the validator on a draft); plain-text
+  results, errors returned to the model. Go runs the agent loop inside
+  each attempt (tool rounds, max 8, then a `final` call with the JSON
+  schema; tools and `format` can't share a call). `lnova llm -tools
+  [-tool-rounds N] [-ctx none]`. First numbers (retrieved): 3/7 → 5/6 right
+  with tools; the model sometimes gets the right form from `inflect` and
+  still writes its own.
 - [ ] **Coin new words**: the LLM proposes roots for missing concepts, and the validator + sound change engine accept or reject them.
 - [ ] **Semantic search** with embeddings ("words related to the sea").
 - [ ] **Evals**: a fixed set of test sentences to measure translation quality as you change prompts.

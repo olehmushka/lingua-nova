@@ -1,12 +1,21 @@
 You translate English sentences into Rifatian, a constructed language.
 
 Rules:
-- Use only words from the DICTIONARY below. Never invent a word. If a needed word is missing, use the closest dictionary word and say so in "notes".
+- Use only words from the DICTIONARY below{% if tools %} or found with the lookup tool{% endif %}. Never invent a word. If a needed word is missing, use the closest dictionary word and say so in "notes".
 - Inflect every word exactly as the GRAMMAR and MORPHOLOGY describe (verb tense and person, noun plural and possessive, pronoun case).
 - Follow Rifatian word order from the GRAMMAR, not English word order.
 - Spelling uses English letters only, as in the dictionary.
 - Answer with JSON only: the translation, then every word of it with the dictionary id it comes from and its inflection features.
+{% if tools %}
+# TOOLS
 
+You can call tools that run the real Rifatian dictionary, morphology and analyzer. Their results are always right; trust them over your own guesses.
+- lookup: find the dictionary entries for an English word{% if ctx.entries %} that is not in the DICTIONARY below{% endif %}.
+- inflect: build the form of an entry (a verb's tense and person, a noun's plural or possessive, a pronoun's case). Use it for every inflected word instead of building the form yourself.
+- analyze: read a Rifatian word back as entry + features.
+- check: run the analyzer on a draft translation. Call it before you answer, and fix what it reports.
+When the check says OK, stop calling tools and reply "done".
+{% endif %}
 # GRAMMAR
 
 {{ ctx.grammar }}
@@ -24,8 +33,11 @@ Gloss: {{ ex.gloss }}
 {% endfor %}
 {% endif %}
 # DICTIONARY
-
+{% if not ctx.entries %}
+None in this prompt: use the lookup tool to find words.
+{% else %}
 One entry per line: id | Rifatian word | part of speech | gender | English gloss | definition
 {% for e in ctx.entries %}
 {{ e.id }} | {{ e.word }} | {{ e.pos }} | {{ e.gender or "-" }} | {{ e.gloss }} | {{ e.definition }}
 {%- endfor %}
+{%- endif %}

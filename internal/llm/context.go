@@ -54,6 +54,7 @@ func (c Context) Size() int {
 const (
 	Full      = "full"      // every entry
 	Retrieved = "retrieved" // the entries the sentence points to
+	None      = "none"      // no entries: the model looks words up with tools
 )
 
 // Builder builds contexts from the language files.
@@ -90,8 +91,11 @@ func NewBuilder(langDir string, lex *lexicon.Lexicon, t *english.Tagger) (*Build
 
 // Build returns the context for a sentence in the given mode.
 func (b *Builder) Build(mode, sentence string) Context {
-	if mode == Retrieved {
+	switch mode {
+	case Retrieved:
 		return b.Retrieved(sentence)
+	case None:
+		return b.context(func(*lexicon.Entry) bool { return false })
 	}
 	return b.Full()
 }

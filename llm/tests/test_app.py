@@ -57,21 +57,59 @@ def test_schema_requires_every_field():
     assert set(schema["required"]) == {"translation", "words", "notes"}
 
 
+TOOLS = [app.Tool(name="inflect", description="Inflect.", parameters={"type": "object", "properties": {}})]
+STEP = app.Step(
+    calls=[app.ToolCall(name="inflect", arguments={"id": "see", "features": ["PRS", "3SG"]})],
+    results=[app.ToolResult(name="inflect", content="nara  (see-TH.3SG)")],
+)
+
+
+def test_system_prompt_tools_section():
+    assert "# TOOLS" not in app.system_prompt(CTX)
+    s = app.system_prompt(CTX, TOOLS)
+    assert "# TOOLS" in s and "inflect:" in s
+    none = app.Context(grammar="g", entries=[])
+    assert "use the lookup tool" in app.system_prompt(none, TOOLS)
+
+
+def test_messages_with_tool_steps():
+    req = app.TranslateRequest(
+        english="The woman sees.",
+        context=CTX,
+        tools=TOOLS,
+        history=[app.Turn(steps=[STEP], answer=ANSWER, feedback="wrong")],
+        steps=[STEP],
+        final=True,
+    )
+    msgs = app.build_messages(req)
+    roles = [m["role"] for m in msgs]
+    assert roles == ["system", "user", "assistant", "tool", "assistant", "user", "assistant", "tool", "user"]
+    assert msgs[2]["tool_calls"][0]["function"] == {"name": "inflect", "arguments": {"id": "see", "features": ["PRS", "3SG"]}}
+    assert msgs[3] == {"role": "tool", "content": "nara  (see-TH.3SG)", "tool_name": "inflect"}
+    assert "final translation" in msgs[-1]["content"]
+
+
+class FakeCall:
+    def __init__(self, name, arguments):
+        self.function = type("F", (), {"name": name, "arguments": arguments})()
+
+
 class FakeResp:
-    def __init__(self, content):
-        self.message = type("M", (), {"content": content})()
+    def __init__(self, content, calls=None):
+        self.message = type("M", (), {"content": content, "tool_calls": calls})()
         self.prompt_eval_count = 100
         self.eval_count = 20
 
 
 class FakeClient:
-    def __init__(self, content):
+    def __init__(self, content, calls=None):
         self.content = content
+        self.calls = calls
         self.kwargs = None
 
     def chat(self, **kwargs):
         self.kwargs = kwargs
-        return FakeResp(self.content)
+        return FakeResp(self.content, self.calls)
 
 
 @pytest.mark.parametrize(
@@ -90,3 +128,34 @@ def test_translate_endpoint(monkeypatch, content, status):
     if status == 200:
         assert r.json()["answer"]["translation"] == "Lu mena nara."
         assert r.json()["prompt_tokens"] == 100
+
+
+def post(monkeypatch, fake, **extra):
+    monkeypatch.setattr(app, "client", lambda: fake)
+    body = {"english": "The woman sees.", "context": CTX.model_dump(), **extra}
+    return TestClient(app.app).post("/translate", json=body)
+
+
+def test_tool_round_returns_calls(monkeypatch):
+    fake = FakeClient("", [FakeCall("inflect", {"id": "see", "features": ["PRS", "3SG"]})])
+    r = post(monkeypatch, fake, tools=[t.model_dump() for t in TOOLS])
+    assert r.status_code == 200, r.text
+    assert "format" not in fake.kwargs
+    assert fake.kwargs["options"]["num_predict"] == app.TOOL_ROUND_MAX_TOKENS
+    assert fake.kwargs["tools"][0]["function"]["name"] == "inflect"
+    assert r.json()["calls"] == [{"name": "inflect", "arguments": {"id": "see", "features": ["PRS", "3SG"]}}]
+    assert r.json()["answer"] is None
+
+
+def test_tool_round_without_calls_returns_content(monkeypatch):
+    r = post(monkeypatch, FakeClient("done"), tools=[t.model_dump() for t in TOOLS])
+    assert r.status_code == 200, r.text
+    assert r.json()["calls"] == [] and r.json()["content"] == "done"
+
+
+def test_final_round_uses_format(monkeypatch):
+    fake = FakeClient(ANSWER.model_dump_json())
+    r = post(monkeypatch, fake, tools=[t.model_dump() for t in TOOLS], final=True)
+    assert r.status_code == 200, r.text
+    assert "tools" not in fake.kwargs and fake.kwargs["format"] == app.Answer.model_json_schema()
+    assert r.json()["answer"]["translation"] == "Lu mena nara."

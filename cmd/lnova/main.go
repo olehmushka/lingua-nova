@@ -52,9 +52,10 @@ commands:
   translate [-n 20] [-tree] <english sentence>
                   translate simple English into Rifatian: every translation,
                   ranked, with the gloss of the best one
-  llm [-ctx retrieved|full] [-model M] [-attempts 3] [-compare] <english sentence>
+  llm [-ctx retrieved|full|none] [-tools] [-model M] [-attempts 3] [-compare] <english sentence>
                   translate with a local model (Ollama, via the llm/ service);
-                  the glosser checks each answer and problems go back to the model
+                  the glosser checks each answer and problems go back to the model;
+                  -tools lets the model call lookup, inflect, analyze and check
 `
 
 func main() {
@@ -776,24 +777,30 @@ func cmdTranslate(langDir string, args []string, stdout, stderr io.Writer) int {
 //	   ! blomp: not a form of any dictionary word
 //	attempt 2  Lu mena nara lu trubo.  ✓  0.8s, 3210+58 tokens
 //
+// With -tools, each attempt's tool calls come first, with their results:
+//
+//	→ inflect(eat, [PRS 3SG]) = bauge  (eat-TH.3SG)
+//
 // then the gloss of the last answer and, with -compare, the rule-based
 // translator's verdict.
 func cmdLLM(langDir string, args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("llm", flag.ContinueOnError)
 	fs.SetOutput(stderr)
-	mode := fs.String("ctx", llm.Retrieved, "context: `retrieved` (entries the sentence needs) or full (every entry)")
+	mode := fs.String("ctx", llm.Retrieved, "context: `retrieved` (entries the sentence needs), full (every entry) or none (no entries)")
+	tools := fs.Bool("tools", false, "let the model call lookup, inflect, analyze and check")
+	rounds := fs.Int("tool-rounds", 8, "with -tools, ask for the answer after `N` rounds of tool calls")
 	model := fs.String("model", llm.DefaultModel, "Ollama `model`")
 	attempts := fs.Int("attempts", 3, "give up after `N` attempts")
 	url := fs.String("url", llm.DefaultURL, "`URL` of the llm/ service")
 	compare := fs.Bool("compare", false, "compare with the rule-based translator")
 	usage := func() {
-		fmt.Fprintln(stderr, "usage: lnova llm [-ctx retrieved|full] [-model M] [-attempts 3] [-url U] [-compare] <english sentence>")
+		fmt.Fprintln(stderr, "usage: lnova llm [-ctx retrieved|full|none] [-tools] [-tool-rounds 8] [-model M] [-attempts 3] [-url U] [-compare] <english sentence>")
 	}
 	fs.Usage = usage
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
-	if fs.NArg() == 0 || *attempts < 1 || (*mode != llm.Retrieved && *mode != llm.Full) {
+	if fs.NArg() == 0 || *attempts < 1 || *rounds < 1 || !slices.Contains([]string{llm.Retrieved, llm.Full, llm.None}, *mode) {
 		usage()
 		return 2
 	}
@@ -824,8 +831,13 @@ func cmdLLM(langDir string, args []string, stdout, stderr io.Writer) int {
 	}
 
 	c := b.Build(*mode, sentence)
-	opt := llm.Options{Model: *model, MaxAttempts: *attempts}
-	fmt.Fprintf(stdout, "%s context: %d entries, %s\n", *mode, len(c.Entries), *model)
+	opt := llm.Options{Model: *model, MaxAttempts: *attempts, MaxToolRounds: *rounds}
+	with := ""
+	if *tools {
+		opt.Tools = llm.NewToolbox(lex, tr.Rules, tr.Tagger, lt.Checker)
+		with = ", tools"
+	}
+	fmt.Fprintf(stdout, "%s context: %d entries%s, %s\n", *mode, len(c.Entries), with, *model)
 	res, err := lt.Translate(context.Background(), sentence, c, opt)
 	fmt.Fprintf(stdout, "meaning check: %s\n", res.Expect.Kind())
 	tw := tabwriter.NewWriter(stdout, 0, 0, 2, ' ', 0)
@@ -836,6 +848,11 @@ func cmdLLM(langDir string, args []string, stdout, stderr io.Writer) int {
 		}
 		fmt.Fprintf(tw, "attempt %d\t%s\t%s\t%.1fs, %d+%d tokens\n", i+1, a.Answer.Translation, mark,
 			a.Duration.Seconds(), a.PromptTokens, a.EvalTokens)
+		for _, st := range a.Steps {
+			for j, c := range st.Calls {
+				fmt.Fprintf(tw, "   → %s = %s\n", c, toolSummary(st.Results[j].Content))
+			}
+		}
 		for _, p := range a.Check.Problems {
 			fmt.Fprintf(tw, "   ! %s\n", p)
 		}
@@ -863,6 +880,19 @@ func cmdLLM(langDir string, args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 	return 0
+}
+
+// toolSummary shortens a tool result to one line: a check's problems, or
+// the first line and how many more there are.
+func toolSummary(s string) string {
+	if _, probs, ok := strings.Cut(s, "Problems:\n"); ok {
+		return "✗ " + strings.ReplaceAll(strings.TrimPrefix(probs, "- "), "\n- ", "; ")
+	}
+	first, rest, _ := strings.Cut(s, "\n")
+	if n := strings.Count(rest, "\n") + 1; rest != "" {
+		return fmt.Sprintf("%s  (+%d more)", first, n)
+	}
+	return first
 }
 
 // compareRuleBased says how the rule-based translator's output relates to

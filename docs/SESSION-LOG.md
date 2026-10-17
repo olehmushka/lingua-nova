@@ -6,6 +6,108 @@ why, and where to pick up. The task list itself lives in `ROADMAP.md` →
 
 ---
 
+## 2026-10-18: Tool use for LLM translation
+
+### Done
+
+- **Protocol** (`internal/llm/client.go`, `llm/app.py`): `Tool`,
+  `ToolCall`, `ToolResult`, `Step` (one assistant message with calls + the
+  results). `Request` gains `tools`, `steps` (current attempt), `final`;
+  `Turn` keeps its steps; `Response.answer` is optional, plus `calls` and
+  `content`. The service stays one model call per request: a tool round
+  sends `tools` and no `format`, the final round `format` and no tools,
+  with a "now give the final answer" user message. Output capped at
+  512 tokens per tool round and 1024 per answer (`num_predict`).
+- **Tools** (`internal/llm/tools.go`): `lookup` (same path as retrieval:
+  tag, lemma, gloss, then search), `inflect` (`morph.Rules.Inflect`),
+  `analyze` (`morph.Analyzer`), `check` (`Checker.Verify` on a draft, with
+  the sentence's `Expectation`). Results are plain text; a bad call returns
+  `error: …` and the loop goes on. Defined in Go next to the code that runs
+  them; the service passes the schemas through.
+- **Loop** (`internal/llm/loop.go`): per attempt, tool rounds until the
+  model stops calling or `MaxToolRounds` (8), then `final`. Tokens and time
+  add up over the attempt's calls. A retry carries the failed attempt's
+  steps and the feedback, and can use tools again.
+- **Context** `none`: grammar, morphology and examples, no dictionary.
+- **CLI**: `lnova llm -tools [-tool-rounds N] [-ctx retrieved|full|none]`;
+  each call is printed as `→ inflect(eat, [PRS 3SG]) = bauge (eat-TH.3SG)`.
+- A client timeout now says "timed out … check ollama ps" instead of the
+  "start the service" hint.
+
+### Key decisions (the user's choices)
+
+| Area | Decision |
+|---|---|
+| Loop | **Go drives it**; the Python service stays stateless |
+| Tools | lookup, inflect, analyze **and check** |
+| Context | `-tools` is a flag for any `-ctx`, plus `-ctx none` |
+
+Mine, from the first real run: `inflect` also accepts the dictionary
+word. The model kept sending `inflect(baugir, …)` instead of
+`inflect(eat, …)`, got "no entry", looked the word up, and sent the same
+call again until the round cap. A tool should accept what the model
+naturally sends.
+
+### Measurements (same 7 sentences; one run each)
+
+| sentence | retrieved | retrieved + tools | tool calls |
+|---|---|---|---|
+| The woman sees the river. | ✓ | ✓ | 1 (check) |
+| The men will drink the water. | ✓ | ✓ | 4 |
+| Didst thou see the woman's dog? | ✓ | ✓ (2nd; mislabeled id) | 2 |
+| The dog eats the bread. | ✗ `baugir` | ✗ `bauge` but `gurnah` (PL) | 15 |
+| She didn't see the big house. | ✗ | **✓** (2nd, via `inflect`) | 6 |
+| Who saw the men? | ✗ `naraxis` | **✓** (via `check`) | 3 |
+| We will love the god. | ✗ | not measured (Ollama stuck) | |
+| **passed and right** | **3/7** | **5/6** | |
+| time per sentence | 5–20 s | 19–145 s | |
+
+`-ctx none -tools` isn't measured: `ollama serve` got stuck mid-run
+(`ollama ps` shows the model "Stopping..." with no runner). Every request
+waited for the 10-minute client timeout. Restart Ollama and rerun.
+
+What the transcripts show:
+
+- **Tools help where one call fixes one slot.** `Who saw the men?`:
+  `check` said "needs see-TH-PST-3SG", the model tried twice and got `OK`.
+  The big house: `inflect(narar, [PST 3SG]) = naraxe` on the retry.
+- **Getting the right form isn't using it.** On the first real run,
+  `inflect` returned `bauge` and every later draft still had `baugir`.
+  In the measured run, `bauge` only made it into the answer on attempt 3,
+  which was then wrong in another slot (`gurnah`, after the model called
+  `inflect(gurna, [PL])` for a singular noun on its own).
+- **Repeated calls**: the model sends the same failing call
+  (`inflect(huro, [PRS 3SG])` on a noun) round after round. That's the
+  classic agent "doom loop"; the round cap is what ends it.
+- **Cost**: every round resends the whole conversation, so a tools
+  attempt is 17K–42K prompt tokens instead of ~5K, and 2–7× slower.
+
+### Concepts
+
+- **Function calling**: the model emits a structured call
+  (`<tool_call>{"name":…,"arguments":…}` in qwen's template, parsed by
+  Ollama into `message.tool_calls`); it never runs anything. The host
+  runs it and answers with a `role: tool` message.
+- **Agent loop (ReAct)**: act → observe → repeat → answer. Here it runs
+  inside each attempt of the generate-and-test retry loop.
+- **Tools vs. constrained decoding**: a JSON-schema grammar masks every
+  token of a tool call, so tools and `format` go in separate calls.
+- **Tool design for small models**: accept loose input (word or id,
+  `"PST.3SG"` or `["PST","3SG"]`), return short text, put the fix in the
+  error message ("use lookup to find the id").
+- **Agentic vs. prefetched RAG**: `-ctx none -tools` makes the model fetch
+  its own context; still to be measured.
+
+### Start next session here
+
+1. Restart `ollama serve`, then finish the measurement (ROADMAP → Next up 1).
+2. Ideas if tools stay weak, for the user to decide: a newer or larger
+   local model with better tool use; return the `check` verdict
+   automatically after each `inflect`; drop repeated identical calls.
+3. Then Coin new words, or Evals first.
+
+---
+
 ## 2026-10-17: Meaning check for LLM answers
 
 ### Done

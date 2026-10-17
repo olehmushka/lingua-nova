@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -259,6 +260,27 @@ func TestLLM(t *testing.T) {
 	defer wrong.Close()
 	down := httptest.NewServer(http.NotFoundHandler())
 	down.Close()
+	// With tools: one inflect call, then no more calls, then the answer.
+	n := 0
+	tools := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Tools []any `json:"tools"`
+			Final bool  `json:"final"`
+		}
+		json.NewDecoder(r.Body).Decode(&req)
+		n++
+		switch {
+		case len(req.Tools) == 0:
+			http.Error(w, "no tools sent", http.StatusBadRequest)
+		case req.Final:
+			fmt.Fprint(w, `{"answer": {"translation": "Lu mena nara lu trubo.", "words": [], "notes": ""}, "prompt_tokens": 900, "eval_tokens": 40, "duration_ms": 1200}`)
+		case n == 1:
+			fmt.Fprint(w, `{"calls": [{"name": "inflect", "arguments": {"id": "see", "features": ["PRS", "3SG"]}}], "prompt_tokens": 800, "eval_tokens": 20, "duration_ms": 500}`)
+		default:
+			fmt.Fprint(w, `{"calls": [], "content": "done", "prompt_tokens": 850, "eval_tokens": 5, "duration_ms": 300}`)
+		}
+	}))
+	defer tools.Close()
 
 	const en = "The woman sees the river."
 	tests := []struct {
@@ -280,6 +302,10 @@ func TestLLM(t *testing.T) {
 			"attempt 2  Lu mena nara lu trubo.  ✓"}, ""},
 		{"gives up", []string{"llm", "-url", bad.URL, "-attempts", "2", en}, 1, []string{
 			"attempt 2", "no valid translation in 2 attempts"}, ""},
+		{"tools", []string{"llm", "-url", tools.URL, "-ctx", "none", "-tools", en}, 0, []string{
+			"none context: 0 entries, tools,",
+			"attempt 1  Lu mena nara lu trubo.  ✓  2.0s, 2550+65 tokens",
+			"   → inflect(see, [PRS 3SG]) = nara  (see-TH.3SG)"}, ""},
 		{"service down", []string{"llm", "-url", down.URL, en}, 1, nil, "uv run uvicorn"},
 		{"no args", []string{"llm"}, 2, nil, "usage: lnova llm"},
 		{"bad ctx", []string{"llm", "-ctx", "some", en}, 2, nil, "usage: lnova llm"},
