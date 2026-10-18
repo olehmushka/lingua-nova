@@ -82,9 +82,10 @@ func (t *Translator) Translate(ctx context.Context, english string, c Context, o
 	}
 	res := &Result{Context: c, Expect: t.Checker.Expect(english)}
 	var history []Turn
+	seen := map[string]string{} // tool calls made for this sentence, over all attempts
 	for range opt.MaxAttempts {
 		req := Request{English: english, Model: opt.Model, Context: c, History: history, NumCtx: opt.NumCtx}
-		a, err := t.attempt(ctx, req, opt, res.Expect)
+		a, err := t.attempt(ctx, req, opt, res.Expect, seen)
 		if a != nil {
 			res.Attempts = append(res.Attempts, *a)
 		}
@@ -103,7 +104,7 @@ func (t *Translator) Translate(ctx context.Context, english string, c Context, o
 // attempt runs the tool rounds (if any) and the final call of one
 // attempt, and checks the answer. On an error during the tool rounds it
 // returns nil: there's no answer to show.
-func (t *Translator) attempt(ctx context.Context, req Request, opt Options, x *Expectation) (*Attempt, error) {
+func (t *Translator) attempt(ctx context.Context, req Request, opt Options, x *Expectation, seen map[string]string) (*Attempt, error) {
 	a := &Attempt{}
 	call := func(req Request) (*Response, error) {
 		resp, err := t.Client.Translate(ctx, req)
@@ -128,7 +129,7 @@ func (t *Translator) attempt(ctx context.Context, req Request, opt Options, x *E
 			}
 			st := Step{Calls: resp.Calls}
 			for _, c := range resp.Calls {
-				st.Results = append(st.Results, opt.Tools.Run(c, x))
+				st.Results = append(st.Results, opt.Tools.runOnce(c, x, seen))
 			}
 			a.Steps = append(a.Steps, st)
 		}

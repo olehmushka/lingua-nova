@@ -230,17 +230,22 @@ def translate(req: TranslateRequest) -> TranslateResponse:
     use_tools = bool(req.tools) and not req.final
     kwargs = {"tools": ollama_tools(req.tools)} if use_tools else {"format": Answer.model_json_schema()}
     cap = TOOL_ROUND_MAX_TOKENS if use_tools else ANSWER_MAX_TOKENS
+    # Rendered before the call: a template error is a bug here, not Ollama
+    # being down, and FastAPI reports it as a 500 with the traceback logged.
+    messages = build_messages(req)
     try:
         resp = client().chat(
             model=req.model,
-            messages=build_messages(req),
+            messages=messages,
             options={"temperature": req.temperature, "num_ctx": req.num_ctx, "num_predict": cap},
             **kwargs,
         )
     except ollama.ResponseError as e:
         raise HTTPException(502, f"ollama: {e.error}")
-    except Exception as e:
+    except ConnectionError as e:  # the ollama client's wrapper for httpx.ConnectError
         raise HTTPException(503, f"ollama not reachable at {OLLAMA_HOST}: {e}. Start it with: ollama serve")
+    except Exception as e:
+        raise HTTPException(502, f"ollama call failed: {type(e).__name__}: {e}")
 
     done = dict(
         model=req.model,

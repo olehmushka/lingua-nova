@@ -406,6 +406,13 @@ func TestToolLoop(t *testing.T) {
 		{"no calls", []string{"…", good}, 0, 2, []int{0}, []int{1}, true, ""},
 		{"round cap forces final", []string{"→lookup english=dog", "→lookup english=dog", good}, 2, 3, []int{2}, []int{2}, true, "huro"},
 		{"tools again after feedback", []string{"…", "Huro baugir lu gurna.", "→analyze word=baugir", "…", good}, 0, 5, []int{0, 1}, []int{1, 4}, true, "eat"},
+		{"repeated call", []string{"→lookup english=dog", "→lookup english=dog", "…", good}, 0, 4, []int{2}, []int{3}, true,
+			"repeated call: you already called lookup(dog) and got:\ndog | huro"},
+		{"repeated across attempts", []string{"→analyze word=baugir", "…", "Huro baugir lu gurna.", "→analyze word=baugir", "…", good}, 0, 6, []int{1, 1}, []int{2, 5}, true,
+			"repeated call: you already called analyze(baugir)"},
+		// Loose input: "PRS 3SG" and "PRS.3SG" are the same features.
+		{"repeated with other spelling", []string{"→inflect id=eat features=PRS_3SG", "→inflect id=eat features=PRS.3SG", "…", good}, 0, 4, []int{2}, []int{3}, true,
+			"repeated call: you already called inflect(eat, [PRS 3SG])"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

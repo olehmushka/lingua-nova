@@ -2,6 +2,7 @@
 
 import json
 
+import jinja2
 import pytest
 from fastapi.testclient import TestClient
 
@@ -128,6 +129,40 @@ def test_translate_endpoint(monkeypatch, content, status):
     if status == 200:
         assert r.json()["answer"]["translation"] == "Lu mena nara."
         assert r.json()["prompt_tokens"] == 100
+
+
+class RaisingClient:
+    def __init__(self, exc):
+        self.exc = exc
+
+    def chat(self, **kwargs):
+        raise self.exc
+
+
+@pytest.mark.parametrize(
+    "exc,status,says",
+    [
+        (ConnectionError("Failed to connect"), 503, "ollama not reachable"),
+        (RuntimeError("boom"), 502, "ollama call failed: RuntimeError: boom"),
+    ],
+)
+def test_translate_ollama_errors(monkeypatch, exc, status, says):
+    r = post(monkeypatch, RaisingClient(exc))
+    assert r.status_code == status, r.text
+    assert says in r.json()["detail"]
+
+
+def test_template_error_is_not_blamed_on_ollama(monkeypatch):
+    def broken(_):
+        raise jinja2.UndefinedError("'tools' is undefined")
+
+    monkeypatch.setattr(app, "build_messages", broken)
+    monkeypatch.setattr(app, "client", lambda: FakeClient("{}"))
+    r = TestClient(app.app, raise_server_exceptions=False).post(
+        "/translate", json={"english": "The woman sees.", "context": CTX.model_dump()}
+    )
+    assert r.status_code == 500
+    assert "ollama" not in r.text
 
 
 def post(monkeypatch, fake, **extra):

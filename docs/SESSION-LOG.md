@@ -6,6 +6,101 @@ why, and where to pick up. The task list itself lives in `ROADMAP.md` →
 
 ---
 
+## 2026-10-18 (evening): Tool-use measurement, finished
+
+### Done
+
+- All three columns rerun on the **629-entry** lexicon (the user's choice,
+  so every number comes from the same data): 7 sentences ×
+  `-ctx retrieved`, `-ctx retrieved -tools`, `-ctx none -tools`, one run each,
+  all with `-compare`. Script and transcripts are in the session scratchpad
+  (not in the repo); Evals will turn it into a real tool.
+- No code changes.
+
+### Measurements (629 entries; one run each)
+
+| sentence | retrieved | retrieved + tools | none + tools |
+|---|---|---|---|
+| The woman sees the river. | ✓ | ✓ (1 call) | ✓ (7) |
+| The men will drink the water. | ✓ | ✓ (5) | ✓ (11) |
+| Didst thou see the woman's dog? | ✓ | ✓ (1) | ✓ (1) |
+| The dog eats the bread. | ✗ `baugir` ×3 | ✗ 120 calls, 423 s | ✗ `baugir`/`baugiru` (26) |
+| She didn't see the big house. | ✗ `nara`, `gumo hoida` | ✓ (5)¹ | ✓ (15) |
+| Who saw the men? | ✗ `naraxis` ×3 | ✓ (3) | ✓ 2nd attempt (7) |
+| We will love the god. | ✗ `bauzareh` | ✓ `noidaremu` (2)² | ✓ `Eluviremu`, pro-drop (8) |
+| **right** | **3/7** | **6/7** | **6/7** |
+| time per sentence | 6–17 s | 11–29 s (423 s doom loop) | 17–126 s |
+| prompt tokens per sentence | 6K (1 attempt) – 18K (3) | 19K–47K (139K) | 17K–112K |
+| `lookup` calls | n/a | 1 in total | 18 in total |
+
+¹ The first try of this cell stalled past the 10-minute client timeout
+(`ollama ps`: "Stopping..."). Ollama answered again right after, and the
+rerun took 27 s. So the hang doesn't reproduce consistently; it's one request
+that never finishes, not a dead server. The 512-token tool-round cap was hit
+5 times with an empty reply (the model produced no parseable call).
+
+² `noidar` is *love.storge* (family love). It's one of the 5 references,
+because the rule-based translator offers every `love_*` verb, so the meaning
+check accepts it, but it's the wrong kind of love for a god. The check
+accepts any translation that's a correct sense of the word, not only the
+best one.
+
+Compared with 323 entries: retrieved stays 3/7 (same failures);
+retrieved+tools goes 5/6 → 6/7 (the god sentence is now measured and passes).
+
+### What the transcripts show
+
+- **`The dog eats the bread.` fails in every setup.** The model is sure the
+  verb is `baugir` and keeps it, whatever `check` and `inflect` say. With
+  retrieved+tools it doom-looped: `check("Lu huro gurna.")` 19×,
+  `inflect(baugir, [PRS 3SG])` 13× in one run. `MaxToolRounds` caps rounds,
+  not identical calls.
+- **`-ctx none` works**: the model looks up what it needs (2–3 `lookup`s per
+  sentence) and is as accurate as prefetched retrieval, at 1.5–2× the time
+  and tokens. With retrieved context it almost never calls `lookup` (once
+  in 7): it uses tools to *verify* (`check`, `inflect`), not to *fetch*.
+  Sentence 3 needs no lookup in either mode, because it's grammar.md's own
+  example and is already in the prompt.
+- Tools fix exactly what retrieved alone got wrong: verb agreement
+  (`naraxis` → `naraxe`), tense, word order.
+
+### Fixed afterwards (the user said yes to all three)
+
+- Killed the stale service on :8765.
+- `llm/app.py`: messages are rendered before the Ollama call, so a template
+  error is a 500 of its own. Only `ConnectionError` says "ollama not
+  reachable" (503); any other failure is "ollama call failed: <type>" (502).
+  Tests for both.
+- **Repeated tool calls** (`Toolbox.runOnce`): a call identical to an
+  earlier one for the same sentence (any attempt) isn't run again. It gets
+  "repeated call: you already called X and got: … Use it, or call something
+  different." The key is `ToolCall.String()`, which now prints `features`
+  as a list however they're sent (`"PRS.3SG"` = `["PRS","3SG"]`). The CLI
+  shows `↻ repeated call`.
+- Rerun of `The dog eats the bread.` (retrieved + tools): **120 → 22 calls,
+  423 → 151 s**, 6 repeats caught. Still ✗: the model gets `bauge` from
+  `inflect` and writes `baugis`. Dedupe makes a stuck model cheaper, not
+  right.
+
+### Concepts
+
+- **Agentic vs. prefetched RAG**: with prefetched context the retriever
+  decides what the model sees; with `-ctx none` the model decides by calling
+  `lookup`. Same accuracy here, but agentic costs more rounds, and every
+  round resends the whole conversation.
+- **One run per cell says little.** Sampling noise (sentence 5: a stall,
+  then 27 s) can flip a cell, so 6/7 vs. 5/6 isn't a real difference. That's
+  the case for Evals: more sentences, several runs, a pass rate with a spread.
+
+### Start next session here
+
+1. Evals (ROADMAP → Next up), then Coin new words.
+2. Open idea for the "right form, wrong word" failure: after a draft fails
+   `check`, put the `inflect` result for the failing slot into the feedback
+   ("the verb must be bauge"), or try a larger local model.
+
+---
+
 ## 2026-10-18 (later): Lexicon 323 → 629, word formation
 
 ### Done

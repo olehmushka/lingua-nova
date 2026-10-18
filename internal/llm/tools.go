@@ -101,6 +101,25 @@ func (b *Toolbox) Run(c ToolCall, x *Expectation) ToolResult {
 	return ToolResult{Name: c.Name, Content: out}
 }
 
+// runOnce runs a call unless the same call (same tool, same arguments as
+// String prints them) already ran for this sentence. Then it returns the
+// earlier result with a note instead. The tools are deterministic, so a
+// repeat can't learn anything new. A small model stuck on one idea sends
+// the same call round after round (the "doom loop"); saying so gives it a
+// reason to change course, where a fresh copy of the result doesn't.
+// seen maps String() to the earlier result and is updated.
+func (b *Toolbox) runOnce(c ToolCall, x *Expectation, seen map[string]string) ToolResult {
+	key := c.String()
+	if prev, ok := seen[key]; ok {
+		return ToolResult{Name: c.Name, Content: fmt.Sprintf(
+			"repeated call: you already called %s and got:\n%s\nIt will give the same result again. Use it, or call something different.",
+			key, prev)}
+	}
+	r := b.Run(c, x)
+	seen[key] = r.Content
+	return r
+}
+
 // lookup finds entries the way retrieval does (tag, lemmatize, look up
 // by gloss, then the dictionary search), for each word given.
 func (b *Toolbox) lookup(word string) string {
@@ -217,7 +236,8 @@ func (c ToolCall) list(name string) []string {
 	return out
 }
 
-// String shows the call: inflect(see, [PST 3SG]).
+// String shows the call: inflect(see, [PST 3SG]). Features print the same
+// however they were sent, so it's also the key for spotting repeated calls.
 func (c ToolCall) String() string {
 	var args []string
 	for _, p := range toolParams[c.Name] {
@@ -225,7 +245,10 @@ func (c ToolCall) String() string {
 		case []any:
 			args = append(args, "["+strings.Join(c.list(p), " ")+"]")
 		case string:
-			if c.Name == "check" {
+			switch {
+			case p == "features": // "PST.3SG" is the same features as ["PST", "3SG"]
+				v = "[" + strings.Join(c.list(p), " ") + "]"
+			case c.Name == "check":
 				v = fmt.Sprintf("%q", v)
 			}
 			args = append(args, v)

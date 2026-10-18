@@ -7,13 +7,10 @@ previous one is "done", even if done means small.
 
 _Keep this section current: it's where every new session starts._
 
-1. **Finish the tool-use measurement** (needs a restarted `ollama serve`;
-   it got stuck mid-run, see SESSION-LOG 2026-10-18): `We will love the god.`
-   with `-ctx retrieved -tools`, and all 7 sentences with `-ctx none -tools`.
+1. **Evals** (Phase 5): the 7-sentence measurement, made repeatable: more
+   sentences, several runs each, a pass rate per setup.
 2. **Coin new words** (Phase 5): the LLM proposes roots for missing
    concepts; the validator + sound change engine accept or reject them.
-   Consider doing **Evals** first: the 7-sentence script from this session
-   is already most of one.
 3. Open question from the lexicon growth (SESSION-LOG 2026-10-18, later):
    re-seed the generator weights from roots only, not derived words?
 
@@ -208,6 +205,11 @@ the derivation.
   [-tool-rounds N] [-ctx none]`. First numbers (retrieved): 3/7 → 5/6 right
   with tools; the model sometimes gets the right form from `inflect` and
   still writes its own.
+  → Measured on 629 entries (7 sentences, one run each): retrieved 3/7,
+  retrieved + tools 6/7, none + tools 6/7 (the model looks words up
+  itself, 1.5–2× the cost). `The dog eats the bread.` fails everywhere.
+  Repeated identical calls are answered "repeated call: …" instead of
+  run again (that doom loop: 120 → 22 calls).
 - [ ] **Coin new words**: the LLM proposes roots for missing concepts, and the validator + sound change engine accept or reject them.
 - [ ] **Semantic search** with embeddings ("words related to the sea").
 - [ ] **Evals**: a fixed set of test sentences to measure translation quality as you change prompts.

@@ -885,6 +885,9 @@ func cmdLLM(langDir string, args []string, stdout, stderr io.Writer) int {
 // toolSummary shortens a tool result to one line: a check's problems, or
 // the first line and how many more there are.
 func toolSummary(s string) string {
+	if strings.HasPrefix(s, "repeated call:") {
+		return "↻ repeated call, the earlier result again"
+	}
 	if _, probs, ok := strings.Cut(s, "Problems:\n"); ok {
 		return "✗ " + strings.ReplaceAll(strings.TrimPrefix(probs, "- "), "\n- ", "; ")
 	}

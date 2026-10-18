@@ -328,3 +328,18 @@ func TestLLM(t *testing.T) {
 		})
 	}
 }
+
+func TestToolSummary(t *testing.T) {
+	tests := []struct{ in, want string }{
+		{"bauge  (eat-TH.3SG)", "bauge  (eat-TH.3SG)"},
+		{"dog | huro\ndog.x | hurlo", "dog | huro  (+1 more)"},
+		{"Lu huro.\nProblems:\n- a\n- b", "✗ a; b"},
+		{"repeated call: you already called check(\"x\") and got:\nProblems:\n- a\nIt will give the same result again.",
+			"↻ repeated call, the earlier result again"},
+	}
+	for _, tt := range tests {
+		if got := toolSummary(tt.in); got != tt.want {
+			t.Errorf("toolSummary(%q) = %q, want %q", tt.in, got, tt.want)
+		}
+	}
+}
