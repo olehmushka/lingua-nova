@@ -16,6 +16,7 @@ these files, and you edit them by hand.
 | `lexicon/*.yaml` | Dictionary entries, grouped by topic |
 | `english/grammar.cfg` | The English the translator accepts, as a context-free grammar (`lnova parse`, `lnova translate`) |
 | `english/words.yaml` | English function words, archaic forms and irregular inflections, mapped to lexicon ids |
+| `evals.yaml` | English test sentences for `lnova eval` (LLM translation pass rates): `en` and `tags`; every content word must be in the lexicon (`lnova eval -list` checks) |
 
 ## Lexicon entry format (draft, expect it to change)
 

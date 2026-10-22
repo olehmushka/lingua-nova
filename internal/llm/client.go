@@ -13,6 +13,7 @@ package llm
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -90,6 +91,7 @@ type Request struct {
 	Final       bool    `json:"final,omitempty"` // ask for the answer, not for more calls
 	NumCtx      int     `json:"num_ctx"`
 	Temperature float64 `json:"temperature"`
+	Seed        *int    `json:"seed,omitempty"` // nil: Ollama picks one
 }
 
 // Response is the service's reply to a Request: the answer when there
@@ -126,35 +128,43 @@ const startHint = "start it with: ollama serve, then cd llm && uv run uvicorn ap
 
 // Translate sends one model call.
 func (c *Client) Translate(ctx context.Context, req Request) (*Response, error) {
-	body, err := json.Marshal(req)
-	if err != nil {
+	var out Response
+	if err := c.post(ctx, "/translate", req, &out); err != nil {
 		return nil, err
 	}
-	hr, err := http.NewRequestWithContext(ctx, http.MethodPost, c.URL+"/translate", bytes.NewReader(body))
+	return &out, nil
+}
+
+// post sends req as JSON to the service's path and decodes the reply into out.
+func (c *Client) post(ctx context.Context, path string, req, out any) error {
+	body, err := json.Marshal(req)
 	if err != nil {
-		return nil, err
+		return err
+	}
+	hr, err := http.NewRequestWithContext(ctx, http.MethodPost, c.URL+path, bytes.NewReader(body))
+	if err != nil {
+		return err
 	}
 	hr.Header.Set("Content-Type", "application/json")
 	resp, err := c.HTTP.Do(hr)
 	if ue, ok := err.(*url.Error); ok && ue.Timeout() {
-		return nil, fmt.Errorf("llm service at %s timed out after %s; the model may be stuck (check: ollama ps): %w", c.URL, c.HTTP.Timeout, err)
+		return fmt.Errorf("llm service at %s timed out after %s; the model may be stuck (check: ollama ps): %w", c.URL, c.HTTP.Timeout, err)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("llm service not reachable at %s (%s): %w", c.URL, startHint, err)
+		return fmt.Errorf("llm service not reachable at %s (%s): %w", c.URL, startHint, err)
 	}
 	defer resp.Body.Close()
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("llm service: %s: %s", resp.Status, detail(data))
+		return fmt.Errorf("llm service: %s: %s", resp.Status, detail(data))
 	}
-	var out Response
-	if err := json.Unmarshal(data, &out); err != nil {
-		return nil, fmt.Errorf("llm service: bad reply: %w", err)
+	if err := json.Unmarshal(data, out); err != nil {
+		return fmt.Errorf("llm service: bad reply: %w", err)
 	}
-	return &out, nil
+	return nil
 }
 
 // detail extracts FastAPI's {"detail": "..."} error message.
@@ -170,4 +180,52 @@ func detail(data []byte) string {
 		return string(b)
 	}
 	return strings.TrimSpace(string(data))
+}
+
+// DefaultEmbedModel is the Ollama embedding model used when none is given.
+const DefaultEmbedModel = "nomic-embed-text"
+
+// EmbedRequest is one /embed call. Kind is "query" (what you search for)
+// or "document" (what is searched); the service adds the model's task
+// prefix for it.
+type EmbedRequest struct {
+	Texts []string `json:"texts"`
+	Kind  string   `json:"kind"`
+	Model string   `json:"model"`
+}
+
+// EmbedResponse is the service's reply: one vector per text, in order.
+type EmbedResponse struct {
+	Vectors    [][]float32 `json:"vectors"`
+	Model      string      `json:"model"`
+	DurationMS int         `json:"duration_ms"`
+}
+
+// Embed turns texts into vectors with an embedding model ("" = DefaultEmbedModel).
+func (c *Client) Embed(ctx context.Context, model, kind string, texts []string) ([][]float32, error) {
+	req := EmbedRequest{Texts: texts, Kind: kind, Model: cmp.Or(model, DefaultEmbedModel)}
+	var out EmbedResponse
+	if err := c.post(ctx, "/embed", req, &out); err != nil {
+		return nil, err
+	}
+	if len(out.Vectors) != len(texts) {
+		return nil, fmt.Errorf("llm service: %d vectors for %d texts", len(out.Vectors), len(texts))
+	}
+	return out.Vectors, nil
+}
+
+// Embedder is c with the embedding model fixed, for semantic.Build.
+func (c *Client) Embedder(model string) *Embedder {
+	return &Embedder{Client: c, Model: cmp.Or(model, DefaultEmbedModel)}
+}
+
+// Embedder implements semantic.Embedder over the service.
+type Embedder struct {
+	Client *Client
+	Model  string
+}
+
+// Embed implements semantic.Embedder.
+func (e *Embedder) Embed(ctx context.Context, kind string, texts []string) ([][]float32, error) {
+	return e.Client.Embed(ctx, e.Model, kind, texts)
 }

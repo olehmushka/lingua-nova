@@ -16,17 +16,23 @@ type clause struct {
 	wh        *earley.Tree // question word (WhP or WhAdv), fronted
 	subj, obj *earley.Tree // NP nodes
 	aux, neg  *earley.Tree
-	verb      *earley.Tree
+	verb      *earley.Tree   // V, or Be for the copula
+	compl     *earley.Tree   // what follows the copula: Compl
+	pps       []*earley.Tree // PP nodes, in order
+	comp      *earley.Tree   // that, opening this clause as a subordinate one
+	sub       *earley.Tree   // a subordinate clause after the verb: Sub
 }
 
 // read walks the tree in English order. The first NP before the verb is
 // the subject and an NP after it is the object; the auxiliary and
 // negation are found wherever English put them (did you not see / didn't
-// you see / you didn't see).
+// you see / you didn't see). The copula inverts by itself (Is the river
+// cold?), so the NP right after Be is still the subject. A subordinate
+// clause is kept whole, for its own clause.
 func (c *clause) read(t *earley.Tree) {
 	switch t.Label {
 	case "NP":
-		if c.verb == nil && c.subj == nil {
+		if c.subj == nil && (c.verb == nil || c.verb.Label == "Be") {
 			c.subj = t
 		} else {
 			c.obj = t
@@ -35,10 +41,18 @@ func (c *clause) read(t *earley.Tree) {
 		c.aux = t
 	case "Neg":
 		c.neg = t
-	case "V":
+	case "V", "Be":
 		c.verb = t
 	case "WhP", "WhAdv":
 		c.wh = t
+	case "Compl":
+		c.compl = t
+	case "PP":
+		c.pps = append(c.pps, t)
+	case "Comp":
+		c.comp = t
+	case "Sub":
+		c.sub = t
 	default:
 		for _, k := range t.Children {
 			c.read(k)
@@ -63,44 +77,8 @@ func (t *Translator) generate(s english.Sentence, tree *earley.Tree, picks []cho
 	}
 	var c clause
 	c.read(tree)
-	if c.verb == nil {
-		return Translation{}, fmt.Errorf("no verb")
-	}
-
-	tense := g.pick[c.verb].r.Tense
-	if c.aux != nil {
-		tense = g.pick[c.aux].r.Tense // did see → PST: the auxiliary's tense moves to the verb
-	}
-	person := "3SG" // a question word as the subject: who saw…
-	if c.subj != nil {
-		person = g.person(c.subj)
-	}
-	// Double negation: a negative object needs na before the verb. A
-	// negative subject doesn't (Zunhu zuvixe, like Portuguese Nada caiu).
-	neg := c.neg != nil || (c.obj != nil && g.negative(c.obj))
-
-	if c.wh != nil {
-		g.plain(c.wh)
-	}
-	if c.subj != nil {
-		if err := g.np(c.subj, "SBJ", false); err != nil {
-			return Translation{}, err
-		}
-	}
-	if neg {
-		not := t.Tagger.Entry("not")
-		if c.neg != nil {
-			not = cmp.Or(g.pick[c.neg].e, not)
-		}
-		g.add(not, "")
-	}
-	if err := g.verbWord(c.verb, tense, person); err != nil {
+	if err := g.clause(c); err != nil {
 		return Translation{}, err
-	}
-	if c.obj != nil {
-		if err := g.np(c.obj, "OBJ", false); err != nil {
-			return Translation{}, err
-		}
 	}
 
 	if len(g.words) > 0 {
@@ -117,6 +95,103 @@ func (t *Translator) generate(s english.Sentence, tree *earley.Tree, picks []cho
 		Notes:   g.notes,
 		Unknown: g.unknwn,
 	}, nil
+}
+
+// clause adds a clause in Rifatian order: question word, subject, na,
+// verb, object or copula complement, prepositional phrases (S V O PP),
+// and then a subordinate clause, which always opens with itu.
+func (g *gen) clause(c clause) error {
+	if c.verb == nil {
+		return fmt.Errorf("no verb")
+	}
+	tense := g.pick[c.verb].r.Tense
+	if c.aux != nil {
+		tense = g.pick[c.aux].r.Tense // did see → PST: the auxiliary's tense moves to the verb
+	}
+	person := "3SG" // a question word as the subject: who saw…
+	if c.subj != nil {
+		person = g.person(c.subj)
+	}
+	// Double negation: a negative object needs na before the verb. A
+	// negative subject doesn't (Zunhu zuvixe, like Portuguese Nada caiu).
+	neg := c.neg != nil || (c.obj != nil && g.negative(c.obj))
+
+	if c.comp != nil {
+		g.plain(c.comp)
+	}
+	if c.wh != nil {
+		g.plain(c.wh)
+	}
+	if c.subj != nil {
+		if err := g.np(c.subj, "SBJ", false); err != nil {
+			return err
+		}
+	}
+	if neg {
+		not := g.t.Tagger.Entry("not")
+		if c.neg != nil {
+			not = cmp.Or(g.pick[c.neg].e, not)
+		}
+		g.add(not, "")
+	}
+	if err := g.verbWord(c.verb, tense, person); err != nil {
+		return err
+	}
+	if c.obj != nil {
+		if err := g.np(c.obj, "OBJ", false); err != nil {
+			return err
+		}
+	}
+	if c.compl != nil {
+		if err := g.compl(c.compl); err != nil {
+			return err
+		}
+	}
+	for _, pp := range c.pps {
+		if err := g.pp(pp); err != nil {
+			return err
+		}
+	}
+	if c.sub != nil {
+		var sc clause
+		for _, k := range c.sub.Children {
+			sc.read(k)
+		}
+		if sc.comp == nil { // English dropped "that"; Rifatian keeps itu
+			g.add(g.t.Tagger.Entry("that_comp"), "")
+		}
+		return g.clause(sc)
+	}
+	return nil
+}
+
+// compl adds the copula's complement. An adjective doesn't inflect; a
+// pronoun takes the subject form, as the subject does (Hu iha mu, like
+// Portuguese Sou eu), and a noun shows no case anyway.
+func (g *gen) compl(t *earley.Tree) error {
+	k := t.Children[0]
+	switch k.Label {
+	case "Adj":
+		g.plain(k)
+		return nil
+	case "NP":
+		return g.np(k, "SBJ", false)
+	case "PP":
+		return g.pp(k)
+	}
+	return fmt.Errorf("unexpected complement %v", k)
+}
+
+// pp adds a prepositional phrase: the preposition, then its noun phrase.
+// Which form a pronoun takes after a preposition isn't decided yet
+// (grammar.md, open questions), so there's no translation for one.
+func (g *gen) pp(pp *earley.Tree) error {
+	g.plain(pp.Children[0])
+	np := pp.Children[1]
+	if g.head(np).Label == "Pron" {
+		return fmt.Errorf("%s: a pronoun after a preposition isn't decided yet", g.s.Tokens[g.head(np).Start].Text)
+	}
+	return g.np(np, "OBJ", false)
 }
 
 func (g *gen) add(e *lexicon.Entry, text string) {
@@ -190,8 +265,12 @@ func (g *gen) person(np *earley.Tree) string {
 }
 
 // head is the leaf that decides an NP's person and number: the pronoun,
-// or the noun of the outermost Nom (the dog in "the woman's dog").
+// or the noun of the outermost Nom (the dog in "the woman's dog", the
+// children in "the children of the king").
 func (g *gen) head(np *earley.Tree) *earley.Tree {
+	if len(np.Children) == 3 && np.Children[1].Label == "Of" {
+		return g.head(np.Children[0])
+	}
 	last := np.Children[len(np.Children)-1]
 	switch last.Label {
 	case "Pron", "N":
@@ -230,6 +309,8 @@ func (g *gen) np(np *earley.Tree, kase string, possessor bool) error {
 			return err
 		}
 		return g.nom(k[1], possessor)
+	case k[1].Label == "Of": // NP Of NP: the children of [the king] → [lu dauzo]s orloh
+		return g.of(k[0], k[2], kase, possessor)
 	case k[0].Label == "NP": // NP Gen Nom: [the woman]'s dog
 		if err := g.np(k[0], kase, true); err != nil {
 			return err
@@ -261,4 +342,28 @@ func (g *gen) nom(nom *earley.Tree, possessor bool) error {
 		g.plain(a)
 	}
 	return nil
+}
+
+// of adds "head of possessor" as Rifatian says it: possessor's head. The
+// article belongs to the possessor (lu dauzos orloh), so the head can
+// only have "the" or nothing; how to say "a child of the king" isn't
+// decided yet (grammar.md, open questions).
+func (g *gen) of(head, possessor *earley.Tree, kase string, poss bool) error {
+	k := head.Children
+	var nom *earley.Tree
+	switch {
+	case len(k) == 1 && k[0].Label == "Nom":
+		nom = k[0]
+	case len(k) == 2 && k[0].Label == "Det":
+		if e := g.pick[k[0]].e; e == nil || e.ID != "the" {
+			return fmt.Errorf("%s … of: only \"the\" is decided", g.s.Tokens[k[0].Start].Text)
+		}
+		nom = k[1]
+	default:
+		return fmt.Errorf("\"of\" after a %s isn't supported", k[0].Label)
+	}
+	if err := g.np(possessor, kase, true); err != nil {
+		return err
+	}
+	return g.nom(nom, poss)
 }

@@ -149,6 +149,9 @@ func TestLemmas(t *testing.T) {
 		{"V", "seest", "see"},
 		{"V", "loveth", "love"},
 		{"V", "wept", "weep+"},
+		// Irregular presents (be has its own category, Be, in words.yaml).
+		{"V", "has", "have"},
+		{"V", "hath", "have"},
 	}
 	for _, tt := range tests {
 		var got string

@@ -99,10 +99,43 @@ func (g *Glosser) Gloss(sentence string) *Result {
 		w := &res.Words[i]
 		w.Readings, w.Err = g.a.Analyze(w.Text)
 	}
+	complementizers(res.Words)
 	for _, c := range clauses(res.Words) {
 		res.Notes = append(res.Notes, g.clause(c)...)
 	}
 	return res
+}
+
+// complementizers decides each complementizer-or-not word (itu: COMP
+// or "what") before the sentence is cut into clauses, because a
+// complementizer is itself a clause boundary. After a finite verb in the
+// same clause it's COMP and opens a subordinate clause (Mu sozu itu lu
+// trubo iha grepo); anywhere else it isn't (Itu lu mena beuzexe?).
+func complementizers(ws []Word) {
+	isComp := func(an morph.Analysis) bool { return an.POS == "complementizer" }
+	verb := false
+	for i := range ws {
+		w := &ws[i]
+		if slices.ContainsFunc(w.Readings, isComp) {
+			if verb {
+				w.remove("a COMP after the verb", func(an morph.Analysis) bool { return !isComp(an) })
+				verb = false
+			} else {
+				w.remove("no verb before it to be its COMP", isComp)
+			}
+		} else if slices.ContainsFunc(w.Readings, func(an morph.Analysis) bool { _, ok := an.Finite(); return ok }) {
+			verb = true
+		}
+		if boundary(ws, i) {
+			verb = false
+		}
+	}
+}
+
+// comp reports whether w was read as a complementizer.
+func comp(w Word) bool {
+	t := w.Top()
+	return t != nil && t.POS == "complementizer"
 }
 
 // clauses splits words at clause boundaries; the clauses share ws's
@@ -124,9 +157,10 @@ func clauses(ws []Word) [][]Word {
 const clauseEnd = ".,?!;:—–…"
 
 // boundary reports whether a clause ends after ws[i]: Naraxis hono? — Naraxu.
+// A complementizer starts a clause too: Mu sozu | itu lu trubo iha grepo.
 func boundary(ws []Word, i int) bool {
 	return strings.ContainsAny(ws[i].Punct, clauseEnd) ||
-		i+1 < len(ws) && strings.ContainsAny(ws[i+1].Lead, clauseEnd)
+		i+1 < len(ws) && (strings.ContainsAny(ws[i+1].Lead, clauseEnd) || comp(ws[i+1]))
 }
 
 // clause runs the rules on one clause. Rifatian clauses are SVO with one
@@ -135,6 +169,8 @@ func boundary(ws []Word, i int) bool {
 //  1. the verb is the first word with a finite reading (known roots
 //     before guesses); no other word in the clause is a finite verb;
 //  2. a subject pronoun comes before the verb, an object pronoun after;
+//     after the copula ihar a pronoun is in the subject form too (Hunu
+//     iha mu, "It is I", like Portuguese Sou eu);
 //  3. the subject agrees with the verb in person and number. The subject
 //     is the nearest word before the verb, skipping negation and
 //     adjectives; a clause can have none (pro-drop: Naraxu chi). A pronoun
@@ -143,8 +179,15 @@ func boundary(ws []Word, i int) bool {
 //     can be a fronted object with the subject dropped (Ifa naraxis? =
 //     whom did you see?).
 //
+// A subordinate clause's complementizer isn't part of it for these rules.
 // A clause without a verb (Na.) is left as the analyzer read it.
 func (g *Glosser) clause(ws []Word) (notes []string) {
+	if len(ws) > 0 && comp(ws[0]) {
+		if len(ws) == 1 {
+			return []string{strings.ToLower(ws[0].Text) + " is a COMP with no clause after it"}
+		}
+		ws = ws[1:]
+	}
 	v := verb(ws)
 	if v < 0 {
 		return nil
@@ -156,6 +199,10 @@ func (g *Glosser) clause(ws []Word) (notes []string) {
 			notes = append(notes, strings.ToLower(w.Text)+" is "+rule)
 		}
 	}
+	copula := slices.ContainsFunc(ws[v].Readings, func(an morph.Analysis) bool {
+		_, ok := an.Finite()
+		return ok && an.Entry != nil && an.Entry.ID == copulaID
+	})
 	for i := range ws {
 		if i == v {
 			continue
@@ -164,9 +211,12 @@ func (g *Glosser) clause(ws []Word) (notes []string) {
 			_, ok := an.Finite()
 			return ok
 		})
-		if i < v {
+		switch {
+		case i < v:
 			check(&ws[i], "OBJ before the verb", hasCase("OBJ"))
-		} else {
+		case copula:
+			check(&ws[i], "OBJ after the copula", hasCase("OBJ"))
+		default:
 			check(&ws[i], "SBJ after the verb", hasCase("SBJ"))
 		}
 	}
@@ -259,6 +309,10 @@ func persons(rs []morph.Analysis, person func(morph.Analysis) (string, bool)) []
 	}
 	return out
 }
+
+// copulaID is the lexicon id of ihar "be", whose complement pronoun is
+// in the subject form.
+const copulaID = "be"
 
 func hasCase(kase string) func(morph.Analysis) bool {
 	return func(an morph.Analysis) bool {

@@ -1,0 +1,6 @@
+Coin {{ n }} different proto roots for a new {{ c.pos }}{% if c.gender %} ({{ "feminine" if c.gender == "f" else "masculine" }}){% endif %} meaning "{{ c.english }}".
+{%- if c.definition %} Definition: {{ c.definition }}{% endif %}
+{%- if c.pos == "verb" %} It is a verb: every root must end in -ar, -er or -ir (the infinitive).{% endif %}
+{%- if c.gender == "f" %} Feminine nouns typically end in -a.{% elif c.gender == "m" %} Masculine nouns typically end in -o.{% endif %}
+Make the {{ n }} roots really different from each other: different first sounds, different syllable shapes and lengths, as in the EXAMPLES. Do not start them with the first letter of the English word.
+In "definition", write what "{{ c.english }}" means, as a short English dictionary definition (like "A small lamp ..."), not a description of your roots.

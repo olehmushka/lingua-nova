@@ -14,6 +14,14 @@ type Options struct {
 
 	Tools         *Toolbox // nil: no tools, the model answers straight away
 	MaxToolRounds int      // tool rounds per attempt before the answer is forced; 0 = 8
+
+	// Temperature 0 is greedy decoding: the most likely token every
+	// time, so the same prompt gives (nearly) the same answer. Above 0
+	// the model samples, and Seed fixes the sampler's random numbers:
+	// same seed, same prompt, same answer. Every call of the sentence
+	// uses the same seed.
+	Temperature float64
+	Seed        *int
 }
 
 // Attempt is one answer and its check, with the tool steps that led to
@@ -84,7 +92,8 @@ func (t *Translator) Translate(ctx context.Context, english string, c Context, o
 	var history []Turn
 	seen := map[string]string{} // tool calls made for this sentence, over all attempts
 	for range opt.MaxAttempts {
-		req := Request{English: english, Model: opt.Model, Context: c, History: history, NumCtx: opt.NumCtx}
+		req := Request{English: english, Model: opt.Model, Context: c, History: history, NumCtx: opt.NumCtx,
+			Temperature: opt.Temperature, Seed: opt.Seed}
 		a, err := t.attempt(ctx, req, opt, res.Expect, seen)
 		if a != nil {
 			res.Attempts = append(res.Attempts, *a)

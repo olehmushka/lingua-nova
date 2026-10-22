@@ -15,10 +15,18 @@ decide what counts as correct.
 ```sh
 ollama serve                                   # terminal 1 (:11434)
 ollama pull qwen2.5:7b-instruct-q4_K_M         # once
+ollama pull nomic-embed-text                   # once, for search by meaning
 cd llm && uv run uvicorn app:app --port 8765   # terminal 2
 curl localhost:8765/health
 lnova llm -compare "The men will drink the water."
 lnova llm -tools -ctx none "The dog eats the bread."   # the model looks words up
+lnova eval -list                               # the eval set, no model
+lnova eval -runs 5 -out evals/results/x.json   # pass rates per setup (hours)
+lnova eval -show evals/results/x.json          # report a saved run; add -resume to continue one
+lnova llm -temp 0.7 -seed 3 "…"                # replay one eval run (run 3)
+lnova coin -pos noun -gender f lantern         # coin proto roots; YAML on stdout
+lnova similar words related to the sea         # search by meaning (vectors cached in .cache/)
+lnova similar -eval evals/similar.yaml         # recall@10 of the search
 ```
 
 ## Endpoints
@@ -26,10 +34,27 @@ lnova llm -tools -ctx none "The dog eats the bread."   # the model looks words u
 - `GET /health?model=…`: checks that Ollama is up and the model is pulled.
 - `POST /translate`: `{english, model, context:{grammar, morphology,
   entries, examples}, history:[{steps, answer, feedback}], tools, steps,
-  final, num_ctx, temperature}` returns `{answer:{translation,
+  final, num_ctx, temperature, seed}` returns `{answer:{translation,
   words:[{text, lexicon_id, features}], notes}, calls, content, model,
   prompt_tokens, eval_tokens, duration_ms}`. A reply that doesn't fit the
-  schema returns 502, and Ollama being down returns 503.
+  schema returns 502, and Ollama being down returns 503. `temperature` 0
+  (the default) is greedy decoding; above 0 the model samples, and `seed`
+  (optional) makes the sample repeatable.
+
+- `POST /coin`: `{concept:{english, pos, gender, definition}, phonology,
+  examples:[{proto, modern, pos, gloss}], history:[{coinage, feedback}], n,
+  model, num_ctx, temperature, seed}` returns `{coinage:{definition,
+  candidates:[{proto, reason}]}, model, prompt_tokens, eval_tokens,
+  duration_ms}`. The phonology text and the examples are built in Go
+  (`internal/llm/coin.go`), which also checks every candidate; prompts in
+  `prompts/coin_*.j2`. Same errors as `/translate`.
+
+- `POST /embed`: `{texts, kind: "query"|"document", model}` returns
+  `{vectors, model, duration_ms}`, one vector per text. `model` defaults to
+  `nomic-embed-text`, which was trained with a task prefix per side of a
+  search; the service adds it (`search_query: ` / `search_document: `,
+  `TASK_PREFIXES`), so Go sends plain texts. Ranking and the cache are in Go
+  (`internal/semantic`).
 
 ### Tools
 

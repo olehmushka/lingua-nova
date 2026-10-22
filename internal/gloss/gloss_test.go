@@ -95,8 +95,21 @@ func TestGloss(t *testing.T) {
 		{"Ifa na naraxis lu dubroh?", "Ifa na nar-a-x-is lu dubro-h?", "who NEG see-TH-PST-2SG the man-PL",
 			[]string{"ifa (3SG) doesn't agree with naraxis (2SG)"}},
 		{"Ifa naraxis?", "Ifa nar-a-x-is?", "who see-TH-PST-2SG", nil},
-		{"Itu naraxis?", "Itu nar-a-x-is?", "what see-TH-PST-2SG", nil},
-		{"Itu chu naraxis?", "Itu chu nar-a-x-is?", "what 2SG see-TH-PST-2SG", nil},
+		// itu is "what" or COMP: COMP only after the clause's verb.
+		{"Itu naraxis?", "Itu nar-a-x-is?", "what see-TH-PST-2SG",
+			[]string{"itu: removed COMP (no verb before it to be its COMP)"}},
+		{"Itu chu naraxis?", "Itu chu nar-a-x-is?", "what 2SG see-TH-PST-2SG",
+			[]string{"itu: removed COMP (no verb before it to be its COMP)"}},
+		{"Mu sozu itu lu trubo iha grepo.", "Mu soz-u itu lu trubo ih-a grepo.", "1SG think-1SG COMP the river be-TH.3SG cold",
+			[]string{"itu: removed what (a COMP after the verb)"}},
+		// The subordinate clause has its own agreement.
+		{"Mu sozu itu lu trubo ihu grepo.", "Mu soz-u itu lu trubo ih-u grepo.", "1SG think-1SG COMP the river be-1SG cold",
+			[]string{"itu: removed what (a COMP after the verb)", "trubo (3SG) doesn't agree with ihu (1SG)"}},
+		// itu is never left out: without it, one clause has two verbs.
+		{"Mu sozu lu trubo iha grepo.", "Mu soz-u lu trubo ih-a grepo.", "1SG think-1SG the river be-TH.3SG cold",
+			[]string{"iha is a second verb in the clause"}},
+		{"Mu sozu itu.", "Mu soz-u itu.", "1SG think-1SG COMP",
+			[]string{"itu: removed what (a COMP after the verb)", "itu is a COMP with no clause after it"}},
 		{"Zunhu zuvixe.", "Zunhu zuv-i-x-e.", "nothing fall-TH-PST-3SG", nil},
 		// Pro-drop, and a clause without a verb: no subject, no note.
 		{"Naraxu chi.", "Nar-a-x-u chi.", "see-TH-PST-1SG 2SG.OBJ", nil},
@@ -106,6 +119,9 @@ func TestGloss(t *testing.T) {
 		// A rule that can't remove the only reading: the sentence is wrong.
 		{"Naraxis hono?", "Nar-a-x-is hono?", "see-TH-PST-2SG 3SG.M", []string{"hono is SBJ after the verb"}},
 		{"Mi naraxu.", "Mi nar-a-x-u.", "1SG.OBJ see-TH-PST-1SG", []string{"mi is OBJ before the verb"}},
+		// After the copula a pronoun is in the subject form: It is I.
+		{"Hunu iha mu.", "Hunu ih-a mu.", "3SG.N be-TH.3SG 1SG", nil},
+		{"Hunu iha mi.", "Hunu ih-a mi.", "3SG.N be-TH.3SG 1SG.OBJ", []string{"mi is OBJ after the copula"}},
 		{"Mu nara naraxu.", "Mu nar-a nar-a-x-u.", "1SG see-TH.3SG see-TH-PST-1SG",
 			[]string{"naraxu is a second verb in the clause", "mu (1SG) doesn't agree with nara (3SG)"}},
 		{"Mu na naraxu sela, na.", "Mu na nar-a-x-u sela, na.", "1SG NEG see-TH-PST-1SG 2SG.POL.OBJ NEG",
@@ -190,12 +206,14 @@ func TestClauses(t *testing.T) {
 	}
 	tests := []struct {
 		sentence string
-		want     []string // per clause: wh | subject | neg | verb | object
+		want     []string // per clause: wh or comp | subject | neg | verb | object
 	}{
 		{"Lu mena nara lu trubo.", []string{"- | the: woman:SG | - | see:PRS.3SG | the: river:SG"}},
 		{"Ifa naraxe lu dubroh?", []string{"who: |  | - | see:PST.3SG | the: man:PL"}},
 		{"Itu chu naraxis?", []string{"what: | thou:SG.SBJ | - | see:PST.2SG | "}},
 		{"Mu na naraxu zunhu.", []string{"- | i:SG.SBJ | not: | see:PST.1SG | nothing:"}},
+		// A subordinate clause: COMP isn't part of its subject.
+		{"Mu sozu itu lu trubo iha grepo.", []string{"- | i:SG.SBJ | - | think:PRS.1SG | ", "that_comp: | the: river:SG | - | be:PRS.3SG | cold:"}},
 		// No finite verb: everything is Subject.
 		{"Huro baugir lu gurna.", []string{"- | dog:SG eat:INF the: bread:SG | - | - | "}},
 		// na after the verb lands in the object.
@@ -205,7 +223,11 @@ func TestClauses(t *testing.T) {
 	for _, tt := range tests {
 		var got []string
 		for _, c := range g.Gloss(tt.sentence).Clauses() {
-			got = append(got, strings.Join([]string{one(c.Wh), str(c.Subject), one(c.Neg), one(c.Verb), str(c.Object)}, " | "))
+			head := one(c.Wh)
+			if c.Comp != nil {
+				head = one(c.Comp)
+			}
+			got = append(got, strings.Join([]string{head, str(c.Subject), one(c.Neg), one(c.Verb), str(c.Object)}, " | "))
 		}
 		if !slices.Equal(got, tt.want) {
 			t.Errorf("Clauses(%q) =\n  %s\nwant\n  %s", tt.sentence, strings.Join(got, "\n  "), strings.Join(tt.want, "\n  "))

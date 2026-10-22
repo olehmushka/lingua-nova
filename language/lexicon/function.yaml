@@ -1,4 +1,5 @@
-# Articles, the negation particle, conjunctions and prepositions.
+# Articles, the negation particle, conjunctions, the complementizer and
+# prepositions.
 
 - id: the
   proto: lu
@@ -35,6 +36,14 @@
   gloss: or
   definition: "Or."
 
+- id: that_comp
+  proto: ittun
+  modern: itu
+  pos: complementizer
+  gloss: COMP
+  definition: "That, introducing a clause after a verb: Mu sozu itu lu trubo iha grepo (I think that the river is cold). Never left out."
+  notes: "The question word itu 'what' (pronouns.yaml), grammaticalized as Portuguese que (from Latin quid) was. *ittun → itu"
+
 - id: in
   proto: bim
   modern: bi
@@ -58,3 +67,10 @@
   gloss: to
   definition: "To, toward (direction)."
   notes: "*eppe → epe (rule 3: pp > p)"
+
+- id: over
+  proto: fai
+  modern: fai
+  pos: preposition
+  gloss: over
+  definition: "Over, above; across."

@@ -7,11 +7,18 @@ previous one is "done", even if done means small.
 
 _Keep this section current: it's where every new session starts._
 
-1. **Evals** (Phase 5): the 7-sentence measurement, made repeatable: more
-   sentences, several runs each, a pass rate per setup.
-2. **Coin new words** (Phase 5): the LLM proposes roots for missing
-   concepts; the validator + sound change engine accept or reject them.
-3. Open question from the lexicon growth (SESSION-LOG 2026-10-18, later):
+1. `lnova eval -baseline evals/results/2026-10-18-qwen2.5-7b.json` after
+   any translation prompt or model change (that baseline is partial: 133
+   of 390; see SESSION-LOG 2026-10-18/19). The 5 copula / preposition /
+   clause sentences now get the frame check, not the lexical one, so they
+   aren't comparable with that baseline: re-run them first (SESSION-LOG
+   2026-10-22, English side). Richer definitions would help search by
+   meaning most (SESSION-LOG 2026-10-22, later).
+2. Coin the words you want with `lnova coin` and paste the chosen roots.
+3. Open grammar questions (grammar.md → Open questions): pronouns after
+   prepositions (the translator gives no translation until decided),
+   "a child of the king", fronted prepositional phrases, relative clauses.
+4. Open question from the lexicon growth (SESSION-LOG 2026-10-18, later):
    re-seed the generator weights from roots only, not derived words?
 
 ## Phase 0 — Learn the basics (reading, ~1–2 weeks alongside Phase 1)
@@ -210,9 +217,39 @@ the derivation.
   itself, 1.5–2× the cost). `The dog eats the bread.` fails everywhere.
   Repeated identical calls are answered "repeated call: …" instead of
   run again (that doom loop: 120 → 22 calls).
-- [ ] **Coin new words**: the LLM proposes roots for missing concepts, and the validator + sound change engine accept or reject them.
-- [ ] **Semantic search** with embeddings ("words related to the sea").
-- [ ] **Evals**: a fixed set of test sentences to measure translation quality as you change prompts.
+- [x] **Evals**: a fixed set of test sentences to measure translation quality as you change prompts.
+  → `language/evals.yaml` (26 sentences, tagged), `internal/eval`,
+  `lnova eval [-setups] [-runs 5] [-temp 0.7] [-tag] [-out] [-baseline]
+  [-list]`: run *i* uses seed *i* (`lnova llm -temp -seed` replays it);
+  pass rate and first-attempt rate per setup with Wilson 95% intervals;
+  results saved as JSON after every translation, `-resume`, `-baseline`
+  diffs two runs, `-show`. Partial baseline: retrieved 35%, +tools 44%,
+  none+tools 48%, intervals overlap. Along the way:
+  lexical meaning check fixed (prepositions, is → be), and grammar.md
+  got copula `ihar`, prepositions (S V O PP; `fai` over), "of" = `-s`,
+  and `itu` clauses (glossed COMP).
+  Then the English side: `grammar.cfg` has `Be`, `PP`, `NP Of NP` and
+  `Sub` (with or without "that"), the rule-based translator builds them,
+  and those sentences get the frame check.
+- [x] **Coin new words**: the LLM proposes roots for missing concepts, and the validator + sound change engine accept or reject them.
+  → `lnova coin -pos P [-gender m|f] [-def] [-id] [-n 5] [-want 3]
+  [-rounds 3] <english>`, `internal/llm/coin.go`, `POST /coin`. The model
+  writes proto roots only. Go checks sounds, proto phonotactics, verb
+  ending, runs the sound changes, checks modern phonotactics, existing
+  roots and homophones (rejected), then `lexicon.Validate` on the entry.
+  Rejections go back as feedback; accepted roots are printed as lexicon
+  YAML (notes with the rule trace) for you to paste. First numbers (6
+  concepts × 2 seeds): 79% of candidates accepted (gen's random roots:
+  87%), but the model's roots are samey (CV.CVa nouns, -irl- verbs).
+- [x] **Semantic search** with embeddings ("words related to the sea").
+  → `POST /embed` (task prefixes for `nomic-embed-text`), `internal/semantic`:
+  one unit vector per entry from `gloss (pos): definition`, brute-force
+  cosine search, cache in `.cache/embeddings-<model>.json` keyed by a hash
+  of each text. `lnova similar [-k] [-pos] <english>`, `-eval
+  evals/similar.yaml` (recall@10: 62%); "Related in meaning" on the search
+  page (htmx fragment `/similar`, server flag `-llm`); `lnova coin -related
+  10` puts the 10 nearest roots first among the 30 examples, only those
+  within `-related-margin 0.05` of the best score.
 - [ ] Stretch: a chat partner that speaks only the conlang.
 
 **Done when:** LLM translations pass your validator most of the time, and you can measure that number.

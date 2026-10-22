@@ -197,6 +197,17 @@ func TestMeaning(t *testing.T) {
 			[]string{"verb: the English needs love.storge-TH-FUT-1PL; you have love.storge-TH-FUT-3PL"}},
 		// Wrong tense only.
 		{"Who saw the men?", "Ifa nara lu dubroh?", "frame", []string{"verb: the English needs see-TH-PST-3SG"}},
+		// Copula, prepositions, "of" as possessive, a subordinate clause.
+		{"The warrior's sword is long.", "Lu gurzos halto iha estra.", "frame", nil},
+		{"The king was a warrior.", "Lu dauzo ihaxe ne gurzo.", "frame", nil},
+		{"The children of the king sleep in the house.", "Lu dauzos orloh sileh bi lu hoida.", "frame", nil},
+		{"The birds fly over the mountain.", "Lu frinhah letah fai lu velda.", "frame", nil},
+		{"The birds fly over the mountain.", "Lu frinhah letah lu velda.", "frame", []string{`object: the English needs "over the mountain"`}},
+		{"I think that the river is cold.", "Mu sozu itu lu trubo iha grepo.", "frame", nil},
+		{"The woman gave bread to the child.", "Lu mena hibaxe gurna epe lu orlo.", "frame", nil},
+		// A PP after a noun isn't in the English grammar: no parse, so
+		// the lexical check, which wants the preposition too.
+		{"The birds over the mountain fly.", "Lu frinhah letah.", "lexical", []string{`"over" is missing`}},
 		// No parse (an adverb): only the words are checked.
 		{"The dog sleeps quickly.", "Lu huro sile.", "lexical", nil},
 		{"The dog sleeps quickly.", "Lu mena sile.", "lexical",
@@ -217,6 +228,45 @@ func TestMeaning(t *testing.T) {
 				if !strings.Contains(got, w) {
 					t.Errorf("want a meaning problem containing %q, got:\n%s", w, got)
 				}
+			}
+		})
+	}
+}
+
+// TestExpectWords: the content words the lexical check requires, for
+// sentences the grammar doesn't parse (a PP after a noun). Prepositions
+// and the copula count, "of" doesn't (it's -s); is/was are be, not
+// entries that mention "is" in their definition.
+func TestExpectWords(t *testing.T) {
+	_, k := setup(t)
+	tests := []struct {
+		english string
+		want    string // word:ids … in order
+		unknown string
+	}{
+		{"The dog in the house sleeps.", "dog:dog in:in house:house sleeps:sleep", ""},
+		{"The children of the king in the house sleep.", "children:child king:king in:in house:house sleep:sleep", ""},
+		{"The woman in the house gave bread to the child.", "woman:woman in:in house:house gave:give bread:bread to:to child:child", ""},
+		{"The dog in the house is big.", "dog:dog in:in house:house is:be big:big", ""},
+		{"The men in the house were strong.", "men:man in:in house:house were:be strong:strong", ""},
+		{"The birds over the mountain fly.", "birds:bird over:over mountain:mountain fly:fly_insect,fly", ""}, // the tagger: fly/NN
+		{"The dragon sleeps.", "sleeps:sleep", "dragon"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.english, func(t *testing.T) {
+			x := k.Expect(tt.english)
+			if !strings.HasPrefix(x.Kind(), "lexical") {
+				t.Fatalf("kind %q, want lexical", x.Kind())
+			}
+			var got []string
+			for _, w := range x.Words {
+				got = append(got, w.Word+":"+strings.Join(w.IDs, ","))
+			}
+			if g := strings.Join(got, " "); g != tt.want {
+				t.Errorf("words %q, want %q", g, tt.want)
+			}
+			if g := strings.Join(x.Unknown, " "); g != tt.unknown {
+				t.Errorf("unknown %q, want %q", g, tt.unknown)
 			}
 		})
 	}
@@ -381,6 +431,46 @@ func TestTranslateLoop(t *testing.T) {
 				}
 				if i > 0 && !strings.Contains(req.History[i-1].Feedback, tt.feedback) {
 					t.Errorf("request %d feedback:\n%s", i, req.History[i-1].Feedback)
+				}
+			}
+		})
+	}
+}
+
+// TestSampling: temperature and seed reach every call of a sentence,
+// tool rounds and retries included; without a seed none is sent.
+func TestSampling(t *testing.T) {
+	b, k := setup(t)
+	seed := 7
+	tests := []struct {
+		name string
+		opt  Options
+		temp float64
+		seed *int
+	}{
+		{"greedy", Options{}, 0, nil},
+		{"sampled", Options{Temperature: 0.7, Seed: &seed}, 0.7, &seed},
+		{"sampled with tools", Options{Temperature: 0.7, Seed: &seed, Tools: sTools}, 0.7, &seed},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := &fakeService{answers: []string{"→lookup english=dog", "…", "Lu huro bauge lu blomp.", "Lu huro bauge lu gurna."}}
+			if tt.opt.Tools == nil {
+				f.answers = f.answers[2:]
+			}
+			srv := httptest.NewServer(f)
+			defer srv.Close()
+			tr := &Translator{Client: NewClient(srv.URL), Checker: k}
+			en := "The dog eats the bread."
+			if _, err := tr.Translate(context.Background(), en, b.Retrieved(en), tt.opt); err != nil {
+				t.Fatal(err)
+			}
+			if len(f.reqs) < 2 {
+				t.Fatalf("%d requests", len(f.reqs))
+			}
+			for i, req := range f.reqs {
+				if req.Temperature != tt.temp || (req.Seed == nil) != (tt.seed == nil) || (req.Seed != nil && *req.Seed != *tt.seed) {
+					t.Errorf("request %d: temperature %v, seed %v", i, req.Temperature, req.Seed)
 				}
 			}
 		})

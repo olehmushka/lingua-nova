@@ -1,0 +1,31 @@
+# Semantic search eval: lnova similar -eval evals/similar.yaml
+#
+# Each query lists the entry ids a good search should return in its top
+# k (default 10). The score is recall@k: the share of the expected ids that
+# are among the k hits. Precision isn't measured, because a hit that isn't
+# listed may still be related (the lists are short, not complete).
+
+- query: words related to the sea
+  expect: [sea, water, shore, island, boat, salt, fish]
+- query: fire and light
+  expect: [fire, burn, light, smoke, ash, sun]
+- query: weather
+  expect: [rain, snow, storm, thunder, wind, cloud]
+- query: family
+  expect: [mother, father, brother, sister, son, daughter, husband, wife, child]
+- query: killing
+  expect: [kill, murder, execute, slaughter, kill_accident, die]
+- query: love
+  expect: [love_agape, love_eros, love_philia, love_storge, love_doing]
+- query: a large wild cat
+  expect: [lion, tiger, leopard, jaguar, panther, cheetah, puma, lynx]
+- query: birds of prey
+  expect: [eagle, hawk, falcon, kestrel, buzzard, osprey, vulture, owl]
+- query: religion
+  expect: [god, deity, priest, prophet, pray, holy, bless, idol]
+- query: speaking
+  expect: [say, call, answer, ask, voice]
+- query: farming
+  expect: [farmer, field, grain, seed, ox]
+- query: times of day
+  expect: [morning, evening, night, day]

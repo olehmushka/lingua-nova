@@ -17,11 +17,14 @@
 //
 // English words are often ambiguous in Rifatian terms ("you" is four
 // pronouns, "love" five verbs), so every combination is generated and
-// ranked: trees that agree with the tagger first, then the first choice
-// of each word (an exact gloss before a sense, informal before polite).
+// ranked: translations without unknown words first (a tagger's noun
+// "cold" in "Is the river cold?" is ?cold, its adjective is grepo), then
+// trees that agree with the tagger, then the first choice of each word
+// (an exact gloss before a sense, informal before polite).
 package translate
 
 import (
+	"cmp"
 	"fmt"
 	"path/filepath"
 	"slices"
@@ -93,7 +96,7 @@ type Translation struct {
 	Gloss   *gloss.Result // nil if a word is unknown
 	Notes   []string      // problems: unknown words, glosser notes
 	Unknown []string      // English words with no lexicon entry
-	rank    []int         // tree score (negated), choice sum, tree index
+	rank    []int         // unknown words, tree score (negated), choice sum, tree index
 }
 
 // Result is every translation of a sentence.
@@ -115,6 +118,7 @@ func (t *Translator) Translate(sentence string, max int) (*Result, error) {
 		return res, t.noParse(s)
 	}
 	var all []Translation
+	var why error // the first reason a combination failed
 	for ti, p := range parses {
 		leaves := p.Tree.Leaves()
 		opts := make([][]choice, len(leaves))
@@ -124,9 +128,10 @@ func (t *Translator) Translate(sentence string, max int) (*Result, error) {
 		combos(opts, MaxCombos, func(pick []choice, sum int) {
 			tr, err := t.generate(s, p.Tree, pick)
 			if err != nil {
-				return // a combination morphology can't build (it has no plural)
+				why = cmp.Or(why, err) // morphology can't build it (no plural), or it isn't decided
+				return
 			}
-			tr.rank = []int{-p.Score, sum, ti}
+			tr.rank = []int{len(tr.Unknown), -p.Score, sum, ti}
 			all = append(all, tr)
 		})
 	}
@@ -143,7 +148,7 @@ func (t *Translator) Translate(sentence string, max int) (*Result, error) {
 		}
 	}
 	if len(res.Translations) == 0 {
-		return res, fmt.Errorf("no translation could be generated")
+		return res, fmt.Errorf("no translation could be generated: %w", why)
 	}
 	for i := range res.Translations {
 		t.verify(&res.Translations[i])

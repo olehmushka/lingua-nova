@@ -5,17 +5,23 @@ import (
 	"bytes"
 	"cmp"
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"maps"
 	"math/rand/v2"
 	"os"
+	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"slices"
 	"strings"
+	"syscall"
 	"text/tabwriter"
+	"time"
 
+	"github.com/olehmushka/lingua-nova/internal/eval"
 	"github.com/olehmushka/lingua-nova/internal/gen"
 	"github.com/olehmushka/lingua-nova/internal/gloss"
 	"github.com/olehmushka/lingua-nova/internal/lexicon"
@@ -52,10 +58,22 @@ commands:
   translate [-n 20] [-tree] <english sentence>
                   translate simple English into Rifatian: every translation,
                   ranked, with the gloss of the best one
-  llm [-ctx retrieved|full|none] [-tools] [-model M] [-attempts 3] [-compare] <english sentence>
+  llm [-ctx retrieved|full|none] [-tools] [-model M] [-attempts 3] [-temp 0 -seed S] [-compare] <english sentence>
                   translate with a local model (Ollama, via the llm/ service);
                   the glosser checks each answer and problems go back to the model;
                   -tools lets the model call lookup, inflect, analyze and check
+  coin -pos noun -gender f [-def D] [-id ID] [-n 5] [-want 3] [-rounds 3] <english>
+                  coin new proto roots with the local model; the phonology, sound
+                  changes and validator accept or reject each one, and the
+                  accepted ones are printed as lexicon YAML to paste; -related N
+                  of the example roots are chosen by meaning (embeddings), those
+                  within -related-margin of the best match
+  similar [-k 10] [-pos P] <english> | -eval evals/similar.yaml
+                  search the lexicon by meaning with an embedding model; vectors
+                  are cached in .cache/; -eval reports recall@k
+  eval [-setups retrieved,retrieved+tools,none+tools] [-runs 5] [-temp 0.7] [-tag T] [-out F] [-baseline F] [-list]
+                  translate language/evals.yaml several times per setup and
+                  report pass rates with 95% intervals; -list: no model
 `
 
 func main() {
@@ -99,6 +117,12 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return cmdTranslate(*langDir, rest, stdout, stderr)
 	case "llm":
 		return cmdLLM(*langDir, rest, stdout, stderr)
+	case "coin":
+		return cmdCoin(*langDir, rest, stdout, stderr)
+	case "similar":
+		return cmdSimilar(*langDir, rest, stdout, stderr)
+	case "eval":
+		return cmdEval(*langDir, rest, stdout, stderr)
 	default:
 		fmt.Fprintf(stderr, "lnova: unknown command %q\n%s", cmd, usage)
 		return 2
@@ -793,48 +817,36 @@ func cmdLLM(langDir string, args []string, stdout, stderr io.Writer) int {
 	attempts := fs.Int("attempts", 3, "give up after `N` attempts")
 	url := fs.String("url", llm.DefaultURL, "`URL` of the llm/ service")
 	compare := fs.Bool("compare", false, "compare with the rule-based translator")
+	temp := fs.Float64("temp", 0, "sampling `temperature`; 0 = greedy (always the most likely token)")
+	seed := fs.Int("seed", -1, "with -temp > 0, the sampler's `seed` (an eval run's seed replays it); -1 = random")
 	usage := func() {
-		fmt.Fprintln(stderr, "usage: lnova llm [-ctx retrieved|full|none] [-tools] [-tool-rounds 8] [-model M] [-attempts 3] [-url U] [-compare] <english sentence>")
+		fmt.Fprintln(stderr, "usage: lnova llm [-ctx retrieved|full|none] [-tools] [-tool-rounds 8] [-model M] [-attempts 3] [-temp 0] [-seed S] [-url U] [-compare] <english sentence>")
 	}
 	fs.Usage = usage
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
-	if fs.NArg() == 0 || *attempts < 1 || *rounds < 1 || !slices.Contains([]string{llm.Retrieved, llm.Full, llm.None}, *mode) {
+	if fs.NArg() == 0 || *attempts < 1 || *rounds < 1 || *temp < 0 || !slices.Contains([]string{llm.Retrieved, llm.Full, llm.None}, *mode) {
 		usage()
 		return 2
 	}
 	sentence := strings.Join(fs.Args(), " ")
 
-	tr, err := translate.Load(langDir)
+	env, err := loadLLM(langDir, *url)
 	if err != nil {
 		fmt.Fprintf(stderr, "lnova: %v\n", err)
 		return 1
 	}
-	lex, err := lexicon.Load(filepath.Join(langDir, "lexicon"))
-	if err != nil {
-		fmt.Fprintf(stderr, "lnova: %v\n", err)
-		return 1
-	}
-	b, err := llm.NewBuilder(langDir, lex, tr.Tagger)
-	if err != nil {
-		fmt.Fprintf(stderr, "lnova: %v\n", err)
-		return 1
-	}
-	ids := map[string]bool{}
-	for _, e := range lex.Entries {
-		ids[e.ID] = true
-	}
-	lt := &llm.Translator{
-		Client:  llm.NewClient(*url),
-		Checker: &llm.Checker{Glosser: tr.Glosser, Known: func(id string) bool { return ids[id] }, Ref: tr, Lex: lex},
-	}
+	tr, lt := env.tr, env.translator
 
-	c := b.Build(*mode, sentence)
-	opt := llm.Options{Model: *model, MaxAttempts: *attempts, MaxToolRounds: *rounds}
+	c := env.builder.Build(*mode, sentence)
+	opt := llm.Options{Model: *model, MaxAttempts: *attempts, MaxToolRounds: *rounds, Temperature: *temp}
+	if *seed >= 0 {
+		opt.Seed = seed
+	}
 	with := ""
 	if *tools {
-		opt.Tools = llm.NewToolbox(lex, tr.Rules, tr.Tagger, lt.Checker)
+		opt.Tools = env.tools
 		with = ", tools"
 	}
 	fmt.Fprintf(stdout, "%s context: %d entries%s, %s\n", *mode, len(c.Entries), with, *model)
@@ -880,6 +892,430 @@ func cmdLLM(langDir string, args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 	return 0
+}
+
+// cmdCoin asks the model for proto roots for a concept the lexicon lacks
+// and checks each one. The rounds (every candidate, ✓ or ✗ and why) and
+// the totals go to stderr; the accepted roots go to stdout as lexicon
+// YAML, the first ready to paste and the others commented out:
+//
+//   - id: lantern
+//     proto: pattuca
+//     modern: patuga
+//     ...
+//     # - id: lantern
+//     #   proto: ...
+//
+// The lexicon is never written: you choose a root and paste it.
+func cmdCoin(langDir string, args []string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet("coin", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	pos := fs.String("pos", "", "part of speech (`noun`, verb, adjective, ...)")
+	gender := fs.String("gender", "", "a noun's gender: `m` or f")
+	def := fs.String("def", "", "the `definition` (default: the model writes one)")
+	id := fs.String("id", "", "lexicon `id` (default: the English with _ for spaces); needed for a second sense of a word the lexicon has")
+	n := fs.Int("n", 5, "candidates per round")
+	want := fs.Int("want", 3, "stop after `N` accepted roots")
+	rounds := fs.Int("rounds", 3, "give up after `N` rounds")
+	model := fs.String("model", llm.DefaultModel, "Ollama `model`")
+	temp := fs.Float64("temp", 0.7, "sampling `temperature`")
+	seed := fs.Int("seed", -1, "the sampler's `seed`; -1 = random")
+	url := fs.String("url", llm.DefaultURL, "`URL` of the llm/ service")
+	related := fs.Int("related", 10, "choose `N` of the 30 example roots by meaning (0 = none)")
+	margin := fs.Float64("related-margin", 0.05, "keep related roots only within `D` of the best score (0 = keep all N)")
+	embedModel := fs.String("embed-model", llm.DefaultEmbedModel, "Ollama embedding `model` for -related")
+	cache := fs.String("cache", "", "embedding cache `file`, as in lnova similar")
+	usage := func() {
+		fmt.Fprintln(stderr, "usage: lnova coin -pos P [-gender m|f] [-def D] [-id ID] [-n 5] [-want 3] [-rounds 3] [-related 10] [-related-margin 0.05] [-model M] [-temp 0.7] [-seed S] [-url U] <english>")
+	}
+	fs.Usage = usage
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
+	if fs.NArg() == 0 || *n < 1 || *want < 1 || *rounds < 1 || *temp < 0 || *related < 0 || *margin < 0 || !slices.Contains(lexicon.PartsOfSpeech, *pos) {
+		usage()
+		return 2
+	}
+	switch {
+	case *pos == "noun" && *gender != "m" && *gender != "f":
+		fmt.Fprintln(stderr, "lnova: a noun needs -gender m or f")
+		return 2
+	case *pos != "noun" && *gender != "":
+		fmt.Fprintf(stderr, "lnova: -gender is for nouns, not a %s\n", *pos)
+		return 2
+	}
+	concept := llm.Concept{English: strings.Join(fs.Args(), " "), POS: *pos, Gender: *gender, Definition: *def}
+
+	inv, err := phon.Load(filepath.Join(langDir, "phonology.yaml"))
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	rules, err := sound.Load(filepath.Join(langDir, "sound-changes.txt"), inv)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	lex, err := lexicon.Load(filepath.Join(langDir, "lexicon"))
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	c := llm.NewCoiner(llm.NewClient(*url), inv, rules, lex)
+	entryID := cmp.Or(*id, concept.ID())
+	if have := c.Existing(concept); len(have) > 0 && *id == "" {
+		for _, e := range have {
+			fmt.Fprintf(stderr, "lnova: the lexicon has %q: %s (%s) at %s:%d\n", concept.English, e.ID, cmp.Or(e.Word, e.Modern), e.File, e.Line)
+		}
+		fmt.Fprintln(stderr, "for a second sense, give the new entry its own id: -id "+concept.ID()+"_2 (or a clearer name)")
+		return 1
+	}
+	for _, e := range lex.Entries {
+		if e.ID == entryID {
+			fmt.Fprintf(stderr, "lnova: id %s is taken: %s:%d (%q); choose another with -id\n", entryID, e.File, e.Line, e.Gloss)
+			return 1
+		}
+	}
+
+	ctx := context.Background()
+	if *related > 0 {
+		// Without the embedding model coin still works, on examples
+		// chosen without regard to meaning.
+		idx, err := buildIndex(ctx, lex, *url, *embedModel, cachePath(langDir, *embedModel, *cache), stderr)
+		if err != nil {
+			fmt.Fprintf(stderr, "lnova: no related examples: %v\n", err)
+		}
+		c.Index = idx
+	}
+
+	opt := llm.CoinOptions{Model: *model, N: *n, Want: *want, MaxRounds: *rounds, Temperature: *temp,
+		Related: *related, RelatedMargin: *margin}
+	if *seed >= 0 {
+		opt.Seed = seed
+	}
+	res, err := c.Coin(ctx, concept, opt)
+	if res.RelatedErr != nil {
+		fmt.Fprintf(stderr, "lnova: no related examples: %v\n", res.RelatedErr)
+	}
+	if res.Related > 0 {
+		var rel []string
+		for _, r := range res.Examples[:res.Related] {
+			rel = append(rel, fmt.Sprintf("%s (%s)", r.Modern, r.Gloss))
+		}
+		fmt.Fprintf(stderr, "related examples: %s\n", strings.Join(rel, ", "))
+	}
+	tw := tabwriter.NewWriter(stderr, 0, 0, 2, ' ', 0)
+	total, first := 0, 0
+	for i, rd := range res.Rounds {
+		fmt.Fprintf(tw, "round %d\t%.1fs, %d+%d tokens\n", i+1, rd.Duration.Seconds(), rd.PromptTokens, rd.EvalTokens)
+		for _, k := range rd.Checked {
+			total++
+			if k.OK() {
+				if i == 0 {
+					first++
+				}
+				fmt.Fprintf(tw, "  ✓ *%s → %s\t%s\n", k.Proto, k.Modern, k.Reason)
+			} else {
+				var msgs []string
+				for _, r := range k.Rejections {
+					msgs = append(msgs, r.Msg)
+				}
+				fmt.Fprintf(tw, "  ✗ *%s\t%s: %s\n", k.Proto, k.Rejections[0].Kind, strings.Join(msgs, "; "))
+			}
+			for _, r := range k.Remarks {
+				fmt.Fprintf(tw, "    ~ %s\t\n", r)
+			}
+		}
+	}
+	tw.Flush()
+	if total > 0 {
+		fmt.Fprintf(stderr, "accepted %d of %d candidates (%d%%)", len(res.Accepted), total, len(res.Accepted)*100/total)
+		if len(res.Rounds) > 0 {
+			fmt.Fprintf(stderr, "; round 1: %d of %d", first, len(res.Rounds[0].Checked))
+		}
+		fmt.Fprintln(stderr)
+		if kinds := res.RejectedKinds(); len(kinds) > 0 {
+			counts := res.Rejected()
+			var parts []string
+			for _, k := range kinds {
+				parts = append(parts, fmt.Sprintf("%s %d", k, counts[k]))
+			}
+			fmt.Fprintf(stderr, "rejected: %s\n", strings.Join(parts, ", "))
+		}
+	}
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	if len(res.Accepted) == 0 {
+		fmt.Fprintf(stderr, "lnova: no root accepted in %d rounds\n", len(res.Rounds))
+		return 1
+	}
+
+	def0 := cmp.Or(res.Definition(), "TODO")
+	g := ""
+	if concept.Gender != "" {
+		g = ", " + concept.Gender
+	}
+	fmt.Fprintf(stdout, "# %q (%s%s), coined by %s: keep one, paste it into language/lexicon/, run lnova validate\n", concept.English, concept.POS, g, *model)
+	for i, k := range res.Accepted {
+		y := llm.EntryYAML(c.Entry(k, concept, entryID, def0, *model))
+		if i > 0 {
+			y = "# " + strings.ReplaceAll(strings.TrimSuffix(y, "\n"), "\n", "\n# ") + "\n"
+		}
+		fmt.Fprint(stdout, y)
+	}
+	return 0
+}
+
+// llmEnv is what an LLM translation needs, loaded from the language
+// directory once: the rule-based translator (glosser, tagger, references),
+// the lexicon, the context builder, the checker and the toolbox.
+type llmEnv struct {
+	tr         *translate.Translator
+	lex        *lexicon.Lexicon
+	builder    *llm.Builder
+	translator *llm.Translator
+	tools      *llm.Toolbox
+}
+
+func loadLLM(langDir, url string) (*llmEnv, error) {
+	tr, err := translate.Load(langDir)
+	if err != nil {
+		return nil, err
+	}
+	lex, err := lexicon.Load(filepath.Join(langDir, "lexicon"))
+	if err != nil {
+		return nil, err
+	}
+	b, err := llm.NewBuilder(langDir, lex, tr.Tagger)
+	if err != nil {
+		return nil, err
+	}
+	ids := map[string]bool{}
+	for _, e := range lex.Entries {
+		ids[e.ID] = true
+	}
+	k := &llm.Checker{Glosser: tr.Glosser, Known: func(id string) bool { return ids[id] }, Ref: tr, Lex: lex}
+	return &llmEnv{
+		tr:         tr,
+		lex:        lex,
+		builder:    b,
+		translator: &llm.Translator{Client: llm.NewClient(url), Checker: k},
+		tools:      llm.NewToolbox(lex, tr.Rules, tr.Tagger, k),
+	}, nil
+}
+
+// cmdEval runs the eval set (language/evals.yaml) through the model in
+// each setup, several times, and prints passes per sentence and each
+// setup's pass rate with a 95% interval:
+//
+//	sentence                   retrieved  retrieved+tools
+//	The woman sees the river.  5/5        5/5
+//	pass rate [95% CI]         52% [40–64]  80% [69–88]
+//
+// -out saves every record as JSON, after each translation; -resume
+// continues an unfinished -out file. -baseline compares with a saved run.
+// -list shows the sentences and their meaning check without the model.
+// Ctrl-C (or kill, or a closed terminal) stops early and still reports
+// and saves the runs done so far.
+func cmdEval(langDir string, args []string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet("eval", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	setupList := fs.String("setups", "retrieved,retrieved+tools,none+tools", "comma-separated `setups`: retrieved, full or none, optionally +tools")
+	runs := fs.Int("runs", 5, "translate each sentence `N` times per setup (run i uses seed i)")
+	temp := fs.Float64("temp", 0.7, "sampling `temperature`; 0 = greedy, and runs barely differ")
+	model := fs.String("model", llm.DefaultModel, "Ollama `model`")
+	attempts := fs.Int("attempts", 3, "attempts per translation")
+	rounds := fs.Int("tool-rounds", 8, "tool rounds per attempt")
+	timeout := fs.Duration("timeout", 5*time.Minute, "give up on one translation after `d` (counted as an error)")
+	tag := fs.String("tag", "", "only the sentences with this `tag`")
+	url := fs.String("url", llm.DefaultURL, "`URL` of the llm/ service")
+	out := fs.String("out", "", "save the results as JSON to `file`")
+	baseline := fs.String("baseline", "", "compare with saved results in `file`")
+	show := fs.String("show", "", "report saved results from `file` (with -baseline: compare); don't run the model")
+	list := fs.Bool("list", false, "list the sentences and their meaning check; don't run the model")
+	resume := fs.Bool("resume", false, "continue the unfinished run saved in -out: skip the translations it has")
+	usage := func() {
+		fmt.Fprintln(stderr, "usage: lnova eval [-setups retrieved,retrieved+tools,none+tools] [-runs 5] [-temp 0.7] [-model M] [-attempts 3] [-tool-rounds 8] [-timeout 5m] [-tag T] [-url U] [-out F [-resume]] [-baseline F] [-list] [-show F]")
+	}
+	fs.Usage = usage
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
+	setups, err := eval.ParseSetups(*setupList)
+	if fs.NArg() != 0 || err != nil || *runs < 1 || *attempts < 1 || *rounds < 1 || *temp < 0 {
+		if err != nil {
+			fmt.Fprintf(stderr, "lnova: %v\n", err)
+		}
+		usage()
+		return 2
+	}
+	if *show != "" {
+		return evalShow(*show, *baseline, stdout, stderr)
+	}
+	all, err := eval.Load(filepath.Join(langDir, "evals.yaml"))
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	cases := eval.WithTag(all, *tag)
+	if len(cases) == 0 {
+		fmt.Fprintf(stderr, "lnova: no sentence has the tag %q\n", *tag)
+		return 1
+	}
+	env, err := loadLLM(langDir, *url)
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	if *list {
+		return evalList(env, cases, stdout)
+	}
+
+	var names []string
+	for _, su := range setups {
+		names = append(names, su.String())
+	}
+	meta := eval.Meta{
+		Model: *model, Temperature: *temp, Runs: *runs, MaxAttempts: *attempts, MaxToolRounds: *rounds,
+		Setups: names, Tag: *tag, Commit: gitDescribe(), Entries: len(env.lex.Entries), EvalSet: eval.Hash(cases),
+	}
+	opt := llm.Options{Model: *model, MaxAttempts: *attempts, MaxToolRounds: *rounds, Temperature: *temp}
+	r := &eval.Runner{Translator: env.translator, Builder: env.builder, Tools: env.tools, Options: opt, Timeout: *timeout, Progress: stderr}
+	if *resume {
+		if *out == "" {
+			fmt.Fprintln(stderr, "lnova: -resume needs -out, the file to continue")
+			return 2
+		}
+		if old, err := eval.LoadResults(*out); err == nil {
+			if why := eval.Mismatch(old.Meta, meta); why != "" {
+				fmt.Fprintf(stderr, "lnova: can't resume %s: %s\n", *out, why)
+				return 1
+			}
+			r.Done = old.Records
+			fmt.Fprintf(stderr, "resuming %s: %d translations done\n", *out, len(old.Records))
+		} else if !errors.Is(err, os.ErrNotExist) {
+			fmt.Fprintf(stderr, "lnova: %v\n", err)
+			return 1
+		}
+	}
+	save := func(recs []eval.Record, interrupted bool) error {
+		m := meta
+		m.Date, m.Interrupted = time.Now().UTC().Truncate(time.Second), interrupted
+		return eval.Save(*out, &eval.Results{Meta: m, Records: recs})
+	}
+	if *out != "" {
+		// Saved after every translation, marked interrupted until the end:
+		// a run that dies loses one translation, and -resume continues it.
+		r.Saved = func(recs []eval.Record) {
+			if err := save(recs, true); err != nil {
+				fmt.Fprintf(stderr, "lnova: %v\n", err)
+			}
+		}
+	}
+	// Ctrl-C, kill and a closed terminal all stop the run cleanly.
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
+	defer stop()
+	fmt.Fprintf(stderr, "%d sentences × %d setups × %d runs, %s, temperature %g\n", len(cases), len(setups), *runs, *model, *temp)
+	recs, err := r.Run(ctx, cases, setups, *runs)
+	interrupted := err != nil
+	if interrupted {
+		fmt.Fprintf(stderr, "lnova: stopped (%v) after %d translations\n", err, len(recs))
+	}
+	if len(recs) == 0 {
+		return 1
+	}
+	eval.Report(stdout, recs)
+
+	res := &eval.Results{Meta: meta, Records: recs}
+	res.Meta.Date, res.Meta.Interrupted = time.Now().UTC().Truncate(time.Second), interrupted
+	status := 0
+	if *out != "" {
+		if err := save(recs, interrupted); err != nil {
+			fmt.Fprintf(stderr, "lnova: %v\n", err)
+			status = 1
+		} else {
+			fmt.Fprintf(stderr, "saved %s\n", *out)
+		}
+	}
+	if *baseline != "" {
+		old, err := eval.LoadResults(*baseline)
+		if err != nil {
+			fmt.Fprintf(stderr, "lnova: %v\n", err)
+			return 1
+		}
+		fmt.Fprintf(stdout, "\ncompared with %s (%s):\n", *baseline, old.Meta.Date.Format(time.DateOnly))
+		eval.Diff(stdout, old, res)
+	}
+	if interrupted {
+		return 1
+	}
+	return status
+}
+
+// evalShow reports saved results, and compares them with a baseline.
+func evalShow(path, baseline string, stdout, stderr io.Writer) int {
+	res, err := eval.LoadResults(path)
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	m := res.Meta
+	state := ""
+	if m.Interrupted {
+		state = ", interrupted"
+	}
+	fmt.Fprintf(stdout, "%s: %s, %s, temperature %g, %d runs planned%s\n\n", path, m.Date.Format(time.DateOnly), m.Model, m.Temperature, m.Runs, state)
+	eval.Report(stdout, res.Records)
+	if baseline != "" {
+		old, err := eval.LoadResults(baseline)
+		if err != nil {
+			fmt.Fprintf(stderr, "lnova: %v\n", err)
+			return 1
+		}
+		fmt.Fprintf(stdout, "\ncompared with %s (%s):\n", baseline, old.Meta.Date.Format(time.DateOnly))
+		eval.Diff(stdout, old, res)
+	}
+	return 0
+}
+
+// evalList prints each eval sentence with its tags and the meaning check
+// it will get: frame (the rule-based translator's references) or lexical
+// (content words only), and the content words that have no entry and so
+// can't be checked at all.
+func evalList(env *llmEnv, cases []eval.Case, stdout io.Writer) int {
+	tw := tabwriter.NewWriter(stdout, 0, 0, 2, ' ', 0)
+	unknown := 0
+	for _, c := range cases {
+		x := env.translator.Checker.Expect(c.English)
+		fmt.Fprintf(tw, "%s\t%s\t%s\n", c.English, strings.Join(c.Tags, " "), x.Kind())
+		if len(x.Refs) > 0 {
+			fmt.Fprintf(tw, "   = %s\t\t\n", x.Refs[0].Text)
+		}
+		for _, w := range x.Words {
+			fmt.Fprintf(tw, "   %s → %s\t\t\n", w.Word, strings.Join(w.IDs, ", "))
+		}
+		for _, w := range x.Unknown {
+			fmt.Fprintf(tw, "   ! %s: not in the lexicon, not checked\t\t\n", w)
+			unknown++
+		}
+	}
+	tw.Flush()
+	fmt.Fprintf(stdout, "%d sentences, %d unknown words\n", len(cases), unknown)
+	if unknown > 0 {
+		return 1
+	}
+	return 0
+}
+
+// gitDescribe names the code an eval ran with ("2cf8e80-dirty"), or "".
+func gitDescribe() string {
+	out, err := exec.Command("git", "describe", "--always", "--dirty").Output()
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(out))
 }
 
 // toolSummary shortens a tool result to one line: a check's problems, or

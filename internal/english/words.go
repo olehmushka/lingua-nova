@@ -28,11 +28,12 @@ type Reading struct {
 // Words is language/english/words.yaml: function words, archaic forms
 // and irregular inflections.
 type Words struct {
-	File   string
-	Words  map[string][]Reading
-	Past   map[string]string // irregular past → verb: saw → see
-	Plural map[string]string // irregular plural → noun: men → man
-	lines  map[string]int    // word → line, for problems
+	File    string
+	Words   map[string][]Reading
+	Present map[string]string // irregular present → verb: is → be
+	Past    map[string]string // irregular past → verb: saw → see
+	Plural  map[string]string // irregular plural → noun: men → man
+	lines   map[string]int    // word → line, for problems
 }
 
 var (
@@ -52,16 +53,17 @@ func LoadWords(path string) (*Words, error) {
 // ParseWords parses a words file's contents; name is used in errors.
 func ParseWords(name string, data []byte) (*Words, error) {
 	var raw struct {
-		Words  yaml.Node         `yaml:"words"`
-		Past   map[string]string `yaml:"past"`
-		Plural map[string]string `yaml:"plural"`
+		Words   yaml.Node         `yaml:"words"`
+		Present map[string]string `yaml:"present"`
+		Past    map[string]string `yaml:"past"`
+		Plural  map[string]string `yaml:"plural"`
 	}
 	dec := yaml.NewDecoder(bytes.NewReader(data))
 	dec.KnownFields(true)
 	if err := dec.Decode(&raw); err != nil {
 		return nil, fmt.Errorf("%s: %w", name, err)
 	}
-	w := &Words{File: name, Words: map[string][]Reading{}, Past: raw.Past, Plural: raw.Plural, lines: map[string]int{}}
+	w := &Words{File: name, Words: map[string][]Reading{}, Present: raw.Present, Past: raw.Past, Plural: raw.Plural, lines: map[string]int{}}
 	n := &raw.Words
 	if n.Kind != yaml.MappingNode {
 		return nil, fmt.Errorf("%s:%d: words: want a mapping", name, n.Line)

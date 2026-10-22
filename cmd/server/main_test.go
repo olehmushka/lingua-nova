@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"io"
 	"maps"
 	"net/http"
@@ -279,5 +281,62 @@ func TestReloadEnglish(t *testing.T) {
 				t.Errorf("%s: body contains %q", st.name, n)
 			}
 		}
+	}
+}
+
+// wordEmbedder puts texts that mention water words on one axis and
+// everything else on another; with down, every call fails.
+type wordEmbedder struct {
+	down  *bool
+	calls *int
+}
+
+func (f wordEmbedder) Embed(_ context.Context, _ string, texts []string) ([][]float32, error) {
+	*f.calls++
+	if *f.down {
+		return nil, errors.New("connection refused")
+	}
+	out := make([][]float32, len(texts))
+	for i, t := range texts {
+		out[i] = []float32{0, 1}
+		if strings.HasPrefix(t, "sea") || strings.HasPrefix(t, "water") || strings.HasPrefix(t, "river") {
+			out[i] = []float32{1, 0}
+		}
+	}
+	return out, nil
+}
+
+func TestSimilar(t *testing.T) {
+	s, err := newHandler("../../language")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if body := get(t, s, "/similar?q=sea"); !strings.Contains(body, "runs without -llm") {
+		t.Errorf("no -llm: %s", body)
+	}
+	if body := get(t, s, "/?q=water"); !strings.Contains(body, `hx-get="/similar?q=water"`) {
+		t.Errorf("search page lacks the similar fragment loader")
+	}
+	if body := get(t, s, "/?q=*esia"); strings.Contains(body, "/similar") {
+		t.Errorf("proto search loads the similar fragment")
+	}
+
+	down, calls := true, 0
+	s.sem = &semConfig{emb: wordEmbedder{&down, &calls}, model: "m", cache: filepath.Join(t.TempDir(), "e.json")}
+	if body := get(t, s, "/similar?q=sea"); !strings.Contains(body, "isn&#39;t reachable") {
+		t.Errorf("service down: %s", body)
+	}
+	down = false
+	body := get(t, s, "/similar?q=sea")
+	for _, want := range []string{"Related in meaning", `href="/entry/sea"`, `href="/entry/water"`, `href="/entry/river"`, "1.00"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("similar lacks %q:\n%s", want, body)
+		}
+	}
+	// The index is built once: the next search only embeds the query.
+	before := calls
+	get(t, s, "/similar?q=river")
+	if calls != before+1 {
+		t.Errorf("%d embed calls for a second search, want 1", calls-before)
 	}
 }

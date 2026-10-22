@@ -6,6 +6,311 @@ why, and where to pick up. The task list itself lives in `ROADMAP.md` →
 
 ---
 
+## 2026-10-22 (English side): copula, prepositions, "of", `itu` clauses
+
+### Done
+
+- **`words.yaml`**: new categories `Be` (am/is/are/art/was/were/wast/wert,
+  bare `be`, each with its tense), `P` (in/at → `bi`, to → `epe`, with →
+  `gu`, over/above/across → `fai`), `Of`, and `Comp` (a second reading of
+  "that" → `that_comp`, `itu`). The forms of be left `present:`/`past:`;
+  `has`/`hath` → have went in (they were `?has` before).
+- **`grammar.cfg`**: `Pred -> Be Compl | Be Neg Compl | Aux Be Compl …`,
+  `Compl -> Adj | NP | PP`, `S -> Be NP Compl` (Is the river cold?),
+  `VP -> V PPs | V NP PPs | V Sub`, `PP -> P NP`, `Sub -> Comp NP Pred |
+  NP Pred`, `NP -> NP Of NP`.
+- **Transfer** (`internal/translate/generate.go`): `clause` is recursive.
+  A `Sub` becomes its own clause after `itu`, and `itu` is inserted when
+  English dropped "that". PPs come after the object (S V O PP). `X of Y`
+  is generated as `Y's X`. When the translator gives no translation, the
+  error now says why.
+- **Ranking**: a translation with no unknown words now comes before one
+  with an unknown word, whatever the tagger thinks. The tagger reads
+  "cold" in "Is the river cold?" as a noun (`?cold`); the adjective
+  reading gives `grepo`.
+- **Glosser**: after `ihar`, a pronoun must be in the subject form (your
+  decision); `Hunu iha mi` gets "mi is OBJ after the copula".
+- **Eval**: the 5 former `no-parse` sentences now get the **frame check**
+  (1 reference each); the tag is gone. The lexical check counts `Be` and
+  `P` as content words, so a dropped `ihar` or preposition still fails
+  it when a sentence doesn't parse.
+
+### The linguistics
+
+- **Why `be` is its own category.** In English, *be* is the one verb
+  that inverts without do-support (*Is it cold?*, not *Does it be cold?*)
+  and takes an adjective as its complement. Grammars of English give it
+  a category of its own for that reason. Rifatian `ihar` is an ordinary
+  class I verb, so the special handling stays on the English side.
+- **PP attachment.** "I saw the man with the telescope" has two trees:
+  the PP modifies *saw* or *man*. This is the textbook ambiguity of
+  parsing, and an Earley parser returns both trees. Here PPs attach only
+  to the verb phrase. A PP after a noun would give the same Rifatian
+  string (the PP follows the object either way), so the extra trees
+  would only multiply the work. Sentences like "The dog in the house
+  sleeps" don't parse and fall back to the lexical check.
+  `NP Of NP` has the same kind of ambiguity:
+  "the house of the woman's dog" is [house of [woman's dog]] or
+  [[house of woman]'s dog], and both translations are listed.
+- **Complementizer insertion.** English may leave out "that"; Rifatian
+  never leaves out `itu`. So the transfer step adds a word that is
+  absent from the source, like `na` for double negation.
+
+### Decided (the user)
+
+1. A pronoun after `ihar` is in the **subject** form: `Hunu iha mu` "It
+   is I" (grammar.md, Copula).
+2. "a/this X of Y": **no translation** for now; added to grammar.md →
+   Open questions. Only "the X of Y" and "X of Y" translate.
+
+Pronouns after prepositions stay undecided, so "She sleeps with him"
+gets no translation ("him: a pronoun after a preposition isn't decided
+yet").
+
+### Known limits
+
+- English agreement isn't checked: "The children of the king's dog
+  sleep" lists "the dog sleeps" (`… huro sile`) first, though plural
+  *sleep* says the children are the subject.
+- The frame check puts PPs and copula complements in the Clause's
+  `Object` slot, so a missing `fai` is reported as "object: the English
+  needs "over the mountain"". It catches the error; the slot name is
+  just broad.
+- Not re-measured: Ollama wasn't running.
+
+### Start next session here
+
+ROADMAP → Next up (#1: re-run the eval on these 5 sentences).
+
+---
+
+## 2026-10-22 (later): Semantic search with embeddings
+
+### Done
+
+- **`POST /embed`** in `llm/app.py`: texts → vectors via Ollama's
+  `nomic-embed-text`. That model was trained with a **task prefix** per
+  side of a search (`search_query: ` for the short query, `search_document: `
+  for what is searched), so the service adds it; other models get the
+  text as is. The error mapping of `chat()` is shared now (`call()`).
+- **`internal/semantic`**: one vector per entry, built from
+  `gloss (pos): definition` (your choice), scaled to length 1 so cosine
+  similarity is a dot product. Search is a brute-force scan (631 × 768
+  floats, under a millisecond); vector databases pay off at millions of
+  documents. Vectors are cached in `.cache/embeddings-<model>.json`
+  (gitignored, outside `language/`), keyed by a hash of each entry's text:
+  an edit re-embeds only that entry. First build 44 s (model load plus 631
+  texts), then about 1.5 s.
+- **`lnova similar [-k 10] [-pos P] <english>`**, and **`-eval
+  evals/similar.yaml`**: 12 queries with the ids a good search should
+  return; the score is **recall@10** (the share of the expected ids in the
+  top 10). Precision isn't scored, because the lists are short, not
+  complete.
+- **Web**: under the search results, an htmx fragment (`GET /similar`,
+  `hx-trigger="load"`) lists "Related in meaning", so string search stays
+  instant. The index is built on the first such request (the service may
+  start after the server); without the service it's one muted line.
+  Flags `-llm URL` ("" = off), `-embed-model`, `-cache`.
+- **`lnova coin -related 10`** (your choice: 10 by meaning + 20 spread):
+  the concept is embedded like an entry, the 10 nearest roots (no derived
+  words, any part of speech) come first among the 30 examples, and
+  stderr prints them. If embedding fails, coin warns and goes on with the
+  old examples.
+
+### First numbers (nomic-embed-text)
+
+- **recall@10 = 62%.** Good: killing 6/6, love 5/5, weather 5/6,
+  religion 6/8. Bad: "a large wild cat" 1/8 (jaguar only; lion, tiger…
+  missing), "birds of prey" 1/8 (osprey only).
+- Why it misses: most definitions are thin ("A lion.", "An eagle."), so
+  "lion is a big cat" has to come from the embedding model's world
+  knowledge, and a 137M-parameter model has little. Disambiguated glosses
+  (`kite.bird`, `swift.bird`) embed as "kite bird", which pulls every bird
+  together: "birds of prey" finds kite, swift, swallow, crow, turkey.
+- **Experiment (not kept): adding the lexicon file as a category**
+  (`lion (noun, mammals): A lion.`) gives 61%, no better: birds of prey
+  12% → 38%, sea 57% → 43%, farming 80% → 60%. The script (Python against
+  `/embed`) reproduced Go's 62% for the baseline text, so the two agree.
+- **Coin, lantern** (seed 1): related examples eiva (light), voixa (moon),
+  eiro (sun), and then trusa (squid), sersebo (lion), vausove (whale),
+  maldo (frog)… After `light` (0.64) every score is about 0.55: the
+  lexicon has few words about lamps, so ranks 2–10 are just the least
+  unrelated entries. A query with a definition doesn't fix it. Roots
+  with related examples: *mira *fela *nira *sila *tira (100% accepted,
+  CV.CVa as before); without: *zilpa *lirfa *pirva *firsa *girfa. One run
+  each, so this shows nothing either way about quality.
+
+### Decided (the user)
+
+1. **Coin's related examples get a threshold**: `-related-margin 0.05`
+   keeps only roots within 0.05 of the best score (`CoinOptions.RelatedMargin`;
+   0 = keep all N). A margin, not a fixed cut-off, because scores shift
+   with the model and the query. Live (the concept embedded as
+   `english (pos)`):
+   - ocean: sea 0.78, squid 0.73 → 2 kept (dolphin 0.73 just out);
+   - tiger cub: tiger → 1 kept (cub is derived, left out);
+   - whisper: breathe, say, push, sing, hear, swim, voice, smell → 8 kept;
+   - lantern: light 0.72, then squid, moon, leaf, lion, whale 0.67–0.69 → 6
+     kept. Thin entries ("squid (noun): A squid.") cluster together, and
+     no margin separates them; richer definitions would.
+2. **`evals/similar.yaml` is fine as written.**
+
+Still open: richer definitions would help search more than any text
+format (a lexicon edit, so yours).
+
+### Start next session here
+
+ROADMAP → Next up.
+
+---
+
+## 2026-10-22: Coining new words
+
+### Done
+
+- **`lnova coin`** (`internal/llm/coin.go`, `POST /coin`, prompts
+  `llm/prompts/coin_*.j2`). Your decisions:
+  - the model invents the **proto** roots;
+  - fresh roots only, no derivations;
+  - output is YAML printed for you to paste (the lexicon is never written);
+  - homophones are rejected and sent back as feedback.
+
+  Go checks each candidate in stages:
+  1. sounds (proto only);
+  2. proto phonotactics and the verb ending;
+  3. `sound.Evolve` gives the modern form, which must pass the modern
+     phonotactics;
+  4. the root must not exist yet, and the modern form must not be a
+     homophone of an existing word or of an earlier candidate;
+  5. `lexicon.Validate` on the entry it would become.
+
+  Rejections are counted by kind, and a repeated candidate counts as
+  `repeat`. Gender/ending mismatches (an f noun in -o) are remarks, not
+  rejections, because grammar.md says "typically". It refuses a concept the
+  lexicon already has, unless you pass `-id`.
+- Prompt: the phonology is written out from `phonology.yaml`: sounds,
+  clusters, codas, finals, forbidden sequences, and template percentages
+  from the generator block. It also gets 30 example roots: same pos (and
+  gender), spread over the lexicon, with derived words (notes with "+") left
+  out.
+- `sound.Rule.Group`: the "# N." heading number, so coined notes read
+  `(rule 2: c > g / V_V; rule 3: tt > t)` like the hand-written ones.
+- Shared HTTP code in `Client.post`. On the Python side, a shared `chat()`
+  helper does the error mapping.
+
+### First numbers (qwen2.5 7B, temp 0.7, 6 concepts × 2 seeds)
+
+- **79% of candidates accepted** (55/70); 78% in round 1. `lnova gen`'s
+  random roots: 87% (500/578).
+- Nouns and adjectives: nearly 100%. Verbs are harder: whisper got 40–70%,
+  with illegal onsets `sl zl zr`, hiatus `u.a` and coda `v`.
+- **Typical failures: English habits.** The model writes `k` and `q`
+  (*kilir, *squil, *tiroko) although the prompt says `c` = /k/. It reaches
+  for English clusters (*slerar). It copied example roots twice (*gilcar
+  "laugh", *bralar "dance") and repeated a rejected candidate.
+- **The accepted roots are samey.** Before the prompt fix, all five lantern
+  roots were *l*-initial (the English word's first letter) CV.CVa. After
+  it, the first letters vary, but the shapes are still mostly CV.CVa.
+  Verbs cluster on -irl-: *birlar, *dirlir, *zirlar. The model's own
+  "reasons" are wrong about syllable shapes (it called *zula* "VCCV"): it
+  can't see phonemes, only tokens.
+- The model first misread "definition" as a description of its roots. The
+  user prompt now asks for an English dictionary definition, and it writes
+  real ones.
+- No homophone rejections in these runs. Random `gen` roots hit them often,
+  because short CV words collide (*von → vo "and").
+
+### Decided (the user, after the first runs)
+
+1. **Sameness: accepted.** You pick from the list anyway; no variety tricks.
+2. **`k`/`q` get a hint:** a candidate with k or q is rejected with
+   "unknown letter 'k' … (write /k/ as c)", so the feedback says what to
+   do instead.
+3. **Meaning-aware examples: next session**, with semantic search
+   (ROADMAP → Next up).
+
+### Start next session here
+
+ROADMAP → Next up.
+
+---
+
+## 2026-10-18/19: Evals, and the grammar they needed
+
+### Done
+
+- **`lnova eval`** (`internal/eval`): `language/evals.yaml` (26 tagged
+  sentences) × setups × runs; run *i* uses seed *i*. Per setup: pass rate
+  and first-attempt rate with **Wilson 95% intervals**, errors, median
+  time and tokens, tool calls. `-out` saves after every translation,
+  `-resume` continues an unfinished file, `-baseline` diffs two runs,
+  `-show` reports a saved file, `-list` checks the set without the model.
+- **Temperature + seed** through Go → service → Ollama. Every call was
+  at temperature 0 (greedy), so repeated runs would have repeated
+  themselves. `lnova llm -temp 0.7 -seed 3` replays an eval run.
+- **Meaning-check bugs found by `-list`**: prepositions fell through to a
+  fuzzy search (`of → shore, cub`) and `is` didn't lemmatize to `be`, so
+  the lexical check demanded nonsense entries. Now: words with no
+  category count only if a gloss matches exactly (in → `bi`, over →
+  `fai`), definitions are never searched, and `words.yaml` has
+  `present:` (am/is/are/art → be) and was/were/wast/wert → be.
+- **Grammar (the user's decisions, grammar.md)**: copula always `ihar`;
+  prepositions before the noun, PP after the object (S V O PP), no
+  contractions; no "of" (X of Y = Y's X); subordinate clauses with
+  `itu` (from "what", as Portuguese *que*), obligatory. New entries:
+  `that_comp` (`itu`, pos `complementizer`, gloss COMP) and `over`
+  (`*fai`, from `lnova gen`). Glosser: a CG rule reads `itu` as COMP after
+  the clause's verb (a clause boundary) and as "what" elsewhere;
+  `gloss.Clause.Comp`.
+
+### Baseline (partial, the user's choice): 133 translations
+
+`evals/results/2026-10-18-qwen2.5-7b.json`; `lnova eval -show` on it.
+Temperature 0.7, 3 attempts. All of run 1, most of run 2; none+tools has
+only run 1 for most sentences.
+
+| | retrieved | retrieved+tools | none+tools |
+|---|---|---|---|
+| pass rate | 35% [23–48] (18/52) | 44% [32–58] (23/52) | 48% [31–66] (14/29) |
+| first attempt | 15% | 29% | 31% |
+| median time | 21 s | 66 s | 78 s |
+| median prompt tokens | 21K | 70K | 72K |
+| tool calls / translation | 0 | 10.2 (176 repeated) | 16.8 (152 repeated) |
+
+- **The intervals overlap: no setup is shown to be better.** Last
+  session's 3/7 vs 6/7 was one greedy run; with sampling and more
+  sentences the gap mostly disappears.
+- Much lower than last session's ~6/7. Likely temperature 0.7 (vs 0)
+  plus harder sentences. Untested: a temp-0 run would tell.
+- Never passed in any setup: `We will love the god`, `The old king built a
+  fortress`, `Did the farmer sell the wine?`, `Why did the child run?`,
+  `My mother sings`, `The shepherd carried the small child`, `The friends
+  hear the thunder`, `Who will help the old man?`.
+- Tools: ~⅓ of all calls are repeats (dedupe answers them). The model
+  loops instead of using the result.
+- New grammar works from the prompt alone: prepositions 2/2 with
+  retrieved+tools; `Mu sozu itu lu trubo iha grepo` passes.
+
+### What went wrong
+
+- First attempt (47 translations) lost: the session ended while the eval
+  was paused, and it only saved at the end → save-per-translation and
+  `-resume`; detached with `setsid nohup`.
+- Second attempt: **Ollama hung** ("Stopping…" in `ollama ps`) at
+  translation 134; every later one hit the 5-minute timeout. Cause:
+  memory. 14/15 GB used, load ~30, `llama-server` 85% GPU / 15% CPU
+  offload, plus Zoom etc. Killing the stuck `llama-server` freed it.
+  The 23 timeout records were dropped from the baseline.
+
+### Start next session here
+
+1. Decide: finish the baseline (`-resume` needs a `-retry-errors`
+   flag or the file as is) on a quieter machine, and/or a temperature-0
+   run for comparison.
+2. Coin new words (ROADMAP → Next up).
+
+---
+
 ## 2026-10-18 (evening): Tool-use measurement, finished
 
 ### Done

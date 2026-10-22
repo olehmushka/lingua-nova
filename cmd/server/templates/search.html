@@ -32,8 +32,31 @@
   {{else if not .Forms}}
   <p>No entries match “{{.Query}}”.</p>
   {{end}}
+  {{if not (eq (slice .Query 0 1) "*")}}
+  <div hx-get="/similar?q={{.Query}}" hx-trigger="load" hx-swap="outerHTML"></div>
+  {{end}}
 {{else}}
   <p class="muted">{{.Total}} entries. Search a Rifatian word (<a href="/?q=exa">exa</a>), an English
   word (<a href="/?q=love">love</a>) or a proto form (<a href="/?q=*esia">*esia</a>).</p>
+{{end}}
+{{end}}
+
+{{/* similar is the "related in meaning" fragment, from /similar. */}}
+{{define "similar"}}
+{{if .Results}}
+<h2>Related in meaning</h2>
+<table>
+  <tr><th>word</th><th>pos</th><th>gloss</th><th>score</th></tr>
+  {{range .Results}}
+  <tr>
+    <td><a href="/entry/{{.ID}}">{{.Headword}}</a></td>
+    <td>{{.POS}}{{with .Gender}} {{.}}{{end}}</td>
+    <td>{{.Gloss}}</td>
+    <td class="muted">{{printf "%.2f" .Score}}</td>
+  </tr>
+  {{end}}
+</table>
+{{else if .Off}}
+<p class="muted">No search by meaning: {{.Off}}.</p>
 {{end}}
 {{end}}

@@ -1,8 +1,9 @@
 // Command server is the Rifatian dictionary web app: search in both
 // directions, an entry page with IPA and the sound-change derivation, and
-// an interlinear glosser and an English → Rifatian translator.
+// an interlinear glosser and an English → Rifatian translator. With the
+// llm/ service running, search also lists entries related in meaning.
 //
-//	go run ./cmd/server [-lang language] [-addr :8080] [-poll 500ms]
+//	go run ./cmd/server [-lang language] [-addr :8080] [-poll 500ms] [-llm URL]
 //
 // It reloads language/ when a file changes. If the new files don't load,
 // it keeps serving the old data and shows the error on every page.
@@ -23,13 +24,16 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/olehmushka/lingua-nova/internal/gloss"
 	"github.com/olehmushka/lingua-nova/internal/lexicon"
+	"github.com/olehmushka/lingua-nova/internal/llm"
 	"github.com/olehmushka/lingua-nova/internal/morph"
 	"github.com/olehmushka/lingua-nova/internal/phon"
+	"github.com/olehmushka/lingua-nova/internal/semantic"
 	"github.com/olehmushka/lingua-nova/internal/sound"
 	"github.com/olehmushka/lingua-nova/internal/translate"
 )
@@ -47,12 +51,19 @@ func main() {
 	langDir := flag.String("lang", "language", "language data directory")
 	addr := flag.String("addr", ":8080", "listen address")
 	poll := flag.Duration("poll", 500*time.Millisecond, "how often to check language/ for changes (0 = never)")
+	llmURL := flag.String("llm", llm.DefaultURL, "URL of the llm/ service, for search by meaning (\"\" = off)")
+	embedModel := flag.String("embed-model", llm.DefaultEmbedModel, "Ollama embedding model")
+	cache := flag.String("cache", "", "embedding cache file (default .cache/embeddings-<model>.json next to -lang)")
 	flag.Parse()
 
 	s, err := newHandler(*langDir)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "server: %v\n", err)
 		os.Exit(1)
+	}
+	if *llmURL != "" {
+		s.sem = &semConfig{emb: llm.NewClient(*llmURL).Embedder(*embedModel), model: *embedModel,
+			cache: cmp.Or(*cache, semantic.CachePath(*langDir, *embedModel))}
 	}
 	if *poll > 0 {
 		go s.watch(*poll)
@@ -105,6 +116,14 @@ type server struct {
 	state   atomic.Pointer[state]
 	pages   map[string]*template.Template
 	mux     *http.ServeMux
+	sem     *semConfig // nil: no search by meaning
+}
+
+// semConfig is how to build the semantic index.
+type semConfig struct {
+	emb   semantic.Embedder
+	model string
+	cache string
 }
 
 // state is what the pages read: the data from the last good load, plus the
@@ -124,6 +143,12 @@ type data struct {
 	glosser  *gloss.Glosser
 	trans    *translate.Translator
 	problems []lexicon.Problem // what lnova validate reports
+
+	// The semantic index, built on the first search by meaning: it needs
+	// the llm/ service, which may start after the server, and the cache
+	// makes a rebuild after a reload cheap (only edited entries).
+	semMu  sync.Mutex
+	semIdx *semantic.Index
 }
 
 // newHandler loads the language data and returns the app's routes.
@@ -145,6 +170,7 @@ func newHandler(langDir string) (*server, error) {
 
 	s.mux = http.NewServeMux()
 	s.mux.HandleFunc("GET /{$}", s.handleSearch)
+	s.mux.HandleFunc("GET /similar", s.handleSimilar)
 	s.mux.HandleFunc("GET /entry/{id}", s.handleEntry)
 	s.mux.HandleFunc("GET /gloss", s.handleGloss)
 	s.mux.HandleFunc("GET /translate", s.handleTranslate)
@@ -342,6 +368,59 @@ func (s *server) handleSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.render(w, http.StatusOK, "search", data)
+}
+
+// maxSimilar is how many entries "related in meaning" lists.
+const maxSimilar = 10
+
+// handleSimilar is the "related in meaning" fragment under the search
+// results, loaded by htmx after them so string search stays instant.
+// Without the llm/ service it says so in one muted line.
+func (s *server) handleSimilar(w http.ResponseWriter, r *http.Request) {
+	q := strings.TrimSpace(r.URL.Query().Get("q"))
+	data := map[string]any{"Query": q}
+	if q != "" && s.sem != nil {
+		d := s.state.Load().d
+		hits, err := s.similar(r, d, q)
+		if err != nil {
+			log.Printf("search by meaning: %v", err)
+			data["Off"] = "the llm/ service isn't reachable"
+		}
+		var results []similarResult
+		for _, h := range hits {
+			results = append(results, similarResult{d.info[h.Entry.ID], h.Score})
+		}
+		data["Results"] = results
+	} else if s.sem == nil {
+		data["Off"] = "the server runs without -llm"
+	}
+	s.execute(w, http.StatusOK, "search", "similar", data)
+}
+
+// similar searches d's semantic index, building it first if needed. A
+// failed build isn't remembered, so it works once the service is up.
+func (s *server) similar(r *http.Request, d *data, q string) ([]semantic.Hit, error) {
+	d.semMu.Lock()
+	if d.semIdx == nil {
+		idx, st, err := semantic.Build(r.Context(), s.sem.emb, s.sem.model, d.lex.Entries, s.sem.cache)
+		if idx == nil {
+			d.semMu.Unlock()
+			return nil, err
+		}
+		if err != nil {
+			log.Printf("search by meaning: %v", err)
+		}
+		log.Printf("semantic index: %d entries embedded, %d from the cache", st.Embedded, st.Cached)
+		d.semIdx = idx
+	}
+	idx := d.semIdx
+	d.semMu.Unlock()
+	return idx.Search(r.Context(), q, maxSimilar, nil)
+}
+
+type similarResult struct {
+	*entryInfo
+	Score float64
 }
 
 // handleGloss glosses the sentence in ?s, live like search: htmx gets
