@@ -207,3 +207,71 @@ def test_final_round_uses_format(monkeypatch):
     assert r.status_code == 200, r.text
     assert "tools" not in fake.kwargs and fake.kwargs["format"] == app.Answer.model_json_schema()
     assert r.json()["answer"]["translation"] == "Lu mena nara."
+
+
+# --- /coin
+
+CONCEPT = app.Concept(english="owl", pos="noun", gender="f")
+COINAGE = app.Coinage(
+    definition="A bird of prey that hunts at night.",
+    candidates=[app.Candidate(proto="hurula", reason="Soft sounds, like its call.")],
+)
+
+
+def coin_req(**extra):
+    return app.CoinRequest(
+        concept=CONCEPT,
+        phonology="Consonants: p t c",
+        examples=[app.Root(proto="nauca", modern="nauga", pos="noun", gloss="fish")],
+        **extra,
+    )
+
+
+def test_coin_prompt():
+    msgs = app.coin_messages(coin_req(n=4))
+    assert [m["role"] for m in msgs] == ["system", "user"]
+    assert "Consonants: p t c" in msgs[0]["content"]
+    assert "*nauca → nauga | noun | fish" in msgs[0]["content"]
+    assert 'Coin 4 different proto roots for a new noun (feminine) meaning "owl".' in msgs[1]["content"]
+    assert "typically end in -a" in msgs[1]["content"]
+    assert "really different" in msgs[1]["content"] and 'what "owl" means' in msgs[1]["content"]
+    verb = app.coin_messages(app.CoinRequest(concept=app.Concept(english="swim", pos="verb"), phonology="p"))
+    assert "-ar, -er or -ir" in verb[1]["content"]
+    assert "# EXAMPLES" not in verb[0]["content"]
+
+
+def test_coin_messages_after_feedback():
+    msgs = app.coin_messages(coin_req(history=[app.Round(coinage=COINAGE, feedback="*hurula: rejected")]))
+    assert [m["role"] for m in msgs] == ["system", "user", "assistant", "user"]
+    assert json.loads(msgs[2]["content"])["candidates"][0]["proto"] == "hurula"
+    assert "*hurula: rejected" in msgs[3]["content"]
+    assert 'new proto roots for "owl"' in msgs[3]["content"]
+
+
+def test_coinage_schema_requires_every_field():
+    schema = app.Coinage.model_json_schema()
+    assert set(schema["required"]) == {"definition", "candidates"}
+    assert set(schema["$defs"]["Candidate"]["required"]) == {"proto", "reason"}
+
+
+@pytest.mark.parametrize(
+    "content,status",
+    [(COINAGE.model_dump_json(), 200), ("not json", 502), ('{"definition": "x"}', 502)],
+)
+def test_coin_endpoint(monkeypatch, content, status):
+    fake = FakeClient(content)
+    monkeypatch.setattr(app, "client", lambda: fake)
+    body = coin_req(temperature=0.7, seed=2).model_dump()
+    r = TestClient(app.app).post("/coin", json=body)
+    assert r.status_code == status, r.text
+    assert fake.kwargs["format"] == app.Coinage.model_json_schema()
+    assert fake.kwargs["options"]["temperature"] == 0.7 and fake.kwargs["options"]["seed"] == 2
+    if status == 200:
+        assert r.json()["coinage"]["candidates"][0]["proto"] == "hurula"
+        assert r.json()["prompt_tokens"] == 100
+
+
+def test_coin_ollama_down(monkeypatch):
+    monkeypatch.setattr(app, "client", lambda: RaisingClient(ConnectionError("Failed to connect")))
+    r = TestClient(app.app).post("/coin", json=coin_req().model_dump())
+    assert r.status_code == 503 and "ollama not reachable" in r.json()["detail"]

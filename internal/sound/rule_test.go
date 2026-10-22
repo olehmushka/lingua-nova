@@ -3,6 +3,7 @@ package sound
 import (
 	"errors"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -148,5 +149,15 @@ func TestRealRules(t *testing.T) {
 	}
 	if got, want := rules[2].Text, "si > x / _V"; got != want {
 		t.Errorf("rule text = %q, want %q", got, want)
+	}
+	// The "# N." headings number the rules: 6 palatalizations are rule 1,
+	// the 3 voicings rule 2.
+	if g := []int{rules[0].Group, rules[5].Group, rules[6].Group, rules[8].Group}; !slices.Equal(g, []int{1, 1, 2, 2}) {
+		t.Errorf("rule groups = %v, want [1 1 2 2]", g)
+	}
+	for _, r := range rules {
+		if r.Group == 0 {
+			t.Errorf("rule %s (line %d) has no group", r, r.Line)
+		}
 	}
 }

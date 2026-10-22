@@ -337,6 +337,79 @@ func TestLLM(t *testing.T) {
 	}
 }
 
+// TestCoin runs lnova coin against a fake llm/ service that answers each
+// /coin request with the next scripted list of roots.
+func TestCoin(t *testing.T) {
+	serve := func(rounds ...string) *httptest.Server {
+		n := 0
+		return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path != "/coin" {
+				http.NotFound(w, r)
+				return
+			}
+			var cands []string
+			for _, p := range strings.Fields(rounds[min(n, len(rounds)-1)]) {
+				cands = append(cands, fmt.Sprintf(`{"proto": %q, "reason": "fits"}`, p))
+			}
+			n++
+			fmt.Fprintf(w, `{"coinage": {"definition": "A lamp in a box.", "candidates": [%s]}, "prompt_tokens": 1000, "eval_tokens": 60, "duration_ms": 1500}`,
+				strings.Join(cands, ", "))
+		}))
+	}
+	good := serve("pattuca tamsa hurula")
+	defer good.Close()
+	bad := serve("tamsa xalo")
+	defer bad.Close()
+
+	tests := []struct {
+		name   string
+		args   []string
+		code   int
+		stdout []string
+		stderr []string
+	}{
+		{"accepted", []string{"coin", "-url", good.URL, "-pos", "noun", "-gender", "f", "-want", "2", "lantern"}, 0, []string{
+			`# "lantern" (noun, f), coined by`,
+			"- id: lantern\n  proto: pattuca\n  modern: patuga\n  pos: noun\n  gender: f\n  gloss: lantern\n  definition: A lamp in a box.\n",
+			`  notes: "*pattuca → patuga (rule 2: c > g / V_V; rule 3: tt > t). Coined by`,
+			"# - id: lantern\n#   proto: hurula\n",
+		}, []string{
+			"1.5s, 1000+60 tokens", "✓ *pattuca → patuga", "✗ *tamsa", `proto-phonotactics: illegal coda "m" in tam.sa`,
+			"accepted 2 of 3 candidates (66%); round 1: 2 of 3", "rejected: proto-phonotactics 1",
+		}},
+		{"none accepted", []string{"coin", "-url", bad.URL, "-pos", "noun", "-gender", "m", "-rounds", "2", "lantern"}, 1, nil, []string{
+			"round 2", "accepted 0 of 4 candidates (0%)", "rejected: repeat 2, proto-phonotactics 1, sound 1", "no root accepted in 2 rounds",
+		}},
+		{"concept exists", []string{"coin", "-url", good.URL, "-pos", "noun", "-gender", "f", "owl"}, 1, nil, []string{
+			`the lexicon has "owl": owl (eidiha)`, "-id owl_2",
+		}},
+		{"id taken", []string{"coin", "-url", good.URL, "-pos", "noun", "-gender", "f", "-id", "fish", "lantern"}, 1, nil, []string{"id fish is taken"}},
+		{"noun without gender", []string{"coin", "-pos", "noun", "lantern"}, 2, nil, []string{"needs -gender"}},
+		{"gender on a verb", []string{"coin", "-pos", "verb", "-gender", "f", "whisper"}, 2, nil, []string{"-gender is for nouns"}},
+		{"bad pos", []string{"coin", "-pos", "thing", "lantern"}, 2, nil, []string{"usage: lnova coin"}},
+		{"no args", []string{"coin", "-pos", "verb"}, 2, nil, []string{"usage: lnova coin"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			code := run(append([]string{"-lang", "../../language"}, tt.args...), &stdout, &stderr)
+			if code != tt.code {
+				t.Errorf("exit code = %d, want %d (stderr: %s)", code, tt.code, stderr.String())
+			}
+			for _, want := range tt.stdout {
+				if !strings.Contains(stdout.String(), want) {
+					t.Errorf("stdout =\n%s\nwant it to contain %q", stdout.String(), want)
+				}
+			}
+			for _, want := range tt.stderr {
+				if !strings.Contains(stderr.String(), want) {
+					t.Errorf("stderr =\n%s\nwant it to contain %q", stderr.String(), want)
+				}
+			}
+		})
+	}
+}
+
 func TestToolSummary(t *testing.T) {
 	tests := []struct{ in, want string }{
 		{"bauge  (eat-TH.3SG)", "bauge  (eat-TH.3SG)"},

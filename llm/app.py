@@ -4,7 +4,8 @@ One request = one model call. The Go side (internal/llm) owns the retry
 loop, the tool loop, the tools and the validator; this service only turns a
 request into a prompt and asks the local model (Ollama) either for tool
 calls or for an answer constrained to a JSON schema, and checks that the
-answer has that shape.
+answer has that shape. /translate translates a sentence; /coin proposes
+proto roots for a new word.
 
 Run:  ollama serve   (in another terminal)
       uv run uvicorn app:app --port 8765
@@ -202,6 +203,89 @@ def ollama_tools(tools: list[Tool]) -> list[dict]:
     ]
 
 
+# --- Coining new roots (POST /coin).
+
+
+class Candidate(BaseModel):
+    proto: str = Field(description="The proto-language root, letters only, without *.")
+    reason: str = Field(description="One short sentence: why this form suits the meaning.")
+
+
+class Coinage(BaseModel):
+    """The answer schema of /coin."""
+
+    definition: str = Field(description="A one-sentence dictionary definition of the concept.")
+    candidates: list[Candidate] = Field(description="The proposed roots, all different.")
+
+
+class Concept(BaseModel):
+    english: str  # the gloss: "owl"
+    pos: str
+    gender: str = ""
+    definition: str = ""  # given by the user; empty: the model writes one
+
+
+class Root(BaseModel):
+    """An existing entry, shown to the model as an example of the style."""
+
+    proto: str
+    modern: str
+    pos: str
+    gloss: str
+
+
+class Round(BaseModel):
+    """An earlier round: the model's candidates and the validator's verdicts."""
+
+    coinage: Coinage
+    feedback: str
+
+
+class CoinRequest(BaseModel):
+    concept: Concept
+    phonology: str  # the proto sounds and phonotactics, written by Go
+    examples: list[Root] = []
+    history: list[Round] = []
+    n: int = 5
+    model: str = DEFAULT_MODEL
+    num_ctx: int = 8192
+    temperature: float = 0.0
+    seed: int | None = None
+
+
+class CoinResponse(BaseModel):
+    coinage: Coinage
+    model: str
+    prompt_tokens: int
+    eval_tokens: int
+    duration_ms: int
+
+
+def coin_messages(req: CoinRequest) -> list[dict]:
+    """system (rules, phonology, examples), user (the concept), then per
+    earlier round the model's answer and the feedback on it."""
+    msgs = [
+        {
+            "role": "system",
+            "content": templates.get_template("coin_system.j2").render(
+                phonology=req.phonology, examples=req.examples
+            ),
+        },
+        {"role": "user", "content": templates.get_template("coin_user.j2").render(c=req.concept, n=req.n)},
+    ]
+    for r in req.history:
+        msgs.append({"role": "assistant", "content": r.coinage.model_dump_json()})
+        msgs.append(
+            {
+                "role": "user",
+                "content": templates.get_template("coin_feedback.j2").render(
+                    feedback=r.feedback, c=req.concept, n=req.n
+                ),
+            }
+        )
+    return msgs
+
+
 # --- HTTP.
 
 app = FastAPI(title="lingua-nova llm")
@@ -222,6 +306,34 @@ def health(model: str = DEFAULT_MODEL) -> dict:
     return {"ok": True, "ollama": OLLAMA_HOST, "model": model}
 
 
+def chat(model: str, messages: list[dict], options: dict, **kwargs):
+    """One Ollama call, with its errors mapped to HTTP status codes."""
+    try:
+        return client().chat(model=model, messages=messages, options=options, **kwargs)
+    except ollama.ResponseError as e:
+        raise HTTPException(502, f"ollama: {e.error}")
+    except ConnectionError as e:  # the ollama client's wrapper for httpx.ConnectError
+        raise HTTPException(503, f"ollama not reachable at {OLLAMA_HOST}: {e}. Start it with: ollama serve")
+    except Exception as e:
+        raise HTTPException(502, f"ollama call failed: {type(e).__name__}: {e}")
+
+
+def sampling(temperature: float, num_ctx: int, cap: int, seed: int | None) -> dict:
+    options = {"temperature": temperature, "num_ctx": num_ctx, "num_predict": cap}
+    if seed is not None:
+        options["seed"] = seed
+    return options
+
+
+def usage(model: str, resp, start: float) -> dict:
+    return dict(
+        model=model,
+        prompt_tokens=resp.prompt_eval_count or 0,
+        eval_tokens=resp.eval_count or 0,
+        duration_ms=int((time.monotonic() - start) * 1000),
+    )
+
+
 @app.post("/translate")
 def translate(req: TranslateRequest) -> TranslateResponse:
     start = time.monotonic()
@@ -234,29 +346,9 @@ def translate(req: TranslateRequest) -> TranslateResponse:
     # Rendered before the call: a template error is a bug here, not Ollama
     # being down, and FastAPI reports it as a 500 with the traceback logged.
     messages = build_messages(req)
-    options = {"temperature": req.temperature, "num_ctx": req.num_ctx, "num_predict": cap}
-    if req.seed is not None:
-        options["seed"] = req.seed
-    try:
-        resp = client().chat(
-            model=req.model,
-            messages=messages,
-            options=options,
-            **kwargs,
-        )
-    except ollama.ResponseError as e:
-        raise HTTPException(502, f"ollama: {e.error}")
-    except ConnectionError as e:  # the ollama client's wrapper for httpx.ConnectError
-        raise HTTPException(503, f"ollama not reachable at {OLLAMA_HOST}: {e}. Start it with: ollama serve")
-    except Exception as e:
-        raise HTTPException(502, f"ollama call failed: {type(e).__name__}: {e}")
+    resp = chat(req.model, messages, sampling(req.temperature, req.num_ctx, cap, req.seed), **kwargs)
 
-    done = dict(
-        model=req.model,
-        prompt_tokens=resp.prompt_eval_count or 0,
-        eval_tokens=resp.eval_count or 0,
-        duration_ms=int((time.monotonic() - start) * 1000),
-    )
+    done = usage(req.model, resp, start)
     raw = resp.message.content or ""
     if getattr(resp, "done_reason", "") == "length":
         log.warning("reply cut at %d tokens (%s round): %r", cap, "tool" if use_tools else "answer", raw[-200:])
@@ -272,3 +364,21 @@ def translate(req: TranslateRequest) -> TranslateResponse:
         raise HTTPException(502, f"model reply is not a valid answer: {e}\nraw: {raw[:500]}")
 
     return TranslateResponse(answer=answer, **done)
+
+
+@app.post("/coin")
+def coin(req: CoinRequest) -> CoinResponse:
+    start = time.monotonic()
+    messages = coin_messages(req)
+    resp = chat(
+        req.model,
+        messages,
+        sampling(req.temperature, req.num_ctx, ANSWER_MAX_TOKENS, req.seed),
+        format=Coinage.model_json_schema(),
+    )
+    raw = resp.message.content or ""
+    try:
+        coinage = Coinage.model_validate(json.loads(raw))
+    except (json.JSONDecodeError, ValidationError) as e:
+        raise HTTPException(502, f"model reply is not a valid coinage: {e}\nraw: {raw[:500]}")
+    return CoinResponse(coinage=coinage, **usage(req.model, resp, start))

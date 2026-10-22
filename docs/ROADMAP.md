@@ -7,17 +7,20 @@ previous one is "done", even if done means small.
 
 _Keep this section current: it's where every new session starts._
 
-1. **Coin new words** (Phase 5): the LLM proposes roots for missing
-   concepts; the validator + sound change engine accept or reject them.
-   `lnova eval -baseline evals/results/2026-10-18-qwen2.5-7b.json` after
-   any prompt or model change. (That baseline is partial: 133 of 390,
-   Ollama hung on memory; see SESSION-LOG 2026-10-18/19.)
-2. English side of the new grammar (copula, prepositions, `itu`
+1. **Semantic search** with embeddings (Phase 5): `nomic-embed-text` is
+   already pulled. Then use it in `lnova coin`: show the model roots
+   related in meaning as examples (light/fire words for "lantern"); the
+   user's choice, SESSION-LOG 2026-10-22. `lnova eval -baseline
+   evals/results/2026-10-18-qwen2.5-7b.json` after any translation prompt
+   or model change (that baseline is partial: 133 of 390; see SESSION-LOG
+   2026-10-18/19).
+2. Coin the words you want with `lnova coin` and paste the chosen roots.
+3. English side of the new grammar (copula, prepositions, `itu`
    clauses): `grammar.cfg` + the rule-based translator, so those eval
    sentences get the frame check instead of the lexical one.
-3. Open grammar questions (grammar.md → Open questions): pronouns after
+4. Open grammar questions (grammar.md → Open questions): pronouns after
    prepositions, fronted prepositional phrases, relative clauses.
-4. Open question from the lexicon growth (SESSION-LOG 2026-10-18, later):
+5. Open question from the lexicon growth (SESSION-LOG 2026-10-18, later):
    re-seed the generator weights from roots only, not derived words?
 
 ## Phase 0 — Learn the basics (reading, ~1–2 weeks alongside Phase 1)
@@ -227,7 +230,16 @@ the derivation.
   lexical meaning check fixed (prepositions, is → be), and grammar.md
   got copula `ihar`, prepositions (S V O PP; `fai` over), "of" = `-s`,
   and `itu` clauses (glossed COMP).
-- [ ] **Coin new words**: the LLM proposes roots for missing concepts, and the validator + sound change engine accept or reject them.
+- [x] **Coin new words**: the LLM proposes roots for missing concepts, and the validator + sound change engine accept or reject them.
+  → `lnova coin -pos P [-gender m|f] [-def] [-id] [-n 5] [-want 3]
+  [-rounds 3] <english>`, `internal/llm/coin.go`, `POST /coin`. The model
+  writes proto roots only. Go checks sounds, proto phonotactics, verb
+  ending, runs the sound changes, checks modern phonotactics, existing
+  roots and homophones (rejected), then `lexicon.Validate` on the entry.
+  Rejections go back as feedback; accepted roots are printed as lexicon
+  YAML (notes with the rule trace) for you to paste. First numbers (6
+  concepts × 2 seeds): 79% of candidates accepted (gen's random roots:
+  87%), but the model's roots are samey (CV.CVa nouns, -irl- verbs).
 - [ ] **Semantic search** with embeddings ("words related to the sea").
 - [ ] Stretch: a chat partner that speaks only the conlang.
 

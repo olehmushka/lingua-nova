@@ -62,6 +62,10 @@ commands:
                   translate with a local model (Ollama, via the llm/ service);
                   the glosser checks each answer and problems go back to the model;
                   -tools lets the model call lookup, inflect, analyze and check
+  coin -pos noun -gender f [-def D] [-id ID] [-n 5] [-want 3] [-rounds 3] <english>
+                  coin new proto roots with the local model; the phonology, sound
+                  changes and validator accept or reject each one, and the
+                  accepted ones are printed as lexicon YAML to paste
   eval [-setups retrieved,retrieved+tools,none+tools] [-runs 5] [-temp 0.7] [-tag T] [-out F] [-baseline F] [-list]
                   translate language/evals.yaml several times per setup and
                   report pass rates with 95% intervals; -list: no model
@@ -108,6 +112,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return cmdTranslate(*langDir, rest, stdout, stderr)
 	case "llm":
 		return cmdLLM(*langDir, rest, stdout, stderr)
+	case "coin":
+		return cmdCoin(*langDir, rest, stdout, stderr)
 	case "eval":
 		return cmdEval(*langDir, rest, stdout, stderr)
 	default:
@@ -877,6 +883,154 @@ func cmdLLM(langDir string, args []string, stdout, stderr io.Writer) int {
 	if !res.OK {
 		fmt.Fprintf(stdout, "no valid translation in %d attempts\n", len(res.Attempts))
 		return 1
+	}
+	return 0
+}
+
+// cmdCoin asks the model for proto roots for a concept the lexicon lacks
+// and checks each one. The rounds (every candidate, ✓ or ✗ and why) and
+// the totals go to stderr; the accepted roots go to stdout as lexicon
+// YAML, the first ready to paste and the others commented out:
+//
+//   - id: lantern
+//     proto: pattuca
+//     modern: patuga
+//     ...
+//     # - id: lantern
+//     #   proto: ...
+//
+// The lexicon is never written: you choose a root and paste it.
+func cmdCoin(langDir string, args []string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet("coin", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	pos := fs.String("pos", "", "part of speech (`noun`, verb, adjective, ...)")
+	gender := fs.String("gender", "", "a noun's gender: `m` or f")
+	def := fs.String("def", "", "the `definition` (default: the model writes one)")
+	id := fs.String("id", "", "lexicon `id` (default: the English with _ for spaces); needed for a second sense of a word the lexicon has")
+	n := fs.Int("n", 5, "candidates per round")
+	want := fs.Int("want", 3, "stop after `N` accepted roots")
+	rounds := fs.Int("rounds", 3, "give up after `N` rounds")
+	model := fs.String("model", llm.DefaultModel, "Ollama `model`")
+	temp := fs.Float64("temp", 0.7, "sampling `temperature`")
+	seed := fs.Int("seed", -1, "the sampler's `seed`; -1 = random")
+	url := fs.String("url", llm.DefaultURL, "`URL` of the llm/ service")
+	usage := func() {
+		fmt.Fprintln(stderr, "usage: lnova coin -pos P [-gender m|f] [-def D] [-id ID] [-n 5] [-want 3] [-rounds 3] [-model M] [-temp 0.7] [-seed S] [-url U] <english>")
+	}
+	fs.Usage = usage
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
+	if fs.NArg() == 0 || *n < 1 || *want < 1 || *rounds < 1 || *temp < 0 || !slices.Contains(lexicon.PartsOfSpeech, *pos) {
+		usage()
+		return 2
+	}
+	switch {
+	case *pos == "noun" && *gender != "m" && *gender != "f":
+		fmt.Fprintln(stderr, "lnova: a noun needs -gender m or f")
+		return 2
+	case *pos != "noun" && *gender != "":
+		fmt.Fprintf(stderr, "lnova: -gender is for nouns, not a %s\n", *pos)
+		return 2
+	}
+	concept := llm.Concept{English: strings.Join(fs.Args(), " "), POS: *pos, Gender: *gender, Definition: *def}
+
+	inv, err := phon.Load(filepath.Join(langDir, "phonology.yaml"))
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	rules, err := sound.Load(filepath.Join(langDir, "sound-changes.txt"), inv)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	lex, err := lexicon.Load(filepath.Join(langDir, "lexicon"))
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	c := llm.NewCoiner(llm.NewClient(*url), inv, rules, lex)
+	entryID := cmp.Or(*id, concept.ID())
+	if have := c.Existing(concept); len(have) > 0 && *id == "" {
+		for _, e := range have {
+			fmt.Fprintf(stderr, "lnova: the lexicon has %q: %s (%s) at %s:%d\n", concept.English, e.ID, cmp.Or(e.Word, e.Modern), e.File, e.Line)
+		}
+		fmt.Fprintln(stderr, "for a second sense, give the new entry its own id: -id "+concept.ID()+"_2 (or a clearer name)")
+		return 1
+	}
+	for _, e := range lex.Entries {
+		if e.ID == entryID {
+			fmt.Fprintf(stderr, "lnova: id %s is taken: %s:%d (%q); choose another with -id\n", entryID, e.File, e.Line, e.Gloss)
+			return 1
+		}
+	}
+
+	opt := llm.CoinOptions{Model: *model, N: *n, Want: *want, MaxRounds: *rounds, Temperature: *temp}
+	if *seed >= 0 {
+		opt.Seed = seed
+	}
+	res, err := c.Coin(context.Background(), concept, opt)
+	tw := tabwriter.NewWriter(stderr, 0, 0, 2, ' ', 0)
+	total, first := 0, 0
+	for i, rd := range res.Rounds {
+		fmt.Fprintf(tw, "round %d\t%.1fs, %d+%d tokens\n", i+1, rd.Duration.Seconds(), rd.PromptTokens, rd.EvalTokens)
+		for _, k := range rd.Checked {
+			total++
+			if k.OK() {
+				if i == 0 {
+					first++
+				}
+				fmt.Fprintf(tw, "  ✓ *%s → %s\t%s\n", k.Proto, k.Modern, k.Reason)
+			} else {
+				var msgs []string
+				for _, r := range k.Rejections {
+					msgs = append(msgs, r.Msg)
+				}
+				fmt.Fprintf(tw, "  ✗ *%s\t%s: %s\n", k.Proto, k.Rejections[0].Kind, strings.Join(msgs, "; "))
+			}
+			for _, r := range k.Remarks {
+				fmt.Fprintf(tw, "    ~ %s\t\n", r)
+			}
+		}
+	}
+	tw.Flush()
+	if total > 0 {
+		fmt.Fprintf(stderr, "accepted %d of %d candidates (%d%%)", len(res.Accepted), total, len(res.Accepted)*100/total)
+		if len(res.Rounds) > 0 {
+			fmt.Fprintf(stderr, "; round 1: %d of %d", first, len(res.Rounds[0].Checked))
+		}
+		fmt.Fprintln(stderr)
+		if kinds := res.RejectedKinds(); len(kinds) > 0 {
+			counts := res.Rejected()
+			var parts []string
+			for _, k := range kinds {
+				parts = append(parts, fmt.Sprintf("%s %d", k, counts[k]))
+			}
+			fmt.Fprintf(stderr, "rejected: %s\n", strings.Join(parts, ", "))
+		}
+	}
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: %v\n", err)
+		return 1
+	}
+	if len(res.Accepted) == 0 {
+		fmt.Fprintf(stderr, "lnova: no root accepted in %d rounds\n", len(res.Rounds))
+		return 1
+	}
+
+	def0 := cmp.Or(res.Definition(), "TODO")
+	g := ""
+	if concept.Gender != "" {
+		g = ", " + concept.Gender
+	}
+	fmt.Fprintf(stdout, "# %q (%s%s), coined by %s: keep one, paste it into language/lexicon/, run lnova validate\n", concept.English, concept.POS, g, *model)
+	for i, k := range res.Accepted {
+		y := llm.EntryYAML(c.Entry(k, concept, entryID, def0, *model))
+		if i > 0 {
+			y = "# " + strings.ReplaceAll(strings.TrimSuffix(y, "\n"), "\n", "\n# ") + "\n"
+		}
+		fmt.Fprint(stdout, y)
 	}
 	return 0
 }

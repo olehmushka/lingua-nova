@@ -23,6 +23,7 @@ lnova eval -list                               # the eval set, no model
 lnova eval -runs 5 -out evals/results/x.json   # pass rates per setup (hours)
 lnova eval -show evals/results/x.json          # report a saved run; add -resume to continue one
 lnova llm -temp 0.7 -seed 3 "…"                # replay one eval run (run 3)
+lnova coin -pos noun -gender f lantern         # coin proto roots; YAML on stdout
 ```
 
 ## Endpoints
@@ -36,6 +37,14 @@ lnova llm -temp 0.7 -seed 3 "…"                # replay one eval run (run 3)
   schema returns 502, and Ollama being down returns 503. `temperature` 0
   (the default) is greedy decoding; above 0 the model samples, and `seed`
   (optional) makes the sample repeatable.
+
+- `POST /coin`: `{concept:{english, pos, gender, definition}, phonology,
+  examples:[{proto, modern, pos, gloss}], history:[{coinage, feedback}], n,
+  model, num_ctx, temperature, seed}` returns `{coinage:{definition,
+  candidates:[{proto, reason}]}, model, prompt_tokens, eval_tokens,
+  duration_ms}`. The phonology text and the examples are built in Go
+  (`internal/llm/coin.go`), which also checks every candidate; prompts in
+  `prompts/coin_*.j2`. Same errors as `/translate`.
 
 ### Tools
 

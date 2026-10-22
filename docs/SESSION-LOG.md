@@ -6,6 +6,77 @@ why, and where to pick up. The task list itself lives in `ROADMAP.md` →
 
 ---
 
+## 2026-10-22: Coining new words
+
+### Done
+
+- **`lnova coin`** (`internal/llm/coin.go`, `POST /coin`, prompts
+  `llm/prompts/coin_*.j2`). Your decisions:
+  - the model invents the **proto** roots;
+  - fresh roots only, no derivations;
+  - output is YAML printed for you to paste (the lexicon is never written);
+  - homophones are rejected and sent back as feedback.
+
+  Go checks each candidate in stages:
+  1. sounds (proto only);
+  2. proto phonotactics and the verb ending;
+  3. `sound.Evolve` gives the modern form, which must pass the modern
+     phonotactics;
+  4. the root must not exist yet, and the modern form must not be a
+     homophone of an existing word or of an earlier candidate;
+  5. `lexicon.Validate` on the entry it would become.
+
+  Rejections are counted by kind, and a repeated candidate counts as
+  `repeat`. Gender/ending mismatches (an f noun in -o) are remarks, not
+  rejections, because grammar.md says "typically". It refuses a concept the
+  lexicon already has, unless you pass `-id`.
+- Prompt: the phonology is written out from `phonology.yaml`: sounds,
+  clusters, codas, finals, forbidden sequences, and template percentages
+  from the generator block. It also gets 30 example roots: same pos (and
+  gender), spread over the lexicon, with derived words (notes with "+") left
+  out.
+- `sound.Rule.Group`: the "# N." heading number, so coined notes read
+  `(rule 2: c > g / V_V; rule 3: tt > t)` like the hand-written ones.
+- Shared HTTP code in `Client.post`. On the Python side, a shared `chat()`
+  helper does the error mapping.
+
+### First numbers (qwen2.5 7B, temp 0.7, 6 concepts × 2 seeds)
+
+- **79% of candidates accepted** (55/70); 78% in round 1. `lnova gen`'s
+  random roots: 87% (500/578).
+- Nouns and adjectives: nearly 100%. Verbs are harder: whisper got 40–70%,
+  with illegal onsets `sl zl zr`, hiatus `u.a` and coda `v`.
+- **Typical failures: English habits.** The model writes `k` and `q`
+  (*kilir, *squil, *tiroko) although the prompt says `c` = /k/. It reaches
+  for English clusters (*slerar). It copied example roots twice (*gilcar
+  "laugh", *bralar "dance") and repeated a rejected candidate.
+- **The accepted roots are samey.** Before the prompt fix, all five lantern
+  roots were *l*-initial (the English word's first letter) CV.CVa. After
+  it, the first letters vary, but the shapes are still mostly CV.CVa.
+  Verbs cluster on -irl-: *birlar, *dirlir, *zirlar. The model's own
+  "reasons" are wrong about syllable shapes (it called *zula* "VCCV"): it
+  can't see phonemes, only tokens.
+- The model first misread "definition" as a description of its roots. The
+  user prompt now asks for an English dictionary definition, and it writes
+  real ones.
+- No homophone rejections in these runs. Random `gen` roots hit them often,
+  because short CV words collide (*von → vo "and").
+
+### Decided (the user, after the first runs)
+
+1. **Sameness: accepted.** You pick from the list anyway; no variety tricks.
+2. **`k`/`q` get a hint:** a candidate with k or q is rejected with
+   "unknown letter 'k' … (write /k/ as c)", so the feedback says what to
+   do instead.
+3. **Meaning-aware examples: next session**, with semantic search
+   (ROADMAP → Next up).
+
+### Start next session here
+
+ROADMAP → Next up.
+
+---
+
 ## 2026-10-18/19: Evals, and the grammar they needed
 
 ### Done

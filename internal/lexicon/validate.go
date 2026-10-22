@@ -69,7 +69,7 @@ func Validate(lex *Lexicon, inv *phon.Inventory) []Problem {
 
 		if e.POS == "verb" {
 			for _, f := range []struct{ name, val string }{{"proto", e.Proto}, {"modern", e.Modern}} {
-				if f.val != "" && !hasVerbEnding(f.val) {
+				if f.val != "" && !HasVerbEnding(f.val) {
 					bad(f.name, "verb %s %q must end in -ar, -er or -ir", f.name, f.val)
 				}
 			}
@@ -90,7 +90,9 @@ func Validate(lex *Lexicon, inv *phon.Inventory) []Problem {
 	return probs
 }
 
-func hasVerbEnding(w string) bool {
+// HasVerbEnding reports whether w ends in -ar, -er or -ir after at least
+// one more letter, as every verb's proto and modern form must.
+func HasVerbEnding(w string) bool {
 	return slices.ContainsFunc(verbEndings, func(end string) bool {
 		return len(w) > len(end) && strings.HasSuffix(w, end)
 	})

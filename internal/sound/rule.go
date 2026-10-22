@@ -43,6 +43,7 @@ type Item struct {
 // Rule is one parsed sound change.
 type Rule struct {
 	Line        int
+	Group       int    // the number of the "# N." heading above the rule; 0 if none
 	Text        string // the source line with spaces normalized: "si > x / _V"
 	Target      []Item // segments and categories, never empty
 	Replacement []phon.Segment
@@ -87,10 +88,16 @@ func Parse(name string, r io.Reader, inv *phon.Inventory) ([]Rule, error) {
 	p := newParser(inv)
 	var rules []Rule
 	var errs ErrorList
+	group := 0
 	sc := bufio.NewScanner(r)
 	for line := 1; sc.Scan(); line++ {
 		text := strings.Join(strings.Fields(sc.Text()), " ")
 		if text == "" || text[0] == '#' {
+			// "# 2. Intervocalic voicing": the rules below are rule 2.
+			var n int
+			if _, err := fmt.Sscanf(text, "# %d.", &n); err == nil && n > 0 {
+				group = n
+			}
 			continue
 		}
 		rule, err := p.rule(text)
@@ -98,7 +105,7 @@ func Parse(name string, r io.Reader, inv *phon.Inventory) ([]Rule, error) {
 			errs = append(errs, Error{name, line, err.Error()})
 			continue
 		}
-		rule.Line = line
+		rule.Line, rule.Group = line, group
 		rules = append(rules, rule)
 	}
 	if err := sc.Err(); err != nil {

@@ -127,35 +127,43 @@ const startHint = "start it with: ollama serve, then cd llm && uv run uvicorn ap
 
 // Translate sends one model call.
 func (c *Client) Translate(ctx context.Context, req Request) (*Response, error) {
-	body, err := json.Marshal(req)
-	if err != nil {
+	var out Response
+	if err := c.post(ctx, "/translate", req, &out); err != nil {
 		return nil, err
 	}
-	hr, err := http.NewRequestWithContext(ctx, http.MethodPost, c.URL+"/translate", bytes.NewReader(body))
+	return &out, nil
+}
+
+// post sends req as JSON to the service's path and decodes the reply into out.
+func (c *Client) post(ctx context.Context, path string, req, out any) error {
+	body, err := json.Marshal(req)
 	if err != nil {
-		return nil, err
+		return err
+	}
+	hr, err := http.NewRequestWithContext(ctx, http.MethodPost, c.URL+path, bytes.NewReader(body))
+	if err != nil {
+		return err
 	}
 	hr.Header.Set("Content-Type", "application/json")
 	resp, err := c.HTTP.Do(hr)
 	if ue, ok := err.(*url.Error); ok && ue.Timeout() {
-		return nil, fmt.Errorf("llm service at %s timed out after %s; the model may be stuck (check: ollama ps): %w", c.URL, c.HTTP.Timeout, err)
+		return fmt.Errorf("llm service at %s timed out after %s; the model may be stuck (check: ollama ps): %w", c.URL, c.HTTP.Timeout, err)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("llm service not reachable at %s (%s): %w", c.URL, startHint, err)
+		return fmt.Errorf("llm service not reachable at %s (%s): %w", c.URL, startHint, err)
 	}
 	defer resp.Body.Close()
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("llm service: %s: %s", resp.Status, detail(data))
+		return fmt.Errorf("llm service: %s: %s", resp.Status, detail(data))
 	}
-	var out Response
-	if err := json.Unmarshal(data, &out); err != nil {
-		return nil, fmt.Errorf("llm service: bad reply: %w", err)
+	if err := json.Unmarshal(data, out); err != nil {
+		return fmt.Errorf("llm service: bad reply: %w", err)
 	}
-	return &out, nil
+	return nil
 }
 
 // detail extracts FastAPI's {"detail": "..."} error message.
