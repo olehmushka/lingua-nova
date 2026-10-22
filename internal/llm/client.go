@@ -13,6 +13,7 @@ package llm
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -179,4 +180,52 @@ func detail(data []byte) string {
 		return string(b)
 	}
 	return strings.TrimSpace(string(data))
+}
+
+// DefaultEmbedModel is the Ollama embedding model used when none is given.
+const DefaultEmbedModel = "nomic-embed-text"
+
+// EmbedRequest is one /embed call. Kind is "query" (what you search for)
+// or "document" (what is searched); the service adds the model's task
+// prefix for it.
+type EmbedRequest struct {
+	Texts []string `json:"texts"`
+	Kind  string   `json:"kind"`
+	Model string   `json:"model"`
+}
+
+// EmbedResponse is the service's reply: one vector per text, in order.
+type EmbedResponse struct {
+	Vectors    [][]float32 `json:"vectors"`
+	Model      string      `json:"model"`
+	DurationMS int         `json:"duration_ms"`
+}
+
+// Embed turns texts into vectors with an embedding model ("" = DefaultEmbedModel).
+func (c *Client) Embed(ctx context.Context, model, kind string, texts []string) ([][]float32, error) {
+	req := EmbedRequest{Texts: texts, Kind: kind, Model: cmp.Or(model, DefaultEmbedModel)}
+	var out EmbedResponse
+	if err := c.post(ctx, "/embed", req, &out); err != nil {
+		return nil, err
+	}
+	if len(out.Vectors) != len(texts) {
+		return nil, fmt.Errorf("llm service: %d vectors for %d texts", len(out.Vectors), len(texts))
+	}
+	return out.Vectors, nil
+}
+
+// Embedder is c with the embedding model fixed, for semantic.Build.
+func (c *Client) Embedder(model string) *Embedder {
+	return &Embedder{Client: c, Model: cmp.Or(model, DefaultEmbedModel)}
+}
+
+// Embedder implements semantic.Embedder over the service.
+type Embedder struct {
+	Client *Client
+	Model  string
+}
+
+// Embed implements semantic.Embedder.
+func (e *Embedder) Embed(ctx context.Context, kind string, texts []string) ([][]float32, error) {
+	return e.Client.Embed(ctx, e.Model, kind, texts)
 }

@@ -7,13 +7,10 @@ previous one is "done", even if done means small.
 
 _Keep this section current: it's where every new session starts._
 
-1. **Semantic search** with embeddings (Phase 5): `nomic-embed-text` is
-   already pulled. Then use it in `lnova coin`: show the model roots
-   related in meaning as examples (light/fire words for "lantern"); the
-   user's choice, SESSION-LOG 2026-10-22. `lnova eval -baseline
-   evals/results/2026-10-18-qwen2.5-7b.json` after any translation prompt
-   or model change (that baseline is partial: 133 of 390; see SESSION-LOG
-   2026-10-18/19).
+1. `lnova eval -baseline evals/results/2026-10-18-qwen2.5-7b.json` after
+   any translation prompt or model change (that baseline is partial: 133
+   of 390; see SESSION-LOG 2026-10-18/19). Richer definitions would help
+   search by meaning most (SESSION-LOG 2026-10-22, later).
 2. Coin the words you want with `lnova coin` and paste the chosen roots.
 3. English side of the new grammar (copula, prepositions, `itu`
    clauses): `grammar.cfg` + the rule-based translator, so those eval
@@ -240,7 +237,15 @@ the derivation.
   YAML (notes with the rule trace) for you to paste. First numbers (6
   concepts × 2 seeds): 79% of candidates accepted (gen's random roots:
   87%), but the model's roots are samey (CV.CVa nouns, -irl- verbs).
-- [ ] **Semantic search** with embeddings ("words related to the sea").
+- [x] **Semantic search** with embeddings ("words related to the sea").
+  → `POST /embed` (task prefixes for `nomic-embed-text`), `internal/semantic`:
+  one unit vector per entry from `gloss (pos): definition`, brute-force
+  cosine search, cache in `.cache/embeddings-<model>.json` keyed by a hash
+  of each text. `lnova similar [-k] [-pos] <english>`, `-eval
+  evals/similar.yaml` (recall@10: 62%); "Related in meaning" on the search
+  page (htmx fragment `/similar`, server flag `-llm`); `lnova coin -related
+  10` puts the 10 nearest roots first among the 30 examples, only those
+  within `-related-margin 0.05` of the best score.
 - [ ] Stretch: a chat partner that speaks only the conlang.
 
 **Done when:** LLM translations pass your validator most of the time, and you can measure that number.

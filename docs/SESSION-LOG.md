@@ -6,6 +6,86 @@ why, and where to pick up. The task list itself lives in `ROADMAP.md` →
 
 ---
 
+## 2026-10-22 (later): Semantic search with embeddings
+
+### Done
+
+- **`POST /embed`** in `llm/app.py`: texts → vectors via Ollama's
+  `nomic-embed-text`. That model was trained with a **task prefix** per
+  side of a search (`search_query: ` for the short query, `search_document: `
+  for what is searched), so the service adds it; other models get the
+  text as is. The error mapping of `chat()` is shared now (`call()`).
+- **`internal/semantic`**: one vector per entry, built from
+  `gloss (pos): definition` (your choice), scaled to length 1 so cosine
+  similarity is a dot product. Search is a brute-force scan (631 × 768
+  floats, under a millisecond); vector databases pay off at millions of
+  documents. Vectors are cached in `.cache/embeddings-<model>.json`
+  (gitignored, outside `language/`), keyed by a hash of each entry's text:
+  an edit re-embeds only that entry. First build 44 s (model load plus 631
+  texts), then about 1.5 s.
+- **`lnova similar [-k 10] [-pos P] <english>`**, and **`-eval
+  evals/similar.yaml`**: 12 queries with the ids a good search should
+  return; the score is **recall@10** (the share of the expected ids in the
+  top 10). Precision isn't scored, because the lists are short, not
+  complete.
+- **Web**: under the search results, an htmx fragment (`GET /similar`,
+  `hx-trigger="load"`) lists "Related in meaning", so string search stays
+  instant. The index is built on the first such request (the service may
+  start after the server); without the service it's one muted line.
+  Flags `-llm URL` ("" = off), `-embed-model`, `-cache`.
+- **`lnova coin -related 10`** (your choice: 10 by meaning + 20 spread):
+  the concept is embedded like an entry, the 10 nearest roots (no derived
+  words, any part of speech) come first among the 30 examples, and
+  stderr prints them. If embedding fails, coin warns and goes on with the
+  old examples.
+
+### First numbers (nomic-embed-text)
+
+- **recall@10 = 62%.** Good: killing 6/6, love 5/5, weather 5/6,
+  religion 6/8. Bad: "a large wild cat" 1/8 (jaguar only; lion, tiger…
+  missing), "birds of prey" 1/8 (osprey only).
+- Why it misses: most definitions are thin ("A lion.", "An eagle."), so
+  "lion is a big cat" has to come from the embedding model's world
+  knowledge, and a 137M-parameter model has little. Disambiguated glosses
+  (`kite.bird`, `swift.bird`) embed as "kite bird", which pulls every bird
+  together: "birds of prey" finds kite, swift, swallow, crow, turkey.
+- **Experiment (not kept): adding the lexicon file as a category**
+  (`lion (noun, mammals): A lion.`) gives 61%, no better: birds of prey
+  12% → 38%, sea 57% → 43%, farming 80% → 60%. The script (Python against
+  `/embed`) reproduced Go's 62% for the baseline text, so the two agree.
+- **Coin, lantern** (seed 1): related examples eiva (light), voixa (moon),
+  eiro (sun), and then trusa (squid), sersebo (lion), vausove (whale),
+  maldo (frog)… After `light` (0.64) every score is about 0.55: the
+  lexicon has few words about lamps, so ranks 2–10 are just the least
+  unrelated entries. A query with a definition doesn't fix it. Roots
+  with related examples: *mira *fela *nira *sila *tira (100% accepted,
+  CV.CVa as before); without: *zilpa *lirfa *pirva *firsa *girfa. One run
+  each, so this shows nothing either way about quality.
+
+### Decided (the user)
+
+1. **Coin's related examples get a threshold**: `-related-margin 0.05`
+   keeps only roots within 0.05 of the best score (`CoinOptions.RelatedMargin`;
+   0 = keep all N). A margin, not a fixed cut-off, because scores shift
+   with the model and the query. Live (the concept embedded as
+   `english (pos)`):
+   - ocean: sea 0.78, squid 0.73 → 2 kept (dolphin 0.73 just out);
+   - tiger cub: tiger → 1 kept (cub is derived, left out);
+   - whisper: breathe, say, push, sing, hear, swim, voice, smell → 8 kept;
+   - lantern: light 0.72, then squid, moon, leaf, lion, whale 0.67–0.69 → 6
+     kept. Thin entries ("squid (noun): A squid.") cluster together, and
+     no margin separates them; richer definitions would.
+2. **`evals/similar.yaml` is fine as written.**
+
+Still open: richer definitions would help search more than any text
+format (a lexicon edit, so yours).
+
+### Start next session here
+
+ROADMAP → Next up.
+
+---
+
 ## 2026-10-22: Coining new words
 
 ### Done

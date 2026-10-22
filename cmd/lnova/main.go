@@ -65,7 +65,12 @@ commands:
   coin -pos noun -gender f [-def D] [-id ID] [-n 5] [-want 3] [-rounds 3] <english>
                   coin new proto roots with the local model; the phonology, sound
                   changes and validator accept or reject each one, and the
-                  accepted ones are printed as lexicon YAML to paste
+                  accepted ones are printed as lexicon YAML to paste; -related N
+                  of the example roots are chosen by meaning (embeddings), those
+                  within -related-margin of the best match
+  similar [-k 10] [-pos P] <english> | -eval evals/similar.yaml
+                  search the lexicon by meaning with an embedding model; vectors
+                  are cached in .cache/; -eval reports recall@k
   eval [-setups retrieved,retrieved+tools,none+tools] [-runs 5] [-temp 0.7] [-tag T] [-out F] [-baseline F] [-list]
                   translate language/evals.yaml several times per setup and
                   report pass rates with 95% intervals; -list: no model
@@ -114,6 +119,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return cmdLLM(*langDir, rest, stdout, stderr)
 	case "coin":
 		return cmdCoin(*langDir, rest, stdout, stderr)
+	case "similar":
+		return cmdSimilar(*langDir, rest, stdout, stderr)
 	case "eval":
 		return cmdEval(*langDir, rest, stdout, stderr)
 	default:
@@ -914,14 +921,18 @@ func cmdCoin(langDir string, args []string, stdout, stderr io.Writer) int {
 	temp := fs.Float64("temp", 0.7, "sampling `temperature`")
 	seed := fs.Int("seed", -1, "the sampler's `seed`; -1 = random")
 	url := fs.String("url", llm.DefaultURL, "`URL` of the llm/ service")
+	related := fs.Int("related", 10, "choose `N` of the 30 example roots by meaning (0 = none)")
+	margin := fs.Float64("related-margin", 0.05, "keep related roots only within `D` of the best score (0 = keep all N)")
+	embedModel := fs.String("embed-model", llm.DefaultEmbedModel, "Ollama embedding `model` for -related")
+	cache := fs.String("cache", "", "embedding cache `file`, as in lnova similar")
 	usage := func() {
-		fmt.Fprintln(stderr, "usage: lnova coin -pos P [-gender m|f] [-def D] [-id ID] [-n 5] [-want 3] [-rounds 3] [-model M] [-temp 0.7] [-seed S] [-url U] <english>")
+		fmt.Fprintln(stderr, "usage: lnova coin -pos P [-gender m|f] [-def D] [-id ID] [-n 5] [-want 3] [-rounds 3] [-related 10] [-related-margin 0.05] [-model M] [-temp 0.7] [-seed S] [-url U] <english>")
 	}
 	fs.Usage = usage
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
-	if fs.NArg() == 0 || *n < 1 || *want < 1 || *rounds < 1 || *temp < 0 || !slices.Contains(lexicon.PartsOfSpeech, *pos) {
+	if fs.NArg() == 0 || *n < 1 || *want < 1 || *rounds < 1 || *temp < 0 || *related < 0 || *margin < 0 || !slices.Contains(lexicon.PartsOfSpeech, *pos) {
 		usage()
 		return 2
 	}
@@ -966,11 +977,33 @@ func cmdCoin(langDir string, args []string, stdout, stderr io.Writer) int {
 		}
 	}
 
-	opt := llm.CoinOptions{Model: *model, N: *n, Want: *want, MaxRounds: *rounds, Temperature: *temp}
+	ctx := context.Background()
+	if *related > 0 {
+		// Without the embedding model coin still works, on examples
+		// chosen without regard to meaning.
+		idx, err := buildIndex(ctx, lex, *url, *embedModel, cachePath(langDir, *embedModel, *cache), stderr)
+		if err != nil {
+			fmt.Fprintf(stderr, "lnova: no related examples: %v\n", err)
+		}
+		c.Index = idx
+	}
+
+	opt := llm.CoinOptions{Model: *model, N: *n, Want: *want, MaxRounds: *rounds, Temperature: *temp,
+		Related: *related, RelatedMargin: *margin}
 	if *seed >= 0 {
 		opt.Seed = seed
 	}
-	res, err := c.Coin(context.Background(), concept, opt)
+	res, err := c.Coin(ctx, concept, opt)
+	if res.RelatedErr != nil {
+		fmt.Fprintf(stderr, "lnova: no related examples: %v\n", res.RelatedErr)
+	}
+	if res.Related > 0 {
+		var rel []string
+		for _, r := range res.Examples[:res.Related] {
+			rel = append(rel, fmt.Sprintf("%s (%s)", r.Modern, r.Gloss))
+		}
+		fmt.Fprintf(stderr, "related examples: %s\n", strings.Join(rel, ", "))
+	}
 	tw := tabwriter.NewWriter(stderr, 0, 0, 2, ' ', 0)
 	total, first := 0, 0
 	for i, rd := range res.Rounds {

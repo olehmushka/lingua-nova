@@ -5,7 +5,8 @@ loop, the tool loop, the tools and the validator; this service only turns a
 request into a prompt and asks the local model (Ollama) either for tool
 calls or for an answer constrained to a JSON schema, and checks that the
 answer has that shape. /translate translates a sentence; /coin proposes
-proto roots for a new word.
+proto roots for a new word; /embed turns texts into vectors for semantic
+search.
 
 Run:  ollama serve   (in another terminal)
       uv run uvicorn app:app --port 8765
@@ -16,6 +17,7 @@ import logging
 import os
 import time
 from pathlib import Path
+from typing import Literal
 
 import ollama
 from fastapi import FastAPI, HTTPException
@@ -24,6 +26,7 @@ from pydantic import BaseModel, Field, ValidationError
 
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://127.0.0.1:11434")
 DEFAULT_MODEL = "qwen2.5:7b-instruct-q4_K_M"
+DEFAULT_EMBED_MODEL = "nomic-embed-text"
 
 # Output caps in tokens. A tool round has no schema to end the reply, and a
 # small model can ramble until the context window is full (minutes on a
@@ -286,6 +289,35 @@ def coin_messages(req: CoinRequest) -> list[dict]:
     return msgs
 
 
+# --- Embeddings (POST /embed).
+
+# Some embedding models are trained with a task prefix on every input, and
+# the prefix differs for the two sides of a search: the short query and the
+# documents searched. nomic-embed-text is one; without its prefixes the
+# vectors are still usable, but worse. Unknown models get the texts as is.
+TASK_PREFIXES = {
+    "nomic-embed-text": {"query": "search_query: ", "document": "search_document: "},
+}
+
+
+class EmbedRequest(BaseModel):
+    texts: list[str]
+    kind: Literal["query", "document"]
+    model: str = DEFAULT_EMBED_MODEL
+
+
+class EmbedResponse(BaseModel):
+    vectors: list[list[float]]
+    model: str
+    duration_ms: int
+
+
+def embed_inputs(req: EmbedRequest) -> list[str]:
+    """The texts as the model gets them: with its task prefix, if it has one."""
+    prefix = TASK_PREFIXES.get(req.model.removesuffix(":latest"), {}).get(req.kind, "")
+    return [prefix + t for t in req.texts]
+
+
 # --- HTTP.
 
 app = FastAPI(title="lingua-nova llm")
@@ -307,9 +339,14 @@ def health(model: str = DEFAULT_MODEL) -> dict:
 
 
 def chat(model: str, messages: list[dict], options: dict, **kwargs):
-    """One Ollama call, with its errors mapped to HTTP status codes."""
+    """One Ollama chat call, with its errors mapped to HTTP status codes."""
+    return call(lambda: client().chat(model=model, messages=messages, options=options, **kwargs))
+
+
+def call(f):
+    """Runs one Ollama call and maps its errors to HTTP status codes."""
     try:
-        return client().chat(model=model, messages=messages, options=options, **kwargs)
+        return f()
     except ollama.ResponseError as e:
         raise HTTPException(502, f"ollama: {e.error}")
     except ConnectionError as e:  # the ollama client's wrapper for httpx.ConnectError
@@ -382,3 +419,15 @@ def coin(req: CoinRequest) -> CoinResponse:
     except (json.JSONDecodeError, ValidationError) as e:
         raise HTTPException(502, f"model reply is not a valid coinage: {e}\nraw: {raw[:500]}")
     return CoinResponse(coinage=coinage, **usage(req.model, resp, start))
+
+
+@app.post("/embed")
+def embed(req: EmbedRequest) -> EmbedResponse:
+    start = time.monotonic()
+    if not req.texts:
+        return EmbedResponse(vectors=[], model=req.model, duration_ms=0)
+    resp = call(lambda: client().embed(model=req.model, input=embed_inputs(req)))
+    vectors = [list(v) for v in resp.embeddings]
+    if len(vectors) != len(req.texts):
+        raise HTTPException(502, f"ollama returned {len(vectors)} vectors for {len(req.texts)} texts")
+    return EmbedResponse(vectors=vectors, model=req.model, duration_ms=int((time.monotonic() - start) * 1000))

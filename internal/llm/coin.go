@@ -12,6 +12,7 @@ import (
 
 	"github.com/olehmushka/lingua-nova/internal/lexicon"
 	"github.com/olehmushka/lingua-nova/internal/phon"
+	"github.com/olehmushka/lingua-nova/internal/semantic"
 	"github.com/olehmushka/lingua-nova/internal/sound"
 )
 
@@ -136,6 +137,7 @@ type Coiner struct {
 	Inv    *phon.Inventory
 	Rules  []sound.Rule
 	Lex    *lexicon.Lexicon
+	Index  *semantic.Index // nil: examples chosen without regard to meaning
 
 	byProto  map[string]*lexicon.Entry
 	byModern map[string]*lexicon.Entry // modern form and word override
@@ -398,51 +400,94 @@ func percents(ws []phon.Weighted[string]) string {
 	return strings.Join(out, ", ")
 }
 
-// Examples picks up to n roots to show the model the style: entries of
-// the concept's part of speech (and gender, for a noun), spread evenly
-// over the lexicon, topped up with other roots. Derived words (notes with
-// "+": compounds, diminutives) are left out, because a new word is a
-// fresh root and the long compounds would skew its length.
-//
-// The choice ignores meaning. The lexicon's Search matches strings, not
-// meanings ("owl" finds nothing related); picking related words is the
-// job of the semantic search on the roadmap.
-func (c *Coiner) Examples(concept Concept, n int) []Root {
+// Examples picks up to n roots to show the model the style: first the
+// related ones (by meaning, from Related), then entries of the concept's
+// part of speech (and gender, for a noun), spread evenly over the
+// lexicon, topped up with other roots. Derived words (notes with "+":
+// compounds, diminutives) are left out, because a new word is a fresh root
+// and the long compounds would skew its length.
+func (c *Coiner) Examples(concept Concept, n int, related []*lexicon.Entry) []Root {
+	root := func(e *lexicon.Entry) Root {
+		return Root{Proto: strings.TrimPrefix(e.Proto, "*"), Modern: cmp.Or(e.Word, e.Modern), POS: e.POS, Gloss: e.Gloss}
+	}
+	var out []Root
+	seen := map[*lexicon.Entry]bool{}
+	for _, e := range related[:min(n, len(related))] {
+		out = append(out, root(e))
+		seen[e] = true
+	}
 	var same, other []*lexicon.Entry
 	for _, e := range c.Lex.Entries {
 		switch {
-		case strings.Contains(e.Notes, "+"):
+		case seen[e] || derived(e):
 		case e.POS == concept.POS && (concept.Gender == "" || e.Gender == concept.Gender):
 			same = append(same, e)
 		default:
 			other = append(other, e)
 		}
 	}
-	var out []Root
 	spread := func(es []*lexicon.Entry, k int) {
 		if k <= 0 || len(es) == 0 {
 			return
 		}
 		for i := range min(k, len(es)) {
-			e := es[i*len(es)/min(k, len(es))]
-			out = append(out, Root{Proto: strings.TrimPrefix(e.Proto, "*"), Modern: cmp.Or(e.Word, e.Modern), POS: e.POS, Gloss: e.Gloss})
+			out = append(out, root(es[i*len(es)/min(k, len(es))]))
 		}
 	}
-	spread(same, n*2/3)
+	spread(same, (n-len(out))*2/3)
 	spread(other, n-len(out))
 	return out
 }
 
+// derived reports whether an entry is built from other words (its notes
+// show the parts with "+"), not a root.
+func derived(e *lexicon.Entry) bool { return strings.Contains(e.Notes, "+") }
+
+// Related returns up to k roots closest in meaning to the concept, by the
+// semantic index: the concept is embedded like an entry ("lantern (noun):
+// A lamp in a case."), and derived words are left out as in Examples. Any
+// part of speech counts: "burn" and "fire" both tell the model what a
+// lantern is about. Without an index it returns nothing.
+//
+// With margin > 0, only roots scoring within margin of the best one are
+// kept. Scores are relative to the model and the query: when the lexicon
+// has few words near a concept, the best hit stands out and the rest
+// cluster just below it (lantern: light 0.64, then squid, lion, whale
+// around 0.55), so a fixed cut-off would fit one model and query only.
+// The margin is still a number to tune per embedding model.
+func (c *Coiner) Related(ctx context.Context, concept Concept, k int, margin float64) ([]*lexicon.Entry, error) {
+	if c.Index == nil || k <= 0 {
+		return nil, nil
+	}
+	q := semantic.QueryText(concept.English, concept.POS, concept.Definition)
+	hits, err := c.Index.Search(ctx, q, k, func(e *lexicon.Entry) bool { return !derived(e) })
+	if err != nil {
+		return nil, err
+	}
+	var out []*lexicon.Entry
+	for _, h := range hits {
+		if margin > 0 && h.Score < hits[0].Score-margin {
+			break
+		}
+		out = append(out, h.Entry)
+	}
+	return out, nil
+}
+
 // CoinOptions configure Coin.
 type CoinOptions struct {
-	Model       string // "" = DefaultModel
-	N           int    // candidates per round; 0 = 5
-	Want        int    // stop after this many are accepted; 0 = 3
-	MaxRounds   int    // 0 = 3
-	Examples    int    // example roots in the prompt; 0 = 30
-	NumCtx      int    // 0 = 8192
-	Temperature float64
-	Seed        *int
+	Model     string // "" = DefaultModel
+	N         int    // candidates per round; 0 = 5
+	Want      int    // stop after this many are accepted; 0 = 3
+	MaxRounds int    // 0 = 3
+	Examples  int    // example roots in the prompt; 0 = 30
+	Related   int    // how many of them are chosen by meaning (needs Coiner.Index); 0 = none
+	// RelatedMargin keeps only related roots within this score of the
+	// best one, so fewer than Related when few are close; 0 = no cut-off.
+	RelatedMargin float64
+	NumCtx        int // 0 = 8192
+	Temperature   float64
+	Seed          *int
 }
 
 // CoinRound is one model call and the verdict on each candidate.
@@ -480,10 +525,12 @@ func (r CoinRound) Feedback() string {
 // CoinResult is every round for one concept; Accepted lists the
 // accepted candidates in the order they came.
 type CoinResult struct {
-	Concept  Concept
-	Examples []Root
-	Rounds   []CoinRound
-	Accepted []Coined
+	Concept    Concept
+	Examples   []Root // the first Related of them chosen by meaning
+	Related    int
+	RelatedErr error // the semantic search failed; examples without it
+	Rounds     []CoinRound
+	Accepted   []Coined
 }
 
 // Definition is the concept's definition, or else the model's first one.
@@ -532,7 +579,12 @@ func (c *Coiner) Coin(ctx context.Context, concept Concept, opt CoinOptions) (*C
 	opt.Examples = cmp.Or(opt.Examples, 30)
 	opt.NumCtx = cmp.Or(opt.NumCtx, 8192)
 
-	res := &CoinResult{Concept: concept, Examples: c.Examples(concept, opt.Examples)}
+	res := &CoinResult{Concept: concept}
+	related, err := c.Related(ctx, concept, min(opt.Related, opt.Examples), opt.RelatedMargin)
+	if err != nil {
+		res.RelatedErr = err
+	}
+	res.Examples, res.Related = c.Examples(concept, opt.Examples, related), len(related)
 	req := CoinRequest{Concept: concept, Phonology: c.Phonology(), Examples: res.Examples, N: opt.N,
 		Model: opt.Model, NumCtx: opt.NumCtx, Temperature: opt.Temperature, Seed: opt.Seed}
 	tried := map[string]bool{}

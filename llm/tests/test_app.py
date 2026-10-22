@@ -275,3 +275,58 @@ def test_coin_ollama_down(monkeypatch):
     monkeypatch.setattr(app, "client", lambda: RaisingClient(ConnectionError("Failed to connect")))
     r = TestClient(app.app).post("/coin", json=coin_req().model_dump())
     assert r.status_code == 503 and "ollama not reachable" in r.json()["detail"]
+
+
+@pytest.mark.parametrize(
+    "model,kind,want",
+    [
+        ("nomic-embed-text", "query", ["search_query: sea"]),
+        ("nomic-embed-text:latest", "document", ["search_document: sea"]),
+        ("other-embedder", "query", ["sea"]),
+    ],
+)
+def test_embed_inputs_prefix(model, kind, want):
+    assert app.embed_inputs(app.EmbedRequest(texts=["sea"], kind=kind, model=model)) == want
+
+
+class FakeEmbedClient:
+    def __init__(self, n=None):
+        self.n = n  # vectors to return; None = one per input
+        self.kwargs = None
+
+    def embed(self, **kwargs):
+        self.kwargs = kwargs
+        n = len(kwargs["input"]) if self.n is None else self.n
+
+        class Resp:
+            embeddings = [[float(i), 1.0] for i in range(n)]
+
+        return Resp()
+
+
+@pytest.mark.parametrize("n,status", [(None, 200), (1, 502)])
+def test_embed_endpoint(monkeypatch, n, status):
+    fake = FakeEmbedClient(n)
+    monkeypatch.setattr(app, "client", lambda: fake)
+    r = TestClient(app.app).post("/embed", json={"texts": ["sea", "river (noun): A river."], "kind": "document"})
+    assert r.status_code == status, r.text
+    assert fake.kwargs["model"] == "nomic-embed-text"
+    assert fake.kwargs["input"][1] == "search_document: river (noun): A river."
+    if status == 200:
+        assert r.json()["vectors"] == [[0.0, 1.0], [1.0, 1.0]]
+
+
+def test_embed_empty_needs_no_model(monkeypatch):
+    monkeypatch.setattr(app, "client", lambda: RaisingClient(ConnectionError("down")))
+    r = TestClient(app.app).post("/embed", json={"texts": [], "kind": "query"})
+    assert r.status_code == 200 and r.json()["vectors"] == []
+
+
+def test_embed_ollama_down(monkeypatch):
+    class Down:
+        def embed(self, **kwargs):
+            raise ConnectionError("Failed to connect")
+
+    monkeypatch.setattr(app, "client", lambda: Down())
+    r = TestClient(app.app).post("/embed", json={"texts": ["sea"], "kind": "query"})
+    assert r.status_code == 503 and "ollama not reachable" in r.json()["detail"]

@@ -13,6 +13,7 @@ import (
 
 	"github.com/olehmushka/lingua-nova/internal/lexicon"
 	"github.com/olehmushka/lingua-nova/internal/phon"
+	"github.com/olehmushka/lingua-nova/internal/semantic"
 	"github.com/olehmushka/lingua-nova/internal/sound"
 )
 
@@ -165,7 +166,7 @@ func TestCoinPrompt(t *testing.T) {
 			t.Errorf("phonology lacks %q:\n%s", want, p)
 		}
 	}
-	ex := c.Examples(lantern, 30)
+	ex := c.Examples(lantern, 30, nil)
 	if len(ex) != 30 {
 		t.Fatalf("%d examples, want 30", len(ex))
 	}
@@ -179,7 +180,7 @@ func TestCoinPrompt(t *testing.T) {
 			t.Errorf("example %v: want roots, no * and no compounds", r)
 		}
 	}
-	if !slices.Equal(ex, c.Examples(lantern, 30)) {
+	if !slices.Equal(ex, c.Examples(lantern, 30, nil)) {
 		t.Error("examples differ between calls")
 	}
 }
@@ -298,5 +299,94 @@ func TestCoinRepeatAndStats(t *testing.T) {
 	}
 	if len(res.Accepted) != 3 || len(res.Rounds) != 3 {
 		t.Errorf("%d accepted in %d rounds, want 3 in 3", len(res.Accepted), len(res.Rounds))
+	}
+}
+
+// lightEmbedder puts texts about light and fire on one axis and
+// everything else on another, so a lantern's neighbours are known.
+// With failQuery, building works and every search fails.
+type lightEmbedder struct{ failQuery bool }
+
+func (f lightEmbedder) Embed(_ context.Context, kind string, texts []string) ([][]float32, error) {
+	if f.failQuery && kind == semantic.Query {
+		return nil, fmt.Errorf("embed down")
+	}
+	out := make([][]float32, len(texts))
+	for i, t := range texts {
+		out[i] = []float32{0, 1}
+		for _, w := range []string{"lantern", "fire", "light", "burn"} {
+			if strings.HasPrefix(t, w+" ") {
+				out[i] = []float32{1, 0.1}
+			}
+		}
+	}
+	return out, nil
+}
+
+func TestCoinRelatedExamples(t *testing.T) {
+	c := coiner(t, nil)
+	idx, _, err := semantic.Build(context.Background(), lightEmbedder{}, "m", c.Lex.Entries, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Index = idx
+	related, err := c.Related(context.Background(), lantern, 3, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got []string
+	for _, e := range related {
+		got = append(got, e.ID)
+	}
+	slices.Sort(got)
+	if want := []string{"burn", "fire", "light"}; !slices.Equal(got, want) {
+		t.Errorf("Related(lantern) = %v, want %v (firefly is derived)", got, want)
+	}
+
+	ex := c.Examples(lantern, 30, related)
+	if len(ex) != 30 {
+		t.Fatalf("%d examples, want 30", len(ex))
+	}
+	seen := map[string]bool{}
+	for i, r := range ex {
+		if seen[r.Proto] {
+			t.Errorf("example %d: *%s twice", i, r.Proto)
+		}
+		seen[r.Proto] = true
+	}
+	for i, e := range related {
+		if ex[i].Gloss != e.Gloss {
+			t.Errorf("example %d = %v, want the related %s first", i, ex[i], e.ID)
+		}
+	}
+}
+
+func TestCoinRelatedFallback(t *testing.T) {
+	f := &fakeCoin{answers: [][]string{{"hurula", "pattura", "fiulo"}}}
+	srv := httptest.NewServer(f)
+	defer srv.Close()
+	c := coiner(t, NewClient(srv.URL))
+	idx, _, err := semantic.Build(context.Background(), lightEmbedder{}, "m", c.Lex.Entries, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Index = idx
+
+	res, err := c.Coin(context.Background(), lantern, CoinOptions{Related: 10})
+	if err != nil || res.Related != 10 || res.RelatedErr != nil || len(f.reqs[0].Examples) != 30 {
+		t.Fatalf("related run: err %v, related %d (%v), %d examples", err, res.Related, res.RelatedErr, len(f.reqs[0].Examples))
+	}
+
+	// With a margin only the light words are close enough to the best.
+	res, err = c.Coin(context.Background(), lantern, CoinOptions{Related: 10, RelatedMargin: 0.05})
+	if err != nil || res.Related != 3 || len(res.Examples) != 30 {
+		t.Fatalf("margin: err %v, related %d, %d examples", err, res.Related, len(res.Examples))
+	}
+
+	// The embedding model fails: coin still runs, on the spread examples.
+	c.Index, _, _ = semantic.Build(context.Background(), lightEmbedder{failQuery: true}, "m", c.Lex.Entries, "")
+	res, err = c.Coin(context.Background(), lantern, CoinOptions{Related: 10})
+	if err != nil || res.Related != 0 || res.RelatedErr == nil || len(res.Examples) != 30 {
+		t.Fatalf("fallback: err %v, related %d, relatedErr %v, %d examples", err, res.Related, res.RelatedErr, len(res.Examples))
 	}
 }
