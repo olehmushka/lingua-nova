@@ -7,6 +7,7 @@ import (
 
 	"github.com/olehmushka/lingua-nova/internal/english"
 	"github.com/olehmushka/lingua-nova/internal/gloss"
+	"github.com/olehmushka/lingua-nova/internal/lexicon"
 )
 
 // Expectation is what a right answer must mean, worked out once per
@@ -27,6 +28,7 @@ type Expectation struct {
 	English string
 	Refs    []Reference // the frame check; empty when there's no parse
 	Words   []Expected  // the lexical check, used when Refs is empty
+	Unknown []string    // content words with no entry, so not checked
 	Why     string      // why there are no references
 }
 
@@ -73,16 +75,68 @@ func (k *Checker) Expect(sentence string) *Expectation {
 		x.Why = "every translation has a word that isn't in the lexicon"
 	}
 	for _, tok := range k.Ref.Tagger.Tag(sentence).Tokens {
-		if len(tok.Readings) > 0 && !slices.ContainsFunc(tok.Readings, func(r english.Reading) bool {
-			return slices.Contains(contentCats, r.Cat)
-		}) {
-			continue
-		}
-		if ids := candidates(k.Lex, tok); len(ids) > 0 {
+		ids := strictCandidates(k.Lex, tok)
+		switch {
+		case isContent(tok) && len(ids) == 0:
+			x.Unknown = append(x.Unknown, tok.Text)
+		case isContent(tok) || len(tok.Readings) == 0 && len(ids) > 0:
+			// A word without a category that is an entry's gloss is a
+			// preposition (in → bi, over → fai): the answer needs it too.
+			// One without an entry (of) is grammar: of → -s.
 			x.Words = append(x.Words, Expected{tok.Text, ids})
 		}
 	}
 	return x
+}
+
+// isContent says whether an English token is a content word the answer
+// must keep. A token with readings is content if one of them is a
+// content category. One with none (a word words.yaml doesn't list and the
+// grammar has no category for, like "of" or "over") goes by the tagger's
+// Penn tag: nouns, verbs, adjectives and adverbs are content;
+// prepositions, conjunctions and punctuation aren't (but see Expect).
+func isContent(tok english.Token) bool {
+	if len(tok.Readings) > 0 {
+		return slices.ContainsFunc(tok.Readings, func(r english.Reading) bool {
+			return slices.Contains(contentCats, r.Cat)
+		})
+	}
+	for _, p := range []string{"NN", "VB", "JJ", "RB"} {
+		if strings.HasPrefix(tok.Tag, p) {
+			return true
+		}
+	}
+	return false
+}
+
+// strictCandidates are the entries an English token must be translated
+// with: its readings' entries, else the entries whose gloss is the lemma
+// or has it as a word (fly → fly, fly_insect). Unlike candidates, which
+// picks context for the prompt and may cast a wide net, it doesn't match
+// words inside definitions: "is" appears in many definitions and means
+// none of them.
+func strictCandidates(lex *lexicon.Lexicon, tok english.Token) []string {
+	var ids []string
+	for _, r := range tok.Readings {
+		for _, e := range r.Entries {
+			if !slices.Contains(ids, e.ID) {
+				ids = append(ids, e.ID)
+			}
+		}
+	}
+	if len(ids) > 0 {
+		return ids
+	}
+	lemma := strings.ToLower(tok.Text)
+	if len(tok.Readings) > 0 {
+		lemma = tok.Readings[0].Lemma
+	}
+	for _, h := range lex.Search(lemma) {
+		if h.Field == "gloss" && h.Match <= lexicon.MatchWord {
+			ids = append(ids, h.Entry.ID)
+		}
+	}
+	return ids
 }
 
 // Kind says which check the expectation runs, for showing.

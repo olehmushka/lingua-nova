@@ -7,11 +7,17 @@ previous one is "done", even if done means small.
 
 _Keep this section current: it's where every new session starts._
 
-1. **Evals** (Phase 5): the 7-sentence measurement, made repeatable: more
-   sentences, several runs each, a pass rate per setup.
-2. **Coin new words** (Phase 5): the LLM proposes roots for missing
+1. **Coin new words** (Phase 5): the LLM proposes roots for missing
    concepts; the validator + sound change engine accept or reject them.
-3. Open question from the lexicon growth (SESSION-LOG 2026-10-18, later):
+   `lnova eval -baseline evals/results/2026-10-18-qwen2.5-7b.json` after
+   any prompt or model change. (That baseline is partial: 133 of 390,
+   Ollama hung on memory; see SESSION-LOG 2026-10-18/19.)
+2. English side of the new grammar (copula, prepositions, `itu`
+   clauses): `grammar.cfg` + the rule-based translator, so those eval
+   sentences get the frame check instead of the lexical one.
+3. Open grammar questions (grammar.md → Open questions): pronouns after
+   prepositions, fronted prepositional phrases, relative clauses.
+4. Open question from the lexicon growth (SESSION-LOG 2026-10-18, later):
    re-seed the generator weights from roots only, not derived words?
 
 ## Phase 0 — Learn the basics (reading, ~1–2 weeks alongside Phase 1)
@@ -210,9 +216,19 @@ the derivation.
   itself, 1.5–2× the cost). `The dog eats the bread.` fails everywhere.
   Repeated identical calls are answered "repeated call: …" instead of
   run again (that doom loop: 120 → 22 calls).
+- [x] **Evals**: a fixed set of test sentences to measure translation quality as you change prompts.
+  → `language/evals.yaml` (26 sentences, tagged), `internal/eval`,
+  `lnova eval [-setups] [-runs 5] [-temp 0.7] [-tag] [-out] [-baseline]
+  [-list]`: run *i* uses seed *i* (`lnova llm -temp -seed` replays it);
+  pass rate and first-attempt rate per setup with Wilson 95% intervals;
+  results saved as JSON after every translation, `-resume`, `-baseline`
+  diffs two runs, `-show`. Partial baseline: retrieved 35%, +tools 44%,
+  none+tools 48%, intervals overlap. Along the way:
+  lexical meaning check fixed (prepositions, is → be), and grammar.md
+  got copula `ihar`, prepositions (S V O PP; `fai` over), "of" = `-s`,
+  and `itu` clauses (glossed COMP).
 - [ ] **Coin new words**: the LLM proposes roots for missing concepts, and the validator + sound change engine accept or reject them.
 - [ ] **Semantic search** with embeddings ("words related to the sea").
-- [ ] **Evals**: a fixed set of test sentences to measure translation quality as you change prompts.
 - [ ] Stretch: a chat partner that speaks only the conlang.
 
 **Done when:** LLM translations pass your validator most of the time, and you can measure that number.

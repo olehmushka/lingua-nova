@@ -17,6 +17,9 @@ is decided; the exact sounds can still change.
 | Verbs | **Romance-style conjugation, 3 classes**; endings for person and tense; subject pronouns can be dropped |
 | Negation | **Portuguese-style**: particle before the verb, double negation |
 | Questions | **Portuguese-style**: same order as statements, rising intonation |
+| Copula | **Always `ihar`** "be", conjugated like any verb (Portuguese *é*, *era*) |
+| Prepositions | **Before the noun**; the phrase follows the object (S V O PP) |
+| Subordinate clauses | **`itu` + clause**, never left out (Portuguese *que*) |
 | Word formation | **Proto-level** suffixes (diminutive, augmentative, adjective, deverbal noun) and head-first compounds |
 
 The inflection tables below also exist as data in `morphology.yaml`
@@ -106,6 +109,9 @@ Like English *'s*: **possessor + -s + possessed thing**. After a consonant or pl
 
 As in English, the article belongs to the possessor: `lu menas hoida` = "[the woman]'s house".
 Possessive pronouns also come before the noun: `me hoida` = "my house".
+
+There is **no word for "of"**: English *X of Y* is said as *Y's X*.
+`lu dauzos orloh` = "the children of the king" (= "the king's children").
 
 The **-s goes on the possessor noun**, even when adjectives follow it:
 `lu mena`**`s`**` lirma huro` = "the white woman's dog" (not *lu mena lirmas huro*).
@@ -225,6 +231,50 @@ As in Romance history (Latin *cantare habeo* → Portuguese *cantarei*):
   `Naraxis honi? — Naraxu.` = "Did you see him? — Yes (I saw)."
 - No answer: `Na.` or `Na naraxu.`
 
+## Copula (draft)
+
+**`ihar`** "be" is always there, in every tense, conjugated like any
+class I verb (`iha`, `ihaxe`, `ihare`), as in Portuguese (*A espada é
+longa*), not left out as in Russian (*Меч длинный*). What follows it is
+an adjective (invariable, as always) or a noun phrase:
+
+- `Lu gurzos halto iha estra.` = "The warrior's sword is long."
+- `Lu dauzo ihaxe ne gurzo.` = "The king was a warrior."
+
+## Prepositions (draft)
+
+Prepositions come **before** their noun phrase, as in English and
+Portuguese. That's the usual pattern for a verb–object language like
+Rifatian (Greenberg's word-order universals: VO languages tend to have
+prepositions, OV languages postpositions). The prepositional phrase
+comes **after the object**: S V O PP.
+
+| | | |
+|---|---|---|
+| `bi` | in, at | `Lu orloh sileh bi lu hoida.` = "The children sleep in the house." |
+| `epe` | to | `Lu mena hibaxe gurna epe lu orlo.` = "The woman gave bread to the child." |
+| `gu` | with | |
+| `fai` | over, above, across | `Lu frinhah letah fai lu velda.` = "The birds fly over the mountain." |
+
+The article stays a separate word after a preposition (`bi lu hoida`):
+there are no contractions like Portuguese *em + a = na*.
+An indirect object ("to the child") is a phrase with `epe`.
+
+## Subordinate clauses (draft)
+
+A clause that is the object of a verb ("I think *that…*") starts with
+**`itu`**, the same word as the question word `itu` "what". Portuguese
+*que* (from Latin *quid*, "what") went the same way. English and German
+took the demonstrative instead (*that*, *dass*). The clause keeps
+normal word order and is **never left out**, as in Portuguese (*Acho
+que…*) and unlike English ("I think the river is cold"):
+
+- `Mu sozu itu lu trubo iha grepo.` = "I think that the river is cold."
+
+`itu` right after a verb is the complementizer (glossed COMP); at the
+start of a sentence it's the question word: `Itu lu mena beuzexe?` =
+"What did the woman find?"
+
 ## Example sentences
 
 ```
@@ -288,3 +338,7 @@ Chu  nar-a-x-is      lu   mena-s      huro?
 
 - Extra tenses (perfect, conditional, subjunctive): **postponed**. Only
   present, past and future until after Phase 4 (morphology generator).
+- Prepositions with pronouns (`epe honi`? a separate form?), and whether
+  a prepositional phrase can come first (`Bi lu hoida, …`): not decided.
+- Relative clauses ("the dog *that* ate the bread"): not decided; `itu`
+  is only the complementizer for now.

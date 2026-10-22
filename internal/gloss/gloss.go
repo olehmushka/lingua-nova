@@ -99,10 +99,43 @@ func (g *Glosser) Gloss(sentence string) *Result {
 		w := &res.Words[i]
 		w.Readings, w.Err = g.a.Analyze(w.Text)
 	}
+	complementizers(res.Words)
 	for _, c := range clauses(res.Words) {
 		res.Notes = append(res.Notes, g.clause(c)...)
 	}
 	return res
+}
+
+// complementizers decides each complementizer-or-not word (itu: COMP
+// or "what") before the sentence is cut into clauses, because a
+// complementizer is itself a clause boundary. After a finite verb in the
+// same clause it's COMP and opens a subordinate clause (Mu sozu itu lu
+// trubo iha grepo); anywhere else it isn't (Itu lu mena beuzexe?).
+func complementizers(ws []Word) {
+	isComp := func(an morph.Analysis) bool { return an.POS == "complementizer" }
+	verb := false
+	for i := range ws {
+		w := &ws[i]
+		if slices.ContainsFunc(w.Readings, isComp) {
+			if verb {
+				w.remove("a COMP after the verb", func(an morph.Analysis) bool { return !isComp(an) })
+				verb = false
+			} else {
+				w.remove("no verb before it to be its COMP", isComp)
+			}
+		} else if slices.ContainsFunc(w.Readings, func(an morph.Analysis) bool { _, ok := an.Finite(); return ok }) {
+			verb = true
+		}
+		if boundary(ws, i) {
+			verb = false
+		}
+	}
+}
+
+// comp reports whether w was read as a complementizer.
+func comp(w Word) bool {
+	t := w.Top()
+	return t != nil && t.POS == "complementizer"
 }
 
 // clauses splits words at clause boundaries; the clauses share ws's
@@ -124,9 +157,10 @@ func clauses(ws []Word) [][]Word {
 const clauseEnd = ".,?!;:—–…"
 
 // boundary reports whether a clause ends after ws[i]: Naraxis hono? — Naraxu.
+// A complementizer starts a clause too: Mu sozu | itu lu trubo iha grepo.
 func boundary(ws []Word, i int) bool {
 	return strings.ContainsAny(ws[i].Punct, clauseEnd) ||
-		i+1 < len(ws) && strings.ContainsAny(ws[i+1].Lead, clauseEnd)
+		i+1 < len(ws) && (strings.ContainsAny(ws[i+1].Lead, clauseEnd) || comp(ws[i+1]))
 }
 
 // clause runs the rules on one clause. Rifatian clauses are SVO with one
@@ -143,8 +177,15 @@ func boundary(ws []Word, i int) bool {
 //     can be a fronted object with the subject dropped (Ifa naraxis? =
 //     whom did you see?).
 //
+// A subordinate clause's complementizer isn't part of it for these rules.
 // A clause without a verb (Na.) is left as the analyzer read it.
 func (g *Glosser) clause(ws []Word) (notes []string) {
+	if len(ws) > 0 && comp(ws[0]) {
+		if len(ws) == 1 {
+			return []string{strings.ToLower(ws[0].Text) + " is a COMP with no clause after it"}
+		}
+		ws = ws[1:]
+	}
 	v := verb(ws)
 	if v < 0 {
 		return nil

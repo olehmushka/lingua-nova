@@ -149,6 +149,13 @@ func TestLemmas(t *testing.T) {
 		{"V", "seest", "see"},
 		{"V", "loveth", "love"},
 		{"V", "wept", "weep+"},
+		// be: present forms aren't past (no +), past ones are.
+		{"V", "is", "be"},
+		{"V", "are", "be"},
+		{"V", "art", "be"},
+		{"V", "was", "be+"},
+		{"V", "wast", "be+"},
+		{"V", "were", "be+"},
 	}
 	for _, tt := range tests {
 		var got string

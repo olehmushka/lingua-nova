@@ -11,7 +11,7 @@ import (
 
 // PartsOfSpeech is the closed set of pos values.
 var PartsOfSpeech = []string{
-	"adjective", "adverb", "article", "conjunction", "determiner", "noun",
+	"adjective", "adverb", "article", "complementizer", "conjunction", "determiner", "noun",
 	"numeral", "particle", "preposition", "pronoun", "verb",
 }
 

@@ -126,9 +126,22 @@ def test_translate_endpoint(monkeypatch, content, status):
     assert r.status_code == status, r.text
     assert fake.kwargs["format"] == app.Answer.model_json_schema()
     assert fake.kwargs["options"]["temperature"] == 0.0
+    assert "seed" not in fake.kwargs["options"]
     if status == 200:
         assert r.json()["answer"]["translation"] == "Lu mena nara."
         assert r.json()["prompt_tokens"] == 100
+
+
+def test_translate_seed(monkeypatch):
+    fake = FakeClient(ANSWER.model_dump_json())
+    monkeypatch.setattr(app, "client", lambda: fake)
+    r = TestClient(app.app).post(
+        "/translate",
+        json={"english": "The woman sees.", "context": CTX.model_dump(), "temperature": 0.7, "seed": 3},
+    )
+    assert r.status_code == 200, r.text
+    assert fake.kwargs["options"]["temperature"] == 0.7
+    assert fake.kwargs["options"]["seed"] == 3
 
 
 class RaisingClient:

@@ -90,6 +90,7 @@ type Request struct {
 	Final       bool    `json:"final,omitempty"` // ask for the answer, not for more calls
 	NumCtx      int     `json:"num_ctx"`
 	Temperature float64 `json:"temperature"`
+	Seed        *int    `json:"seed,omitempty"` // nil: Ollama picks one
 }
 
 // Response is the service's reply to a Request: the answer when there

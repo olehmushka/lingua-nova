@@ -1,0 +1,73 @@
+# Eval sentences for `lnova eval`: English the LLM translates, several
+# runs each, to measure a pass rate per setup. A pass is an answer the
+# checker accepts (form and meaning, see internal/llm). Hand-edited;
+# the Go code only reads it.
+#
+# Fields: en (the sentence), tags (what it tests; `lnova eval -tag T`
+# runs only those). Every content word must be in the lexicon.
+#
+# Tags: present past future · negation yes-no wh-subject wh-object
+# wh-adverb · possessive adjective plural pronoun archaic · copula
+# preposition clause · no-parse
+# (the Phase 4 grammar has no tree: the meaning check is lexical only)
+# · known-hard (failed in earlier measurements).
+
+# The 7 sentences of the 2026-10-18 tool-use measurement.
+- en: The woman sees the river.
+  tags: [present]
+- en: The men will drink the water.
+  tags: [future, plural]
+- en: Didst thou see the woman's dog?
+  tags: [past, yes-no, possessive, archaic, pronoun]
+- en: The dog eats the bread.
+  tags: [present, known-hard]
+- en: She didn't see the big house.
+  tags: [past, negation, adjective, pronoun]
+- en: Who saw the men?
+  tags: [past, wh-subject, plural]
+- en: We will love the god.
+  tags: [future, pronoun]
+
+# Every feature the rule-based grammar handles, again.
+- en: The children sleep.
+  tags: [present, plural]
+- en: The old king built a fortress.
+  tags: [past, adjective]
+- en: I know the priest.
+  tags: [present, pronoun]
+- en: They will not eat the meat.
+  tags: [future, negation, pronoun]
+- en: Did the farmer sell the wine?
+  tags: [past, yes-no]
+- en: What did the woman find?
+  tags: [past, wh-object]
+- en: Where did you see the stranger?
+  tags: [past, wh-adverb, pronoun]
+- en: Why did the child run?
+  tags: [past, wh-adverb]
+- en: My mother sings.
+  tags: [present, possessive]
+- en: The shepherd carried the small child.
+  tags: [past, adjective]
+- en: The friends hear the thunder.
+  tags: [present, plural]
+- en: Who will help the old man?
+  tags: [future, wh-subject, adjective]
+- en: You drank the cold milk.
+  tags: [past, adjective, pronoun]
+- en: The king was a warrior.
+  tags: [past, copula]
+
+# Beyond the Phase 4 English grammar (copula, prepositions, "of",
+# subordinate clauses; grammar.md has them): no reference translation,
+# so only the lexical check (every content word present, none added).
+- en: The warrior's sword is long.
+  tags: [present, possessive, adjective, copula, no-parse]
+- en: The children of the king sleep in the house.
+  tags: [present, plural, possessive, preposition, no-parse]
+- en: The birds fly over the mountain.
+  tags: [present, plural, preposition, no-parse]
+- en: I think that the river is cold.
+  tags: [present, pronoun, copula, clause, no-parse]
+- en: The woman gave bread to the child.
+  tags: [past, preposition, no-parse]

@@ -58,6 +58,9 @@ func (t *Tagger) lemmas(cat, w string) []candidate {
 			if base, ok := t.words.Past[f]; ok {
 				add(base, true)
 			}
+			if base, ok := t.words.Present[f]; ok {
+				add(base, false)
+			}
 		}
 		for _, f := range forms {
 			add(f, false)

@@ -6,6 +6,82 @@ why, and where to pick up. The task list itself lives in `ROADMAP.md` →
 
 ---
 
+## 2026-10-18/19: Evals, and the grammar they needed
+
+### Done
+
+- **`lnova eval`** (`internal/eval`): `language/evals.yaml` (26 tagged
+  sentences) × setups × runs; run *i* uses seed *i*. Per setup: pass rate
+  and first-attempt rate with **Wilson 95% intervals**, errors, median
+  time and tokens, tool calls. `-out` saves after every translation,
+  `-resume` continues an unfinished file, `-baseline` diffs two runs,
+  `-show` reports a saved file, `-list` checks the set without the model.
+- **Temperature + seed** through Go → service → Ollama. Every call was
+  at temperature 0 (greedy), so repeated runs would have repeated
+  themselves. `lnova llm -temp 0.7 -seed 3` replays an eval run.
+- **Meaning-check bugs found by `-list`**: prepositions fell through to a
+  fuzzy search (`of → shore, cub`) and `is` didn't lemmatize to `be`, so
+  the lexical check demanded nonsense entries. Now: words with no
+  category count only if a gloss matches exactly (in → `bi`, over →
+  `fai`), definitions are never searched, and `words.yaml` has
+  `present:` (am/is/are/art → be) and was/were/wast/wert → be.
+- **Grammar (the user's decisions, grammar.md)**: copula always `ihar`;
+  prepositions before the noun, PP after the object (S V O PP), no
+  contractions; no "of" (X of Y = Y's X); subordinate clauses with
+  `itu` (from "what", as Portuguese *que*), obligatory. New entries:
+  `that_comp` (`itu`, pos `complementizer`, gloss COMP) and `over`
+  (`*fai`, from `lnova gen`). Glosser: a CG rule reads `itu` as COMP after
+  the clause's verb (a clause boundary) and as "what" elsewhere;
+  `gloss.Clause.Comp`.
+
+### Baseline (partial, the user's choice): 133 translations
+
+`evals/results/2026-10-18-qwen2.5-7b.json`; `lnova eval -show` on it.
+Temperature 0.7, 3 attempts. All of run 1, most of run 2; none+tools has
+only run 1 for most sentences.
+
+| | retrieved | retrieved+tools | none+tools |
+|---|---|---|---|
+| pass rate | 35% [23–48] (18/52) | 44% [32–58] (23/52) | 48% [31–66] (14/29) |
+| first attempt | 15% | 29% | 31% |
+| median time | 21 s | 66 s | 78 s |
+| median prompt tokens | 21K | 70K | 72K |
+| tool calls / translation | 0 | 10.2 (176 repeated) | 16.8 (152 repeated) |
+
+- **The intervals overlap: no setup is shown to be better.** Last
+  session's 3/7 vs 6/7 was one greedy run; with sampling and more
+  sentences the gap mostly disappears.
+- Much lower than last session's ~6/7. Likely temperature 0.7 (vs 0)
+  plus harder sentences. Untested: a temp-0 run would tell.
+- Never passed in any setup: `We will love the god`, `The old king built a
+  fortress`, `Did the farmer sell the wine?`, `Why did the child run?`,
+  `My mother sings`, `The shepherd carried the small child`, `The friends
+  hear the thunder`, `Who will help the old man?`.
+- Tools: ~⅓ of all calls are repeats (dedupe answers them). The model
+  loops instead of using the result.
+- New grammar works from the prompt alone: prepositions 2/2 with
+  retrieved+tools; `Mu sozu itu lu trubo iha grepo` passes.
+
+### What went wrong
+
+- First attempt (47 translations) lost: the session ended while the eval
+  was paused, and it only saved at the end → save-per-translation and
+  `-resume`; detached with `setsid nohup`.
+- Second attempt: **Ollama hung** ("Stopping…" in `ollama ps`) at
+  translation 134; every later one hit the 5-minute timeout. Cause:
+  memory. 14/15 GB used, load ~30, `llama-server` 85% GPU / 15% CPU
+  offload, plus Zoom etc. Killing the stuck `llama-server` freed it.
+  The 23 timeout records were dropped from the baseline.
+
+### Start next session here
+
+1. Decide: finish the baseline (`-resume` needs a `-retry-errors`
+   flag or the file as is) on a quieter machine, and/or a temperature-0
+   run for comparison.
+2. Coin new words (ROADMAP → Next up).
+
+---
+
 ## 2026-10-18 (evening): Tool-use measurement, finished
 
 ### Done

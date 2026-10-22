@@ -66,7 +66,7 @@ func TestValidate(t *testing.T) {
 			`t.yaml:6: water: unknown field "glos"`,
 		}},
 		{"unknown pos", strings.Replace(strings.Replace(ok, "noun", "nown", 1), "  gender: f\n", "", 1), []string{
-			`t.yaml:4: water: unknown pos "nown" (want one of adjective, adverb, article, conjunction, determiner, noun, numeral, particle, preposition, pronoun, verb)`,
+			`t.yaml:4: water: unknown pos "nown" (want one of adjective, adverb, article, complementizer, conjunction, determiner, noun, numeral, particle, preposition, pronoun, verb)`,
 		}},
 		{"noun without gender", strings.Replace(ok, "  gender: f\n", "", 1), []string{
 			"t.yaml:4: water: noun without gender",

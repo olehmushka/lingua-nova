@@ -12,6 +12,7 @@ import "strings"
 // first, then subject, na, the verb, and the object. A slot keeps its
 // words in order, so `lu hoida gumo` and `gumo hoida` differ.
 type Clause struct {
+	Comp    *Tok  // the complementizer opening a subordinate clause: itu
 	Wh      *Tok  // a clause-initial question word: Ifa
 	Subject []Tok // the words before the verb, without Wh and Neg
 	Neg     *Tok  // a particle right before the verb: na
@@ -38,6 +39,10 @@ func (r *Result) Clauses() []Clause {
 	var out []Clause
 	for _, ws := range clauses(r.Words) {
 		var c Clause
+		if len(ws) > 0 && comp(ws[0]) {
+			t := tok(ws[0])
+			c.Comp, ws = &t, ws[1:]
+		}
 		if len(ws) > 0 && r.wh[tok(ws[0]).ID] {
 			t := tok(ws[0])
 			c.Wh, ws = &t, ws[1:]

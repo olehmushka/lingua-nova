@@ -123,6 +123,7 @@ class TranslateRequest(BaseModel):
     final: bool = False  # ask for the answer now, not for more tool calls
     num_ctx: int = 8192
     temperature: float = 0.0
+    seed: int | None = None  # with temperature > 0: the same seed, the same sample
 
 
 class TranslateResponse(BaseModel):
@@ -233,11 +234,14 @@ def translate(req: TranslateRequest) -> TranslateResponse:
     # Rendered before the call: a template error is a bug here, not Ollama
     # being down, and FastAPI reports it as a 500 with the traceback logged.
     messages = build_messages(req)
+    options = {"temperature": req.temperature, "num_ctx": req.num_ctx, "num_predict": cap}
+    if req.seed is not None:
+        options["seed"] = req.seed
     try:
         resp = client().chat(
             model=req.model,
             messages=messages,
-            options={"temperature": req.temperature, "num_ctx": req.num_ctx, "num_predict": cap},
+            options=options,
             **kwargs,
         )
     except ollama.ResponseError as e:

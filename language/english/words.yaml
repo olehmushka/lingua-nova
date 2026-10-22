@@ -91,6 +91,13 @@ words:
   not:   [{cat: Neg, ids: [not]}]
   "n't": [{cat: Neg, ids: [not]}]
 
+# present: irregular present tenses → the verb (lemma).
+present:
+  am: be
+  are: be
+  art: be
+  is: be
+
 # past: irregular past tenses → the verb (lemma). Archaic -est is removed
 # first (sawest → saw). A past that looks like its verb (cut, put) is
 # found through the tagger instead.
@@ -132,8 +139,12 @@ past:
   threw: throw
   took: take
   understood: understand
+  was: be
+  wast: be
   went: go
   wept: weep
+  were: be
+  wert: be
 
 # plural: irregular plurals → the noun.
 plural:
