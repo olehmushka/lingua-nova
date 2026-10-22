@@ -197,15 +197,17 @@ func TestMeaning(t *testing.T) {
 			[]string{"verb: the English needs love.storge-TH-FUT-1PL; you have love.storge-TH-FUT-3PL"}},
 		// Wrong tense only.
 		{"Who saw the men?", "Ifa nara lu dubroh?", "frame", []string{"verb: the English needs see-TH-PST-3SG"}},
-		// No parse: copula, prepositions, "of" as possessive, a
-		// subordinate clause. The right translations pass.
-		{"The warrior's sword is long.", "Lu gurzos halto iha estra.", "lexical", nil},
-		{"The king was a warrior.", "Lu dauzo ihaxe ne gurzo.", "frame", nil}, // was → be: it parses
-		{"The children of the king sleep in the house.", "Lu dauzos orloh sileh bi lu hoida.", "lexical", nil},
-		{"The birds fly over the mountain.", "Lu frinhah letah fai lu velda.", "lexical", nil},
-		{"The birds fly over the mountain.", "Lu frinhah letah lu velda.", "lexical", []string{`"over" is missing`}},
-		{"I think that the river is cold.", "Mu sozu itu lu trubo iha grepo.", "lexical", nil},
-		{"The woman gave bread to the child.", "Lu mena hibaxe gurna epe lu orlo.", "lexical", nil},
+		// Copula, prepositions, "of" as possessive, a subordinate clause.
+		{"The warrior's sword is long.", "Lu gurzos halto iha estra.", "frame", nil},
+		{"The king was a warrior.", "Lu dauzo ihaxe ne gurzo.", "frame", nil},
+		{"The children of the king sleep in the house.", "Lu dauzos orloh sileh bi lu hoida.", "frame", nil},
+		{"The birds fly over the mountain.", "Lu frinhah letah fai lu velda.", "frame", nil},
+		{"The birds fly over the mountain.", "Lu frinhah letah lu velda.", "frame", []string{`object: the English needs "over the mountain"`}},
+		{"I think that the river is cold.", "Mu sozu itu lu trubo iha grepo.", "frame", nil},
+		{"The woman gave bread to the child.", "Lu mena hibaxe gurna epe lu orlo.", "frame", nil},
+		// A PP after a noun isn't in the English grammar: no parse, so
+		// the lexical check, which wants the preposition too.
+		{"The birds over the mountain fly.", "Lu frinhah letah.", "lexical", []string{`"over" is missing`}},
 		// No parse (an adverb): only the words are checked.
 		{"The dog sleeps quickly.", "Lu huro sile.", "lexical", nil},
 		{"The dog sleeps quickly.", "Lu mena sile.", "lexical",
@@ -231,9 +233,10 @@ func TestMeaning(t *testing.T) {
 	}
 }
 
-// TestExpectWords: the content words the lexical check requires. A
-// preposition with no category isn't one ("in", "of"); is/was are be,
-// not entries that mention "is" in their definition.
+// TestExpectWords: the content words the lexical check requires, for
+// sentences the grammar doesn't parse (a PP after a noun). Prepositions
+// and the copula count, "of" doesn't (it's -s); is/was are be, not
+// entries that mention "is" in their definition.
 func TestExpectWords(t *testing.T) {
 	_, k := setup(t)
 	tests := []struct {
@@ -241,12 +244,12 @@ func TestExpectWords(t *testing.T) {
 		want    string // word:ids … in order
 		unknown string
 	}{
-		{"The dog sleeps in the house.", "dog:dog sleeps:sleep in:in house:house", ""},
-		{"The children of the king sleep.", "children:child king:king sleep:sleep", ""},
-		{"The woman gave bread to the child.", "woman:woman gave:give bread:bread to:to child:child", ""},
-		{"The dog is big.", "dog:dog is:be big:big", ""},
-		{"The men were strong.", "men:man were:be strong:strong", ""},
-		{"The birds fly over the mountain.", "birds:bird fly:fly,fly_insect over:over mountain:mountain", ""},
+		{"The dog in the house sleeps.", "dog:dog in:in house:house sleeps:sleep", ""},
+		{"The children of the king in the house sleep.", "children:child king:king in:in house:house sleep:sleep", ""},
+		{"The woman in the house gave bread to the child.", "woman:woman in:in house:house gave:give bread:bread to:to child:child", ""},
+		{"The dog in the house is big.", "dog:dog in:in house:house is:be big:big", ""},
+		{"The men in the house were strong.", "men:man in:in house:house were:be strong:strong", ""},
+		{"The birds over the mountain fly.", "birds:bird over:over mountain:mountain fly:fly_insect,fly", ""}, // the tagger: fly/NN
 		{"The dragon sleeps.", "sleeps:sleep", "dragon"},
 	}
 	for _, tt := range tests {

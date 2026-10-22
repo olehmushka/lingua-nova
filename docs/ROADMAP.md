@@ -9,15 +9,16 @@ _Keep this section current: it's where every new session starts._
 
 1. `lnova eval -baseline evals/results/2026-10-18-qwen2.5-7b.json` after
    any translation prompt or model change (that baseline is partial: 133
-   of 390; see SESSION-LOG 2026-10-18/19). Richer definitions would help
-   search by meaning most (SESSION-LOG 2026-10-22, later).
+   of 390; see SESSION-LOG 2026-10-18/19). The 5 copula / preposition /
+   clause sentences now get the frame check, not the lexical one, so they
+   aren't comparable with that baseline: re-run them first (SESSION-LOG
+   2026-10-22, English side). Richer definitions would help search by
+   meaning most (SESSION-LOG 2026-10-22, later).
 2. Coin the words you want with `lnova coin` and paste the chosen roots.
-3. English side of the new grammar (copula, prepositions, `itu`
-   clauses): `grammar.cfg` + the rule-based translator, so those eval
-   sentences get the frame check instead of the lexical one.
-4. Open grammar questions (grammar.md → Open questions): pronouns after
-   prepositions, fronted prepositional phrases, relative clauses.
-5. Open question from the lexicon growth (SESSION-LOG 2026-10-18, later):
+3. Open grammar questions (grammar.md → Open questions): pronouns after
+   prepositions (the translator gives no translation until decided),
+   "a child of the king", fronted prepositional phrases, relative clauses.
+4. Open question from the lexicon growth (SESSION-LOG 2026-10-18, later):
    re-seed the generator weights from roots only, not derived words?
 
 ## Phase 0 — Learn the basics (reading, ~1–2 weeks alongside Phase 1)
@@ -227,6 +228,9 @@ the derivation.
   lexical meaning check fixed (prepositions, is → be), and grammar.md
   got copula `ihar`, prepositions (S V O PP; `fai` over), "of" = `-s`,
   and `itu` clauses (glossed COMP).
+  Then the English side: `grammar.cfg` has `Be`, `PP`, `NP Of NP` and
+  `Sub` (with or without "that"), the rule-based translator builds them,
+  and those sentences get the frame check.
 - [x] **Coin new words**: the LLM proposes roots for missing concepts, and the validator + sound change engine accept or reject them.
   → `lnova coin -pos P [-gender m|f] [-def] [-id] [-n 5] [-want 3]
   [-rounds 3] <english>`, `internal/llm/coin.go`, `POST /coin`. The model

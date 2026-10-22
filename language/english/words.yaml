@@ -24,7 +24,9 @@ words:
   a:     [{cat: Det, ids: [a]}]
   an:    [{cat: Det, ids: [a]}]
   this:  [{cat: Det, ids: [this]}]
-  that:  [{cat: Det, ids: [that]}]
+  that:
+    - {cat: Det, ids: [that]}
+    - {cat: Comp, ids: [that_comp]}  # I think that…: Rifatian itu
 
   # Personal pronouns. "you" is ambiguous four ways in Rifatian: informal
   # or polite, singular or plural. Informal singular is listed first.
@@ -87,16 +89,38 @@ words:
   shalt: [{cat: Aux, tense: FUT}]
   wo:    [{cat: Aux, tense: FUT}]
 
+  # The copula. English "be" isn't an ordinary verb: it takes an
+  # adjective (is cold) and inverts without do-support (Is it cold?), so
+  # it has its own category. Bare "be" follows an auxiliary: will be.
+  am:    [{cat: Be, ids: [be], tense: PRS}]
+  are:   [{cat: Be, ids: [be], tense: PRS}]
+  art:   [{cat: Be, ids: [be], tense: PRS}]
+  is:    [{cat: Be, ids: [be], tense: PRS}]
+  was:   [{cat: Be, ids: [be], tense: PST}]
+  wast:  [{cat: Be, ids: [be], tense: PST}]
+  were:  [{cat: Be, ids: [be], tense: PST}]
+  wert:  [{cat: Be, ids: [be], tense: PST}]
+  be:    [{cat: Be, ids: [be]}]
+
+  # Prepositions. "of" has no word of its own: X of Y becomes Y's X.
+  in:     [{cat: P, ids: [in]}]
+  at:     [{cat: P, ids: [in]}]
+  to:     [{cat: P, ids: [to]}]
+  with:   [{cat: P, ids: [with]}]
+  over:   [{cat: P, ids: [over]}]
+  above:  [{cat: P, ids: [over]}]
+  across: [{cat: P, ids: [over]}]
+  of:     [{cat: Of}]
+
   # Negation
   not:   [{cat: Neg, ids: [not]}]
   "n't": [{cat: Neg, ids: [not]}]
 
-# present: irregular present tenses → the verb (lemma).
+# present: irregular present tenses → the verb (lemma). The forms of
+# "be" are words above (category Be), not verbs.
 present:
-  am: be
-  are: be
-  art: be
-  is: be
+  has: have
+  hath: have
 
 # past: irregular past tenses → the verb (lemma). Archaic -est is removed
 # first (sawest → saw). A past that looks like its verb (cut, put) is
@@ -139,12 +163,8 @@ past:
   threw: throw
   took: take
   understood: understand
-  was: be
-  wast: be
   went: go
   wept: weep
-  were: be
-  wert: be
 
 # plural: irregular plurals → the noun.
 plural:

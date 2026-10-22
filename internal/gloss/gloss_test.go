@@ -119,6 +119,9 @@ func TestGloss(t *testing.T) {
 		// A rule that can't remove the only reading: the sentence is wrong.
 		{"Naraxis hono?", "Nar-a-x-is hono?", "see-TH-PST-2SG 3SG.M", []string{"hono is SBJ after the verb"}},
 		{"Mi naraxu.", "Mi nar-a-x-u.", "1SG.OBJ see-TH-PST-1SG", []string{"mi is OBJ before the verb"}},
+		// After the copula a pronoun is in the subject form: It is I.
+		{"Hunu iha mu.", "Hunu ih-a mu.", "3SG.N be-TH.3SG 1SG", nil},
+		{"Hunu iha mi.", "Hunu ih-a mi.", "3SG.N be-TH.3SG 1SG.OBJ", []string{"mi is OBJ after the copula"}},
 		{"Mu nara naraxu.", "Mu nar-a nar-a-x-u.", "1SG see-TH.3SG see-TH-PST-1SG",
 			[]string{"naraxu is a second verb in the clause", "mu (1SG) doesn't agree with nara (3SG)"}},
 		{"Mu na naraxu sela, na.", "Mu na nar-a-x-u sela, na.", "1SG NEG see-TH-PST-1SG 2SG.POL.OBJ NEG",

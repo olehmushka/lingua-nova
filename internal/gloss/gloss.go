@@ -169,6 +169,8 @@ func boundary(ws []Word, i int) bool {
 //  1. the verb is the first word with a finite reading (known roots
 //     before guesses); no other word in the clause is a finite verb;
 //  2. a subject pronoun comes before the verb, an object pronoun after;
+//     after the copula ihar a pronoun is in the subject form too (Hunu
+//     iha mu, "It is I", like Portuguese Sou eu);
 //  3. the subject agrees with the verb in person and number. The subject
 //     is the nearest word before the verb, skipping negation and
 //     adjectives; a clause can have none (pro-drop: Naraxu chi). A pronoun
@@ -197,6 +199,10 @@ func (g *Glosser) clause(ws []Word) (notes []string) {
 			notes = append(notes, strings.ToLower(w.Text)+" is "+rule)
 		}
 	}
+	copula := slices.ContainsFunc(ws[v].Readings, func(an morph.Analysis) bool {
+		_, ok := an.Finite()
+		return ok && an.Entry != nil && an.Entry.ID == copulaID
+	})
 	for i := range ws {
 		if i == v {
 			continue
@@ -205,9 +211,12 @@ func (g *Glosser) clause(ws []Word) (notes []string) {
 			_, ok := an.Finite()
 			return ok
 		})
-		if i < v {
+		switch {
+		case i < v:
 			check(&ws[i], "OBJ before the verb", hasCase("OBJ"))
-		} else {
+		case copula:
+			check(&ws[i], "OBJ after the copula", hasCase("OBJ"))
+		default:
 			check(&ws[i], "SBJ after the verb", hasCase("SBJ"))
 		}
 	}
@@ -300,6 +309,10 @@ func persons(rs []morph.Analysis, person func(morph.Analysis) (string, bool)) []
 	}
 	return out
 }
+
+// copulaID is the lexicon id of ihar "be", whose complement pronoun is
+// in the subject form.
+const copulaID = "be"
 
 func hasCase(kase string) func(morph.Analysis) bool {
 	return func(an morph.Analysis) bool {

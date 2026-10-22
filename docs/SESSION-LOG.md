@@ -6,6 +6,84 @@ why, and where to pick up. The task list itself lives in `ROADMAP.md` →
 
 ---
 
+## 2026-10-22 (English side): copula, prepositions, "of", `itu` clauses
+
+### Done
+
+- **`words.yaml`**: new categories `Be` (am/is/are/art/was/were/wast/wert,
+  bare `be`, each with its tense), `P` (in/at → `bi`, to → `epe`, with →
+  `gu`, over/above/across → `fai`), `Of`, and `Comp` (a second reading of
+  "that" → `that_comp`, `itu`). The forms of be left `present:`/`past:`;
+  `has`/`hath` → have went in (they were `?has` before).
+- **`grammar.cfg`**: `Pred -> Be Compl | Be Neg Compl | Aux Be Compl …`,
+  `Compl -> Adj | NP | PP`, `S -> Be NP Compl` (Is the river cold?),
+  `VP -> V PPs | V NP PPs | V Sub`, `PP -> P NP`, `Sub -> Comp NP Pred |
+  NP Pred`, `NP -> NP Of NP`.
+- **Transfer** (`internal/translate/generate.go`): `clause` is recursive.
+  A `Sub` becomes its own clause after `itu`, and `itu` is inserted when
+  English dropped "that". PPs come after the object (S V O PP). `X of Y`
+  is generated as `Y's X`. When the translator gives no translation, the
+  error now says why.
+- **Ranking**: a translation with no unknown words now comes before one
+  with an unknown word, whatever the tagger thinks. The tagger reads
+  "cold" in "Is the river cold?" as a noun (`?cold`); the adjective
+  reading gives `grepo`.
+- **Glosser**: after `ihar`, a pronoun must be in the subject form (your
+  decision); `Hunu iha mi` gets "mi is OBJ after the copula".
+- **Eval**: the 5 former `no-parse` sentences now get the **frame check**
+  (1 reference each); the tag is gone. The lexical check counts `Be` and
+  `P` as content words, so a dropped `ihar` or preposition still fails
+  it when a sentence doesn't parse.
+
+### The linguistics
+
+- **Why `be` is its own category.** In English, *be* is the one verb
+  that inverts without do-support (*Is it cold?*, not *Does it be cold?*)
+  and takes an adjective as its complement. Grammars of English give it
+  a category of its own for that reason. Rifatian `ihar` is an ordinary
+  class I verb, so the special handling stays on the English side.
+- **PP attachment.** "I saw the man with the telescope" has two trees:
+  the PP modifies *saw* or *man*. This is the textbook ambiguity of
+  parsing, and an Earley parser returns both trees. Here PPs attach only
+  to the verb phrase. A PP after a noun would give the same Rifatian
+  string (the PP follows the object either way), so the extra trees
+  would only multiply the work. Sentences like "The dog in the house
+  sleeps" don't parse and fall back to the lexical check.
+  `NP Of NP` has the same kind of ambiguity:
+  "the house of the woman's dog" is [house of [woman's dog]] or
+  [[house of woman]'s dog], and both translations are listed.
+- **Complementizer insertion.** English may leave out "that"; Rifatian
+  never leaves out `itu`. So the transfer step adds a word that is
+  absent from the source, like `na` for double negation.
+
+### Decided (the user)
+
+1. A pronoun after `ihar` is in the **subject** form: `Hunu iha mu` "It
+   is I" (grammar.md, Copula).
+2. "a/this X of Y": **no translation** for now; added to grammar.md →
+   Open questions. Only "the X of Y" and "X of Y" translate.
+
+Pronouns after prepositions stay undecided, so "She sleeps with him"
+gets no translation ("him: a pronoun after a preposition isn't decided
+yet").
+
+### Known limits
+
+- English agreement isn't checked: "The children of the king's dog
+  sleep" lists "the dog sleeps" (`… huro sile`) first, though plural
+  *sleep* says the children are the subject.
+- The frame check puts PPs and copula complements in the Clause's
+  `Object` slot, so a missing `fai` is reported as "object: the English
+  needs "over the mountain"". It catches the error; the slot name is
+  just broad.
+- Not re-measured: Ollama wasn't running.
+
+### Start next session here
+
+ROADMAP → Next up (#1: re-run the eval on these 5 sentences).
+
+---
+
 ## 2026-10-22 (later): Semantic search with embeddings
 
 ### Done

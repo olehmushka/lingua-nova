@@ -241,6 +241,11 @@ an adjective (invariable, as always) or a noun phrase:
 - `Lu gurzos halto iha estra.` = "The warrior's sword is long."
 - `Lu dauzo ihaxe ne gurzo.` = "The king was a warrior."
 
+A pronoun after `ihar` is in the **subject** form, as in Portuguese
+(*Sou eu*) and unlike colloquial English (*It's me*):
+
+- `Hunu iha mu.` = "It is I."
+
 ## Prepositions (draft)
 
 Prepositions come **before** their noun phrase, as in English and
@@ -342,3 +347,6 @@ Chu  nar-a-x-is      lu   mena-s      huro?
   a prepositional phrase can come first (`Bi lu hoida, …`): not decided.
 - Relative clauses ("the dog *that* ate the bread"): not decided; `itu`
   is only the complementizer for now.
+- "X of Y" with an indefinite or demonstrative X ("*a* child of the
+  king", "*this* son of the king"): `lu dauzos orlo` has room for one
+  article only, the possessor's. Not decided.

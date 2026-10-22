@@ -45,8 +45,9 @@ type Expected struct {
 }
 
 // contentCats are the English categories whose words carry meaning the
-// answer must keep; articles, auxiliaries and negation become grammar.
-var contentCats = []string{"N", "V", "Adj", "Pron", "WhP", "WhAdv"}
+// answer must keep; articles, auxiliaries, negation, "of" and "that"
+// become grammar. The copula counts: Rifatian never leaves ihar out.
+var contentCats = []string{"N", "V", "Be", "Adj", "P", "Pron", "WhP", "WhAdv"}
 
 // contentPOS are the Rifatian parts of speech an answer can't add freely.
 var contentPOS = []string{"noun", "verb", "adjective", "pronoun", "adverb"}
@@ -80,9 +81,9 @@ func (k *Checker) Expect(sentence string) *Expectation {
 		case isContent(tok) && len(ids) == 0:
 			x.Unknown = append(x.Unknown, tok.Text)
 		case isContent(tok) || len(tok.Readings) == 0 && len(ids) > 0:
-			// A word without a category that is an entry's gloss is a
-			// preposition (in → bi, over → fai): the answer needs it too.
-			// One without an entry (of) is grammar: of → -s.
+			// A word without a category that is an entry's gloss is
+			// probably a preposition words.yaml doesn't list yet: the
+			// answer needs it too.
 			x.Words = append(x.Words, Expected{tok.Text, ids})
 		}
 	}
@@ -92,7 +93,7 @@ func (k *Checker) Expect(sentence string) *Expectation {
 // isContent says whether an English token is a content word the answer
 // must keep. A token with readings is content if one of them is a
 // content category. One with none (a word words.yaml doesn't list and the
-// grammar has no category for, like "of" or "over") goes by the tagger's
+// grammar has no category for, like "under") goes by the tagger's
 // Penn tag: nouns, verbs, adjectives and adverbs are content;
 // prepositions, conjunctions and punctuation aren't (but see Expect).
 func isContent(tok english.Token) bool {

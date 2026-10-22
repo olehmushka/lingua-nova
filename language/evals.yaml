@@ -8,9 +8,7 @@
 #
 # Tags: present past future · negation yes-no wh-subject wh-object
 # wh-adverb · possessive adjective plural pronoun archaic · copula
-# preposition clause · no-parse
-# (the Phase 4 grammar has no tree: the meaning check is lexical only)
-# · known-hard (failed in earlier measurements).
+# preposition clause · known-hard (failed in earlier measurements).
 
 # The 7 sentences of the 2026-10-18 tool-use measurement.
 - en: The woman sees the river.
@@ -58,16 +56,16 @@
 - en: The king was a warrior.
   tags: [past, copula]
 
-# Beyond the Phase 4 English grammar (copula, prepositions, "of",
-# subordinate clauses; grammar.md has them): no reference translation,
-# so only the lexical check (every content word present, none added).
+# The copula, prepositions, "of" and subordinate clauses. Until
+# 2026-10-22 the English grammar had no tree for these, so they got only
+# the lexical check; results before then aren't comparable for them.
 - en: The warrior's sword is long.
-  tags: [present, possessive, adjective, copula, no-parse]
+  tags: [present, possessive, adjective, copula]
 - en: The children of the king sleep in the house.
-  tags: [present, plural, possessive, preposition, no-parse]
+  tags: [present, plural, possessive, preposition]
 - en: The birds fly over the mountain.
-  tags: [present, plural, preposition, no-parse]
+  tags: [present, plural, preposition]
 - en: I think that the river is cold.
-  tags: [present, pronoun, copula, clause, no-parse]
+  tags: [present, pronoun, copula, clause]
 - en: The woman gave bread to the child.
-  tags: [past, preposition, no-parse]
+  tags: [past, preposition]

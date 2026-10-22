@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"sync"
 	"testing"
 
@@ -92,6 +93,29 @@ func TestTranslate(t *testing.T) {
 		{"Who saw the dog?", "Ifa naraxe lu huro?", 1},
 		{"What did she see?", "Itu hana naraxe?", 1},
 		{"When didst thou see her?", "Cuda chu naraxis hani?", 1},
+		// The copula: always there, a pronoun after it in the subject form
+		{"The warrior's sword is long.", "Lu gurzos halto iha estra.", 1},
+		{"The king was a warrior.", "Lu dauzo ihaxe ne gurzo.", 1},
+		{"The river will be cold.", "Lu trubo ihare grepo.", 1},
+		{"The river is not cold.", "Lu trubo na iha grepo.", 1},
+		{"It is I.", "Hunu iha mu.", 1},
+		{"Who is the king?", "Ifa iha lu dauzo?", 1},
+		// be inverts without do-support; the tagger's noun "cold" is ?cold,
+		// ranked after the translation with no unknown word
+		{"Is the river cold?", "Lu trubo iha grepo?", 2},
+		{"Isn't the river cold?", "Lu trubo na iha grepo?", 2},
+		// Prepositions: S V O PP
+		{"The children sleep in the house.", "Lu orloh sileh bi lu hoida.", 1},
+		{"The woman gave bread to the child.", "Lu mena hibaxe gurna epe lu orlo.", 1},
+		{"The birds fly over the mountain.", "Lu frinhah letah fai lu velda.", 1},
+		// X of Y is Y's X
+		{"The children of the king sleep in the house.", "Lu dauzos orloh sileh bi lu hoida.", 1},
+		// Subordinate clauses: itu even where English drops "that"
+		{"I think that the river is cold.", "Mu sozu itu lu trubo iha grepo.", 1},
+		{"I think the river is cold.", "Mu sozu itu lu trubo iha grepo.", 1},
+		{"She thought that the dog didn't see the house.", "Hana sozexe itu lu huro na naraxe lu hoida.", 1},
+		// Irregular present
+		{"The man has a dog.", "Lu dubro saule ne huro.", 1},
 		// Ambiguity: four yous, five loves
 		{"You see the dog.", "Chu naras lu huro.", 4},
 		{"I love the woman.", "Mu eluvu lu mena.", 5},
@@ -114,7 +138,12 @@ func TestTranslate(t *testing.T) {
 				t.Errorf("total: got %d %q, want %d", res.Total, all, tt.total)
 			}
 			// Every output must read back cleanly: analysis by synthesis.
+			// One with an unknown word (?cold) isn't glossed at all; that's
+			// TestTranslateProblems.
 			for _, x := range res.Translations {
+				if len(x.Unknown) > 0 {
+					continue
+				}
 				if len(x.Notes) > 0 {
 					t.Errorf("%q: notes %q", x.Text, x.Notes)
 				}
@@ -154,6 +183,16 @@ func TestTranslateProblems(t *testing.T) {
 			t.Errorf("%q: no error", in)
 		}
 	}
+	// Parses, but grammar.md hasn't decided how to say it.
+	for in, want := range map[string]string{
+		"A child of the king sleeps.": `A … of: only "the" is decided`,
+		"She sleeps with him.":        "him: a pronoun after a preposition isn't decided yet",
+	} {
+		if _, err := tr.Translate(in, 0); err == nil || !strings.Contains(err.Error(), want) {
+			t.Errorf("%q: got %v, want %s", in, err, want)
+		}
+	}
+
 	_, err = tr.Translate("Sees the dog the woman.", 0)
 	if want := "the grammar has no tree for: Sees/V the/Det dog/N the/Det woman/N"; err == nil || err.Error() != want {
 		t.Errorf("got %v, want %s", err, want)
