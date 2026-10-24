@@ -6,6 +6,89 @@ why, and where to pick up. The task list itself lives in `ROADMAP.md` →
 
 ---
 
+## 2026-10-23: Eval re-run on the frame-check sentences
+
+### Done
+
+- `lnova eval -tag preposition` and `-tag copula` (defaults: 3 setups ×
+  5 runs, temp 0.7, qwen2.5:7b), code `ea0b5dd`. Together they cover the
+  5 sentences that moved to the frame check, plus "The king was a
+  warrior.", which already had it. Saved as
+  `evals/results/2026-10-22-frame-prep.json` and `…-frame-copula.json`.
+  These are the baseline for these 6 sentences from now on.
+
+| sentence | retrieved | retrieved+tools | none+tools |
+|---|---|---|---|
+| The children of the king sleep in the house. | 0/5 | 2/5 | 2/5 |
+| The birds fly over the mountain. | 1/5 | 0/5 | 0/5 |
+| The woman gave bread to the child. | 3/5 | 3/5 | 2/5 |
+| The king was a warrior. | 1/5 | 1/5 | 0/5 |
+| The warrior's sword is long. | 2/5 | 4/5 | 5/5 |
+| I think that the river is cold. | 5/5 | 5/5 | 1/5 |
+
+Prepositions 13/45 (29%), copula 24/45 (53%). Median time per
+translation: 24 s / 85 s / 137 s (prep), 14 s / 45 s / 103 s (copula).
+The comparison with the 10-18 baseline means little: that partial run
+has only 1–2 translations of each sentence per setup.
+
+### Failures, by kind (53 in all; some have more than one)
+
+1. **Invented word forms** (~17): `frinah` for `frinhah` "birds" (6×),
+   `orlah`, `silah`, `silih`, `gurza`, `dauzah`, `hido`.
+2. **Dropped article** (~13): `ihaxe gurzo` without `ne` (9 of the 13
+   "king was a warrior" failures), `fai velda`, `epe orlo` without `lu`.
+3. **Plural subject, singular verb** (6): `frinhah leta` instead of
+   `letah`.
+4. **Infinitive instead of a conjugated verb** (5): `letar`, `ihar`,
+   `silir`, sometimes moved to the end of the clause (S O V).
+5. **Wrong tense** (4): `hibare` (future) for "gave", `iha` (present) for
+   "was".
+6. **Correct sentence, wrong word list** (1): `Mu sozu itu lu trubo iha
+   grepo.` is exactly the reference, but the model's `words` list gave
+   `itu`, `lu`, `trubo`, `grepo` the id `i`, so the checker failed it.
+7. Nonsense (2): `epe selah trubo hurito sela orlo`, `menah truboh`.
+
+### The linguistics / AI
+
+- **Why `frinhah` breaks.** The plural adds `-h` to `frinha`, and `nh`
+  is one sound written with two letters. The model doesn't see sounds or
+  even letters: it sees **subword tokens** (chunks like `fr`, `inh`,
+  `ah`), so `frinhah` with two `h`s looks like a typo to "fix". Rules
+  that are simple over segments (add `-h`) can be hard over tokens. This
+  is the same reason LLMs miscount the letters in a word.
+- **Dropping `ne` follows Portuguese.** *O rei era guerreiro*: Romance
+  languages (and many others) leave out the indefinite article before a
+  predicate noun, especially for professions and roles. grammar.md cites
+  Portuguese for the copula, and the model's Romance-like habits match.
+  Rifatian says articles are "used like English", so `ne` is required
+  and these fail. That's a design choice, so it's listed below.
+- **Tools cost a lot and helped little.** On prepositions, the lookups
+  (15–33 per translation, most of them repeated) took 4–6× the time for
+  27% → 33%. They help where the error is a missing word (the sword: 2/5 →
+  4/5), not where it's a wrong form the model is sure of (`frinah`).
+- **Noise.** With 5 runs, a 95% interval is ±20–25 points. Only big
+  gaps mean anything: "I think…" 5/5 vs 1/5 without retrieval, and the
+  birds being near 0 everywhere.
+
+### Decided (the user)
+
+1. **`ne` before a predicate noun stays required**, as grammar.md says
+   (articles "used like English"). `Lu dauzo ihaxe gurzo.` stays a fail.
+2. **A correct sentence with a wrong word list passes.** In `Verify`
+   (`internal/llm/check.go`), a word claimed as entry X that the analyzer
+   reads only as entry Y is now a **remark**, like a wrong feature or a
+   made-up id. The meaning check still catches a wrong *word* (`Lu huro
+   nara…` for "The woman sees…"). The saved copula results predate this:
+   re-checked, "I think…" none+tools is 2/5, not 1/5 (copula 25/45).
+3. **Tag `frame`** in `language/evals.yaml` on the 6 sentences:
+   `lnova eval -tag frame` runs them all at once.
+
+### Start next session here
+
+ROADMAP → Next up.
+
+---
+
 ## 2026-10-22 (English side): copula, prepositions, "of", `itu` clauses
 
 ### Done

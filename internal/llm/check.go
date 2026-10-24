@@ -40,15 +40,14 @@ type Checker struct {
 //   - a word that isn't spelled with Rifatian letters, has no analysis,
 //     or only analyzes as an unknown root (the model made it up);
 //   - a grammar note from the glosser (agreement, two verbs);
-//   - a word the model says is a form of entry X, when the analyzer finds
-//     it's a form of some other entry Y and never of X;
 //   - a meaning that differs from the English: a slot of the clause
 //     (subject, verb, tense, negation, object) that matches no reference
 //     translation, or a missing or extra content word. This runs only
 //     once every word is a real one, so the feedback fixes words first.
 //
-// A claimed id that isn't in the lexicon, or claimed features that don't
-// match, are only remarks: the sentence can be right with its labels wrong.
+// What the model claims about its words (the id, even one of another
+// entry, and the features) only gives remarks: the sentence can be right
+// with its labels wrong. A wrong word is caught by the meaning check.
 func (k *Checker) Verify(a Answer, x *Expectation) *Check {
 	c := &Check{}
 	if strings.TrimSpace(a.Translation) == "" {
@@ -104,7 +103,7 @@ func (k *Checker) claim(c *Check, word string, rs []morph.Analysis, aw AnswerWor
 		c.Remarks = append(c.Remarks, fmt.Sprintf("%s: claimed id %q is not in the dictionary; it is a form of %q", word, aw.LexiconID, t.Entry.ID))
 		return
 	case match < 0:
-		c.Problems = append(c.Problems, fmt.Sprintf("%s is a form of %q (%s), not of %q", word, t.Entry.ID, t.Lemma, aw.LexiconID))
+		c.Remarks = append(c.Remarks, fmt.Sprintf("%s is a form of %q (%s), not of %q", word, t.Entry.ID, t.Lemma, aw.LexiconID))
 		return
 	}
 	r := rs[match]
