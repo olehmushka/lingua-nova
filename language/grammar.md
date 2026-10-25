@@ -144,6 +144,10 @@ subject **-u/-o/-a**, object **-i**, possessive **-e**, and plural **-h**.
   Portuguese *eles* for masculine things.
 - Object pronouns come **after the verb**, in normal SVO position:
   `Mu naraxu chi.` = "I saw thee." (Unlike Portuguese clitics, they never move.)
+- After a **preposition** a pronoun takes the **object** form too, as in
+  English *with him*: `Hana sile gu honi.` = "She sleeps with him." So the
+  `-i` form is really the general **non-subject** (oblique) form.
+  Portuguese has special forms here instead (*para mim*, fused *comigo*).
 
 ## Verbs (draft)
 
@@ -264,6 +268,8 @@ comes **after the object**: S V O PP.
 The article stays a separate word after a preposition (`bi lu hoida`):
 there are no contractions like Portuguese *em + a = na*.
 An indirect object ("to the child") is a phrase with `epe`.
+A pronoun after a preposition is in the object form (see Pronouns):
+`Lu mena hibaxe gurna epe mi.` = "The woman gave bread to me."
 
 ## Subordinate clauses (draft)
 
@@ -339,12 +345,26 @@ Chu  nar-a-x-is      lu   mena-s      huro?
   possessor: [lu mena]-s huro, "[the woman]'s dog".
 - Pro-drop variant: `Naraxis lu menas huro?` Answer "yes": `Naraxu.`
 
+### 4. "She sleeps with him."
+
+```
+Hana   sil-e         gu    honi.
+3SG.F  sleep-TH.3SG  with  3SG.M.OBJ
+"She sleeps with him."
+```
+
+- Stress: HA-na SI-le gu HO-ni.
+- `silir` is class III: present 3sg `sile`.
+- After a preposition the pronoun is in the object form, `honi`, not
+  `hono`, as English says *with him*, not *with he*.
+
 ## Open questions
 
 - Extra tenses (perfect, conditional, subjunctive): **postponed**. Only
   present, past and future until after Phase 4 (morphology generator).
-- Prepositions with pronouns (`epe honi`? a separate form?), and whether
-  a prepositional phrase can come first (`Bi lu hoida, …`): not decided.
+- Whether a prepositional phrase can come first (`Bi lu hoida, …`): not
+  decided. (A pronoun after a preposition is in the object form: decided
+  2026-10-25.)
 - Relative clauses ("the dog *that* ate the bread"): not decided; `itu`
   is only the complementizer for now.
 - "X of Y" with an indefinite or demonstrative X ("*a* child of the

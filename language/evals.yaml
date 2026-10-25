@@ -71,3 +71,10 @@
   tags: [present, pronoun, copula, clause, frame]
 - en: The woman gave bread to the child.
   tags: [past, preposition, frame]
+
+# A pronoun after a preposition is in the object form (decided
+# 2026-10-25). No baseline yet.
+- en: She sleeps with him.
+  tags: [present, pronoun, preposition]
+- en: The woman gave bread to me.
+  tags: [past, pronoun, preposition]

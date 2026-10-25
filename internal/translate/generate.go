@@ -183,15 +183,10 @@ func (g *gen) compl(t *earley.Tree) error {
 }
 
 // pp adds a prepositional phrase: the preposition, then its noun phrase.
-// Which form a pronoun takes after a preposition isn't decided yet
-// (grammar.md, open questions), so there's no translation for one.
+// A pronoun takes the object form, as in English (gu honi, "with him").
 func (g *gen) pp(pp *earley.Tree) error {
 	g.plain(pp.Children[0])
-	np := pp.Children[1]
-	if g.head(np).Label == "Pron" {
-		return fmt.Errorf("%s: a pronoun after a preposition isn't decided yet", g.s.Tokens[g.head(np).Start].Text)
-	}
-	return g.np(np, "OBJ", false)
+	return g.np(pp.Children[1], "OBJ", false)
 }
 
 func (g *gen) add(e *lexicon.Entry, text string) {

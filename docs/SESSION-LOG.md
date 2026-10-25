@@ -4,6 +4,53 @@ Newest first. One entry per session: what was done, what was decided and
 why, and where to pick up. The task list itself lives in `ROADMAP.md` →
 "Next up"; this log gives the context behind it.
 
+## 2026-10-25: Pronouns after prepositions take the object form
+
+### Decided (the user)
+
+- **A pronoun after a preposition is in the object form**, as in
+  English: `Hana sile gu honi.` = "She sleeps with him.", `epe mi` "to
+  me". No new forms. Other options were the subject form (Portuguese
+  *com ele*) and fused forms (Portuguese *comigo*, Irish *liom* "with
+  me"). Whether a PP can come first (`Bi lu hoida, …`) is still open.
+
+### Done
+
+- grammar.md: the rule in Pronouns and Prepositions, worked example 4
+  (`Hana sile gu honi.`; the examples are also the LLM prompt's worked
+  examples), open question narrowed.
+- Translator (`internal/translate/generate.go` `pp`): no more refusal.
+  The NP after a preposition was already built with `OBJ`.
+- Glosser (`internal/gloss/gloss.go` rule 2): a word right after a
+  preposition must not be in the subject form ("SBJ after a
+  preposition"), and that check replaces the position checks. Without
+  it, `Lu dauzo iha gu hani` ("The king is with her") got "OBJ after the
+  copula", because that rule looked at every word after `ihar`.
+- Tests: 3 translator rows, 3 glosser rows. `language/evals.yaml`: "She
+  sleeps with him.", "The woman gave bread to me." (no baseline yet;
+  not tagged `frame`, which stays the 6 sentences of the 10-22 baseline).
+
+### The linguistics
+
+- **Oblique case.** Languages that split "subject" from "everything
+  else" have an *oblique* form for the else: objects, and pronouns after
+  prepositions. English is like this (*he* vs *him*, both "see him" and
+  "with him"), and so is Rifatian now: `-i` was called "object" but is
+  really oblique. Portuguese split it three ways for 1st/2nd person:
+  *eu* (subject), *me* (object clitic), *mim* (after a preposition), and
+  it fused *com + migo* from Latin *mecum*.
+- **Why case survives on pronouns.** English and the Romance languages
+  lost case on nouns but kept it on pronouns. Pronouns are frequent and
+  short, so they resist regularizing, the same reason irregular verbs
+  are the common ones.
+
+### Start next session here
+
+ROADMAP → Next up. Running `lnova eval -tag preposition` once (needs
+Ollama) gives the 2 new sentences a baseline.
+
+---
+
 ---
 
 ## 2026-10-23: Eval re-run on the frame-check sentences

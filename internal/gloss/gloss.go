@@ -138,6 +138,12 @@ func comp(w Word) bool {
 	return t != nil && t.POS == "complementizer"
 }
 
+// prep reports whether w was read as a preposition.
+func prep(w Word) bool {
+	t := w.Top()
+	return t != nil && t.POS == "preposition"
+}
+
 // clauses splits words at clause boundaries; the clauses share ws's
 // backing array, so the rules can change their readings in place.
 func clauses(ws []Word) [][]Word {
@@ -170,7 +176,8 @@ func boundary(ws []Word, i int) bool {
 //     before guesses); no other word in the clause is a finite verb;
 //  2. a subject pronoun comes before the verb, an object pronoun after;
 //     after the copula ihar a pronoun is in the subject form too (Hunu
-//     iha mu, "It is I", like Portuguese Sou eu);
+//     iha mu, "It is I", like Portuguese Sou eu); after a preposition
+//     it is in the object form wherever it is (gu honi, "with him");
 //  3. the subject agrees with the verb in person and number. The subject
 //     is the nearest word before the verb, skipping negation and
 //     adjectives; a clause can have none (pro-drop: Naraxu chi). A pronoun
@@ -212,6 +219,8 @@ func (g *Glosser) clause(ws []Word) (notes []string) {
 			return ok
 		})
 		switch {
+		case i > 0 && prep(ws[i-1]):
+			check(&ws[i], "SBJ after a preposition", hasCase("SBJ"))
 		case i < v:
 			check(&ws[i], "OBJ before the verb", hasCase("OBJ"))
 		case copula:
