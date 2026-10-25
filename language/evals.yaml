@@ -8,7 +8,9 @@
 #
 # Tags: present past future · negation yes-no wh-subject wh-object
 # wh-adverb · possessive adjective plural pronoun archaic · copula
-# preposition clause · known-hard (failed in earlier measurements).
+# preposition clause · known-hard (failed in earlier measurements) ·
+# frame (the 6 copula / preposition sentences; their baseline is
+# evals/results/2026-10-22-frame-*.json).
 
 # The 7 sentences of the 2026-10-18 tool-use measurement.
 - en: The woman sees the river.
@@ -54,18 +56,18 @@
 - en: You drank the cold milk.
   tags: [past, adjective, pronoun]
 - en: The king was a warrior.
-  tags: [past, copula]
+  tags: [past, copula, frame]
 
 # The copula, prepositions, "of" and subordinate clauses. Until
 # 2026-10-22 the English grammar had no tree for these, so they got only
 # the lexical check; results before then aren't comparable for them.
 - en: The warrior's sword is long.
-  tags: [present, possessive, adjective, copula]
+  tags: [present, possessive, adjective, copula, frame]
 - en: The children of the king sleep in the house.
-  tags: [present, plural, possessive, preposition]
+  tags: [present, plural, possessive, preposition, frame]
 - en: The birds fly over the mountain.
-  tags: [present, plural, preposition]
+  tags: [present, plural, preposition, frame]
 - en: I think that the river is cold.
-  tags: [present, pronoun, copula, clause]
+  tags: [present, pronoun, copula, clause, frame]
 - en: The woman gave bread to the child.
-  tags: [past, preposition]
+  tags: [past, preposition, frame]

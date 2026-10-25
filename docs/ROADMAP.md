@@ -9,10 +9,10 @@ _Keep this section current: it's where every new session starts._
 
 1. `lnova eval -baseline evals/results/2026-10-18-qwen2.5-7b.json` after
    any translation prompt or model change (that baseline is partial: 133
-   of 390; see SESSION-LOG 2026-10-18/19). The 5 copula / preposition /
-   clause sentences now get the frame check, not the lexical one, so they
-   aren't comparable with that baseline: re-run them first (SESSION-LOG
-   2026-10-22, English side). Richer definitions would help search by
+   of 390; see SESSION-LOG 2026-10-18/19). For the 6 copula / preposition
+   sentences (`-tag frame`), compare with
+   `evals/results/2026-10-22-frame-{prep,copula}.json` instead
+   (SESSION-LOG 2026-10-23). Richer definitions would help search by
    meaning most (SESSION-LOG 2026-10-22, later).
 2. Coin the words you want with `lnova coin` and paste the chosen roots.
 3. Open grammar questions (grammar.md → Open questions): pronouns after
