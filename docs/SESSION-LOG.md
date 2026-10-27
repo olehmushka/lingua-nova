@@ -4,6 +4,69 @@ Newest first. One entry per session: what was done, what was decided and
 why, and where to pick up. The task list itself lives in `ROADMAP.md` →
 "Next up"; this log gives the context behind it.
 
+## 2026-10-27: Eval baseline for the pronoun-after-preposition sentences
+
+### Done
+
+- New eval tag `pp-pronoun` on the 2 sentences from 10-25 (`-tag
+  preposition` also picks up the 3 `frame` sentences that already have a
+  baseline). `lnova eval -tag pp-pronoun` (defaults: 3 setups × 5 runs,
+  temp 0.7, qwen2.5:7b), saved as
+  `evals/results/2026-10-27-pp-pronoun.json`, the baseline for these 2
+  from now on.
+
+| sentence | retrieved | retrieved+tools | none+tools |
+|---|---|---|---|
+| She sleeps with him. | 5/5 | 5/5 | 5/5 |
+| The woman gave bread to me. | 4/5 | 2/5 | 4/5 |
+
+Median time per translation: 26 s / 65 s / 36 s. Tool calls per
+translation: 0 / 12.4 / 5.3 (46 and 21 repeated calls in all).
+
+### Failures (5, all "gave bread to me")
+
+1. **Wrong tense / made-up form** (2): `hibare` (future) for "gave",
+   `hibarexe` (future + past stuck together, and `gurna` dropped).
+2. **Bread made plural** (3): `gurnah`, in `gurnah sela mi` (`sela`
+   for `epe`), `mi epe gurnah` (object and PP swapped) and `gurnah mi`
+   (no `epe`: an English-style double object, "gave me bread").
+
+The model **never** used the subject form after a preposition (`gu
+hana`, `epe mu`): 0 of 30. The pronoun rule itself caused no failures.
+
+### The linguistics / AI
+
+- **Test contamination.** Both sentences, with their exact answers, are
+  in grammar.md (worked example 4, and the `epe` paragraph), and the
+  whole grammar goes into every prompt. So this baseline mostly measures
+  **copying from the prompt**, not applying the rule. In ML terms the
+  test set leaked into the training/context data, and scores on leaked
+  items are inflated. That makes the 5 failures more telling: with the
+  answer in front of it, the model still changed `hibaxe` and `gurna`.
+- **Double object vs. PP.** English has two frames for "give": *gave
+  bread to me* and *gave me bread* (the **dative alternation**). `gurnah
+  mi` looks like the model mixing in the second frame. Rifatian has only
+  the PP frame (S V O PP), as far as grammar.md says.
+- **Tools again cost more and helped less**: retrieved+tools was the
+  slowest and the worst (2/5), and both of its long runs (165 s, 192 s)
+  failed. Same pattern as 10-23. With 5 runs the intervals are ±25
+  points, so only "the pronoun is never wrong" is a solid result.
+
+### Open (for the user)
+
+1. **Make the pronoun test unseen?** E.g. add "He sleeps with her." /
+   "The man gave water to us." (or replace the two), so the eval
+   measures the rule and not copying. Would need entries for every word.
+2. **Dative alternation**: is "The woman gave me bread." (no "to") valid
+   English input, and does it translate to the same PP sentence? Today
+   the English grammar has no double-object VP.
+
+### Start next session here
+
+ROADMAP → Next up, and the two questions above.
+
+---
+
 ## 2026-10-25: Pronouns after prepositions take the object form
 
 ### Decided (the user)

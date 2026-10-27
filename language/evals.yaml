@@ -9,6 +9,7 @@
 # Tags: present past future · negation yes-no wh-subject wh-object
 # wh-adverb · possessive adjective plural pronoun archaic · copula
 # preposition clause · known-hard (failed in earlier measurements) ·
+# pp-pronoun (the 2 pronoun-after-preposition sentences) ·
 # frame (the 6 copula / preposition sentences; their baseline is
 # evals/results/2026-10-22-frame-*.json).
 
@@ -73,8 +74,8 @@
   tags: [past, preposition, frame]
 
 # A pronoun after a preposition is in the object form (decided
-# 2026-10-25). No baseline yet.
+# 2026-10-25). Baseline: evals/results/2026-10-27-pp-pronoun.json.
 - en: She sleeps with him.
-  tags: [present, pronoun, preposition]
+  tags: [present, pronoun, preposition, pp-pronoun]
 - en: The woman gave bread to me.
-  tags: [past, pronoun, preposition]
+  tags: [past, pronoun, preposition, pp-pronoun]

@@ -12,10 +12,11 @@ _Keep this section current: it's where every new session starts._
    of 390; see SESSION-LOG 2026-10-18/19). For the 6 copula / preposition
    sentences (`-tag frame`), compare with
    `evals/results/2026-10-22-frame-{prep,copula}.json` instead
-   (SESSION-LOG 2026-10-23). The 2 pronoun-after-preposition sentences
-   (`-tag preposition`) have no baseline yet: run them once
-   (SESSION-LOG 2026-10-25). Richer definitions would help search by
-   meaning most (SESSION-LOG 2026-10-22, later).
+   (SESSION-LOG 2026-10-23). For the 2 pronoun-after-preposition
+   sentences (`-tag pp-pronoun`), compare with
+   `evals/results/2026-10-27-pp-pronoun.json` (SESSION-LOG 2026-10-27).
+   Richer definitions would help search by meaning most (SESSION-LOG
+   2026-10-22, later).
 2. Coin the words you want with `lnova coin` and paste the chosen roots.
 3. Open grammar questions (grammar.md → Open questions):
    "a child of the king" (the translator gives no translation until
@@ -23,6 +24,10 @@ _Keep this section current: it's where every new session starts._
    ~~Pronouns after prepositions~~: object form, done 2026-10-25.
 4. Open question from the lexicon growth (SESSION-LOG 2026-10-18, later):
    re-seed the generator weights from roots only, not derived words?
+5. Open questions from the 10-27 eval (SESSION-LOG 2026-10-27): both
+   `pp-pronoun` sentences are copied from grammar.md, which is in the
+   prompt; add unseen ones? And "gave me bread" (dative alternation):
+   no English rule for it yet.
 
 ## Phase 0 — Learn the basics (reading, ~1–2 weeks alongside Phase 1)
 
