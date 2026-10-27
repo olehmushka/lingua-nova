@@ -122,6 +122,10 @@ func TestGloss(t *testing.T) {
 		// After the copula a pronoun is in the subject form: It is I.
 		{"Hunu iha mu.", "Hunu ih-a mu.", "3SG.N be-TH.3SG 1SG", nil},
 		{"Hunu iha mi.", "Hunu ih-a mi.", "3SG.N be-TH.3SG 1SG.OBJ", []string{"mi is OBJ after the copula"}},
+		// After a preposition a pronoun is in the object form, even after the copula.
+		{"Hana sile gu honi.", "Hana sil-e gu honi.", "3SG.F sleep-TH.3SG with 3SG.M.OBJ", nil},
+		{"Hana sile gu hono.", "Hana sil-e gu hono.", "3SG.F sleep-TH.3SG with 3SG.M", []string{"hono is SBJ after a preposition"}},
+		{"Lu dauzo iha gu hani.", "Lu dauzo ih-a gu hani.", "the king be-TH.3SG with 3SG.F.OBJ", nil},
 		{"Mu nara naraxu.", "Mu nar-a nar-a-x-u.", "1SG see-TH.3SG see-TH-PST-1SG",
 			[]string{"naraxu is a second verb in the clause", "mu (1SG) doesn't agree with nara (3SG)"}},
 		{"Mu na naraxu sela, na.", "Mu na nar-a-x-u sela, na.", "1SG NEG see-TH-PST-1SG 2SG.POL.OBJ NEG",

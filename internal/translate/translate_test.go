@@ -108,6 +108,10 @@ func TestTranslate(t *testing.T) {
 		{"The children sleep in the house.", "Lu orloh sileh bi lu hoida.", 1},
 		{"The woman gave bread to the child.", "Lu mena hibaxe gurna epe lu orlo.", 1},
 		{"The birds fly over the mountain.", "Lu frinhah letah fai lu velda.", 1},
+		// A pronoun after a preposition is in the object form, also after the copula
+		{"She sleeps with him.", "Hana sile gu honi.", 1},
+		{"The woman gave bread to me.", "Lu mena hibaxe gurna epe mi.", 1},
+		{"The king is with her.", "Lu dauzo iha gu hani.", 1},
 		// X of Y is Y's X
 		{"The children of the king sleep in the house.", "Lu dauzos orloh sileh bi lu hoida.", 1},
 		// Subordinate clauses: itu even where English drops "that"
@@ -186,7 +190,6 @@ func TestTranslateProblems(t *testing.T) {
 	// Parses, but grammar.md hasn't decided how to say it.
 	for in, want := range map[string]string{
 		"A child of the king sleeps.": `A … of: only "the" is decided`,
-		"She sleeps with him.":        "him: a pronoun after a preposition isn't decided yet",
 	} {
 		if _, err := tr.Translate(in, 0); err == nil || !strings.Contains(err.Error(), want) {
 			t.Errorf("%q: got %v, want %s", in, err, want)
