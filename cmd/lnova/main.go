@@ -28,6 +28,8 @@ import (
 	"github.com/olehmushka/lingua-nova/internal/llm"
 	"github.com/olehmushka/lingua-nova/internal/morph"
 	"github.com/olehmushka/lingua-nova/internal/phon"
+	"github.com/olehmushka/lingua-nova/internal/retrieve"
+	"github.com/olehmushka/lingua-nova/internal/semantic"
 	"github.com/olehmushka/lingua-nova/internal/sound"
 	"github.com/olehmushka/lingua-nova/internal/translate"
 )
@@ -58,8 +60,11 @@ commands:
   translate [-n 20] [-tree] <english sentence>
                   translate simple English into Rifatian: every translation,
                   ranked, with the gloss of the best one
-  llm [-ctx retrieved|full|none] [-tools] [-model M] [-attempts 3] [-temp 0 -seed S] [-compare] <english sentence>
+  llm [-ctx retrieved|full|none] [-k 3] [-budget 2048] [-dense] [-tools] [-model M] [-attempts 3] [-temp 0 -seed S] [-compare] <english sentence>
                   translate with a local model (Ollama, via the llm/ service);
+                  a retrieved context has the closed classes and up to -k entries per
+                  word (tagger, BM25, Lesk and with -dense embeddings, fused), within
+                  -budget tokens;
                   the glosser checks each answer and problems go back to the model;
                   -tools lets the model call lookup, inflect, analyze and check
   coin -pos noun -gender f [-def D] [-id ID] [-n 5] [-want 3] [-rounds 3] <english>
@@ -74,6 +79,12 @@ commands:
   eval [-setups retrieved,retrieved+tools,none+tools] [-runs 5] [-temp 0.7] [-tag T] [-out F] [-baseline F] [-list]
                   translate language/evals.yaml several times per setup and
                   report pass rates with 95% intervals; -list: no model
+  eval -retrieval [-gold language] [-k 3] [-budget 2048] [-dense]
+                  measure the retrieved contexts without a model: recall of the
+                  entries the rule-based translation uses, entries and tokens
+  fixture [-n 300000] [-senses 0.1] [-homonyms 0.01] [-seed 1] [-out .cache/fixture-300k]
+                  copy the language directory with -n synthetic entries added to
+                  the lexicon, for scale tests (lnova -lang <out> ...)
 `
 
 func main() {
@@ -123,6 +134,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return cmdSimilar(*langDir, rest, stdout, stderr)
 	case "eval":
 		return cmdEval(*langDir, rest, stdout, stderr)
+	case "fixture":
+		return cmdFixture(*langDir, rest, stdout, stderr)
 	default:
 		fmt.Fprintf(stderr, "lnova: unknown command %q\n%s", cmd, usage)
 		return 2
@@ -811,6 +824,8 @@ func cmdLLM(langDir string, args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("llm", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	mode := fs.String("ctx", llm.Retrieved, "context: `retrieved` (entries the sentence needs), full (every entry) or none (no entries)")
+	tune := retrievalFlags(fs)
+	withDense := denseFlags(fs)
 	tools := fs.Bool("tools", false, "let the model call lookup, inflect, analyze and check")
 	rounds := fs.Int("tool-rounds", 8, "with -tools, ask for the answer after `N` rounds of tool calls")
 	model := fs.String("model", llm.DefaultModel, "Ollama `model`")
@@ -820,7 +835,7 @@ func cmdLLM(langDir string, args []string, stdout, stderr io.Writer) int {
 	temp := fs.Float64("temp", 0, "sampling `temperature`; 0 = greedy (always the most likely token)")
 	seed := fs.Int("seed", -1, "with -temp > 0, the sampler's `seed` (an eval run's seed replays it); -1 = random")
 	usage := func() {
-		fmt.Fprintln(stderr, "usage: lnova llm [-ctx retrieved|full|none] [-tools] [-tool-rounds 8] [-model M] [-attempts 3] [-temp 0] [-seed S] [-url U] [-compare] <english sentence>")
+		fmt.Fprintln(stderr, "usage: lnova llm [-ctx retrieved|full|none] [-k 3] [-budget 2048] [-dense [-embed-model M] [-cache F] [-dims N]] [-tools] [-tool-rounds 8] [-model M] [-attempts 3] [-temp 0] [-seed S] [-url U] [-compare] <english sentence>")
 	}
 	fs.Usage = usage
 	if err := fs.Parse(args); err != nil {
@@ -837,9 +852,15 @@ func cmdLLM(langDir string, args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "lnova: %v\n", err)
 		return 1
 	}
+	tune(env.builder.Retriever)
+	withDense(context.Background(), langDir, *url, env, stderr)
 	tr, lt := env.tr, env.translator
 
-	c := env.builder.Build(*mode, sentence)
+	ctx := context.Background()
+	c, err := env.builder.Build(ctx, *mode, sentence)
+	if err != nil {
+		fmt.Fprintf(stderr, "lnova: warning: %v; the context has the lexical matches only\n", err)
+	}
 	opt := llm.Options{Model: *model, MaxAttempts: *attempts, MaxToolRounds: *rounds, Temperature: *temp}
 	if *seed >= 0 {
 		opt.Seed = seed
@@ -850,7 +871,7 @@ func cmdLLM(langDir string, args []string, stdout, stderr io.Writer) int {
 		with = ", tools"
 	}
 	fmt.Fprintf(stdout, "%s context: %d entries%s, %s\n", *mode, len(c.Entries), with, *model)
-	res, err := lt.Translate(context.Background(), sentence, c, opt)
+	res, err := lt.Translate(ctx, sentence, c, opt)
 	fmt.Fprintf(stdout, "meaning check: %s\n", res.Expect.Kind())
 	tw := tabwriter.NewWriter(stdout, 0, 0, 2, ' ', 0)
 	for i, a := range res.Attempts {
@@ -981,7 +1002,7 @@ func cmdCoin(langDir string, args []string, stdout, stderr io.Writer) int {
 	if *related > 0 {
 		// Without the embedding model coin still works, on examples
 		// chosen without regard to meaning.
-		idx, err := buildIndex(ctx, lex, *url, *embedModel, cachePath(langDir, *embedModel, *cache), stderr)
+		idx, err := buildIndex(ctx, lex, *url, *embedModel, cachePath(langDir, *embedModel, *cache), 0, stderr)
 		if err != nil {
 			fmt.Fprintf(stderr, "lnova: no related examples: %v\n", err)
 		}
@@ -1080,11 +1101,12 @@ type llmEnv struct {
 }
 
 func loadLLM(langDir, url string) (*llmEnv, error) {
-	tr, err := translate.Load(langDir)
+	// Through a snapshot in .cache/: parsing a big lexicon takes seconds.
+	lex, err := lexicon.LoadCached(filepath.Join(langDir, "lexicon"), filepath.Join(filepath.Dir(filepath.Clean(langDir)), ".cache"))
 	if err != nil {
 		return nil, err
 	}
-	lex, err := lexicon.Load(filepath.Join(langDir, "lexicon"))
+	tr, err := translate.LoadWith(langDir, lex)
 	if err != nil {
 		return nil, err
 	}
@@ -1102,8 +1124,48 @@ func loadLLM(langDir, url string) (*llmEnv, error) {
 		lex:        lex,
 		builder:    b,
 		translator: &llm.Translator{Client: llm.NewClient(url), Checker: k},
-		tools:      llm.NewToolbox(lex, tr.Rules, tr.Tagger, k),
+		tools:      llm.NewToolbox(lex, tr.Rules, tr.Tagger, k, b.Retriever),
 	}, nil
+}
+
+// retrievalFlags adds -k and -budget, the retrieved context's limits, to
+// a command; the returned func sets them on the retriever.
+func retrievalFlags(fs *flag.FlagSet) func(*retrieve.Retriever) {
+	k := fs.Int("k", retrieve.DefaultK, "retrieved context: entries per English `word`")
+	budget := fs.Int("budget", retrieve.DefaultBudget, "retrieved context: `tokens` for the words' entries together (0: no limit; a word's best entry always stays)")
+	return func(r *retrieve.Retriever) { r.K, r.Budget = max(*k, 1), max(*budget, 0) }
+}
+
+// retrievalSettings names what a retrieved context depends on, for an
+// eval's results: runs with other settings aren't comparable.
+func retrievalSettings(r *retrieve.Retriever) string {
+	dense := "-"
+	if idx, ok := r.Dense.(*semantic.Index); ok {
+		dense = fmt.Sprintf("%s/%d", idx.Model(), idx.Dims())
+	}
+	return fmt.Sprintf("k=%d budget=%d dense=%s", cmp.Or(r.K, retrieve.DefaultK), r.Budget, dense)
+}
+
+// denseFlags adds -dense, search by meaning as a retrieved context's
+// third channel, with its embedding model, cache and dimensions. The
+// returned func builds the index and adds it to the retriever; without
+// the embedding model it says so and the context stays lexical.
+func denseFlags(fs *flag.FlagSet) func(ctx context.Context, langDir, url string, env *llmEnv, stderr io.Writer) {
+	dense := fs.Bool("dense", false, "retrieved context: also search by meaning (embeddings; the first run embeds the lexicon)")
+	model := fs.String("embed-model", llm.DefaultEmbedModel, "with -dense: Ollama embedding `model`")
+	cache := fs.String("cache", "", "with -dense: embedding cache `file`, as in lnova similar")
+	dims := fs.Int("dims", 0, "with -dense: keep the vectors' first `N` numbers; 0: all")
+	return func(ctx context.Context, langDir, url string, env *llmEnv, stderr io.Writer) {
+		if !*dense {
+			return
+		}
+		idx, err := buildIndex(ctx, env.lex, url, *model, cachePath(langDir, *model, *cache), *dims, stderr)
+		if err != nil {
+			fmt.Fprintf(stderr, "lnova: warning: no search by meaning: %v\n", err)
+			return
+		}
+		env.builder.Retriever.Dense = idx
+	}
 }
 
 // cmdEval runs the eval set (language/evals.yaml) through the model in
@@ -1135,9 +1197,13 @@ func cmdEval(langDir string, args []string, stdout, stderr io.Writer) int {
 	baseline := fs.String("baseline", "", "compare with saved results in `file`")
 	show := fs.String("show", "", "report saved results from `file` (with -baseline: compare); don't run the model")
 	list := fs.Bool("list", false, "list the sentences and their meaning check; don't run the model")
+	tune := retrievalFlags(fs)
+	withDense := denseFlags(fs)
+	retrieval := fs.Bool("retrieval", false, "measure the retrieved contexts (recall of the entries a translation needs, size); don't run the model")
+	goldDir := fs.String("gold", "", "with -retrieval: the language `dir` whose rule-based translations give the needed entries (default: -lang; for a fixture: language)")
 	resume := fs.Bool("resume", false, "continue the unfinished run saved in -out: skip the translations it has")
 	usage := func() {
-		fmt.Fprintln(stderr, "usage: lnova eval [-setups retrieved,retrieved+tools,none+tools] [-runs 5] [-temp 0.7] [-model M] [-attempts 3] [-tool-rounds 8] [-timeout 5m] [-tag T] [-url U] [-out F [-resume]] [-baseline F] [-list] [-show F]")
+		fmt.Fprintln(stderr, "usage: lnova eval [-setups retrieved,retrieved+tools,none+tools] [-runs 5] [-temp 0.7] [-model M] [-attempts 3] [-tool-rounds 8] [-timeout 5m] [-tag T] [-url U] [-out F [-resume]] [-baseline F] [-list] [-show F] [-k 3] [-budget 2048] [-dense] | -retrieval [-gold DIR]")
 	}
 	fs.Usage = usage
 	if err := fs.Parse(args); err != nil {
@@ -1169,8 +1235,13 @@ func cmdEval(langDir string, args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "lnova: %v\n", err)
 		return 1
 	}
+	tune(env.builder.Retriever)
+	withDense(context.Background(), langDir, *url, env, stderr)
 	if *list {
 		return evalList(env, cases, stdout)
+	}
+	if *retrieval {
+		return evalRetrieval(env, *goldDir, *url, cases, stdout, stderr)
 	}
 
 	var names []string
@@ -1180,6 +1251,7 @@ func cmdEval(langDir string, args []string, stdout, stderr io.Writer) int {
 	meta := eval.Meta{
 		Model: *model, Temperature: *temp, Runs: *runs, MaxAttempts: *attempts, MaxToolRounds: *rounds,
 		Setups: names, Tag: *tag, Commit: gitDescribe(), Entries: len(env.lex.Entries), EvalSet: eval.Hash(cases),
+		Retrieval: retrievalSettings(env.builder.Retriever),
 	}
 	opt := llm.Options{Model: *model, MaxAttempts: *attempts, MaxToolRounds: *rounds, Temperature: *temp}
 	r := &eval.Runner{Translator: env.translator, Builder: env.builder, Tools: env.tools, Options: opt, Timeout: *timeout, Progress: stderr}
@@ -1306,6 +1378,30 @@ func evalList(env *llmEnv, cases []eval.Case, stdout io.Writer) int {
 	if unknown > 0 {
 		return 1
 	}
+	return 0
+}
+
+// evalRetrieval runs the retrieval eval (eval.Retrieval) on the
+// retrieved contexts. The gold comes from goldDir's rule-based translator
+// when given: on a fixture, the real lexicon's.
+func evalRetrieval(env *llmEnv, goldDir, url string, cases []eval.Case, stdout, stderr io.Writer) int {
+	ref := env
+	if goldDir != "" {
+		var err error
+		if ref, err = loadLLM(goldDir, url); err != nil {
+			fmt.Fprintf(stderr, "lnova: -gold: %v\n", err)
+			return 1
+		}
+	}
+	gold := func(s string) eval.Gold { return eval.GoldOf(ref.translator.Checker.Expect(s)) }
+	build := func(s string) llm.Context {
+		c, err := env.builder.Build(context.Background(), llm.Retrieved, s)
+		if err != nil {
+			fmt.Fprintf(stderr, "lnova: warning: %q: %v\n", s, err)
+		}
+		return c
+	}
+	eval.ReportRetrieval(stdout, eval.Retrieval(cases, gold, build))
 	return 0
 }
 

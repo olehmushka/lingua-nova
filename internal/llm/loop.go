@@ -1,16 +1,25 @@
 package llm
 
 import (
+	"cmp"
 	"context"
 	"errors"
+	"fmt"
 	"time"
 )
+
+// DefaultMaxNumCtx is the biggest context window Translate asks for.
+// qwen2.5's limit is 32K tokens; past it Ollama silently cuts the start
+// of the prompt (the grammar), and long before it the KV cache fills the
+// GPU. A full context of a big lexicon needs millions.
+const DefaultMaxNumCtx = 32768
 
 // Options configure a translation.
 type Options struct {
 	Model       string // Ollama model; "" = DefaultModel
 	MaxAttempts int    // 0 = 3
 	NumCtx      int    // model context window in tokens; 0 = sized to the prompt
+	MaxNumCtx   int    // refuse a prompt that needs a bigger window; 0 = DefaultMaxNumCtx
 
 	Tools         *Toolbox // nil: no tools, the model answers straight away
 	MaxToolRounds int      // tool rounds per attempt before the answer is forced; 0 = 8
@@ -88,6 +97,10 @@ func (t *Translator) Translate(ctx context.Context, english string, c Context, o
 	if opt.NumCtx == 0 {
 		opt.NumCtx = numCtx(c, opt.Tools != nil)
 	}
+	if limit := cmp.Or(opt.MaxNumCtx, DefaultMaxNumCtx); opt.NumCtx > limit {
+		return nil, fmt.Errorf("the prompt needs a %d-token context window (%d entries), over the limit of %d; use a retrieved context (-ctx retrieved)",
+			opt.NumCtx, len(c.Entries), limit)
+	}
 	res := &Result{Context: c, Expect: t.Checker.Expect(english)}
 	var history []Turn
 	seen := map[string]string{} // tool calls made for this sentence, over all attempts
@@ -138,7 +151,7 @@ func (t *Translator) attempt(ctx context.Context, req Request, opt Options, x *E
 			}
 			st := Step{Calls: resp.Calls}
 			for _, c := range resp.Calls {
-				st.Results = append(st.Results, opt.Tools.runOnce(c, x, seen))
+				st.Results = append(st.Results, opt.Tools.runOnce(ctx, c, x, seen))
 			}
 			a.Steps = append(a.Steps, st)
 		}
@@ -156,15 +169,15 @@ func (t *Translator) attempt(ctx context.Context, req Request, opt Options, x *E
 	return a, nil
 }
 
-// numCtx sizes the model's context window for a prompt: about 3 bytes per
-// token for this mix of English, Rifatian and markup, plus room for the
+// numCtx sizes the model's context window for a prompt: its Tokens, plus
+// room for the
 // instructions, three rounds of answers and feedback, and the reply, rounded
 // up to 1024. A window that's too small makes Ollama silently cut the
 // start of the prompt (the grammar); one that's too big wastes GPU memory
 // on the KV cache. Tool rounds (calls and their results) need about
 // 2K tokens more.
 func numCtx(c Context, tools bool) int {
-	n := c.Size()/3 + 4096
+	n := c.Tokens() + 4096
 	if tools {
 		n += 2048
 	}

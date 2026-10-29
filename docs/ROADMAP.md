@@ -7,7 +7,16 @@ previous one is "done", even if done means small.
 
 _Keep this section current: it's where every new session starts._
 
-1. `lnova eval -baseline evals/results/2026-10-18-qwen2.5-7b.json` after
+1. **Retrieval at scale, with the model** (SESSION-LOG 2026-10-29). Start
+   `ollama serve` and the service, then:
+   - `lnova similar -eval evals/similar.yaml -dims 768`, `512`, `256`:
+     real recall of Matryoshka truncation (offline it kept only 73% of
+     the neighbours at 256);
+   - `lnova eval -retrieval -dense`: does search by meaning add recall?
+     Decide whether `-dense` becomes the default;
+   - `lnova eval -tag unseen` (and the other tags) with the new
+     retriever, to compare with the baselines below.
+2. `lnova eval -baseline evals/results/2026-10-18-qwen2.5-7b.json` after
    any translation prompt or model change (that baseline is partial: 133
    of 390; see SESSION-LOG 2026-10-18/19). For the 6 copula / preposition
    sentences (`-tag frame`), compare with
@@ -15,22 +24,27 @@ _Keep this section current: it's where every new session starts._
    (SESSION-LOG 2026-10-23). For the 2 pronoun-after-preposition
    sentences (`-tag pp-pronoun`), compare with
    `evals/results/2026-10-27-pp-pronoun.json` (SESSION-LOG 2026-10-27).
+   These baselines were made with the old retriever (before 2026-10-29).
    Richer definitions would help search by meaning most (SESSION-LOG
    2026-10-22, later).
-2. Coin the words you want with `lnova coin` and paste the chosen roots.
-3. Open grammar questions (grammar.md → Open questions):
+3. Coin the words you want with `lnova coin` and paste the chosen roots.
+4. Open grammar questions (grammar.md → Open questions):
    "a child of the king" (the translator gives no translation until
    decided), fronted prepositional phrases, relative clauses.
    ~~Pronouns after prepositions~~: object form, done 2026-10-25.
-4. Open question from the lexicon growth (SESSION-LOG 2026-10-18, later):
+5. Open question from the lexicon growth (SESSION-LOG 2026-10-18, later):
    re-seed the generator weights from roots only, not derived words?
-5. **In progress (2026-10-28):** "gave me bread" (dative
+6. **In progress (2026-10-28):** "gave me bread" (dative
    alternation) is translated (`grammar.cfg` `Dat`, translator, tests),
    and 3 `unseen` eval sentences are added (not in grammar.md, so the
    model can't copy them; SESSION-LOG 2026-10-27). Their eval stopped at
-   22/45: finish it with `lnova eval -tag unseen -out
-   evals/results/2026-10-28-unseen.json -resume`, then write the
-   SESSION-LOG entry and commit.
+   22/45, with the old retriever: finish it on commit 66ed39b with
+   `lnova eval -tag unseen -out evals/results/2026-10-28-unseen.json
+   -resume` (the new code refuses to resume it), or rerun it from
+   scratch with the new retriever. Then write the SESSION-LOG entry.
+7. Scaling the rule-based side: at 300k entries the meaning check
+   (`Checker.Expect`) takes 2.8 s per sentence and tries every sense
+   combination (SESSION-LOG 2026-10-29).
 
 ## Phase 0 — Learn the basics (reading, ~1–2 weeks alongside Phase 1)
 
@@ -261,6 +275,16 @@ the derivation.
   page (htmx fragment `/similar`, server flag `-llm`); `lnova coin -related
   10` puts the 10 nearest roots first among the 30 examples, only those
   within `-related-margin 0.05` of the best score.
+- [x] **Retrieval at scale** (~300k entries): the prompt stays the same size however big the lexicon.
+  → `internal/retrieve`: per English word, the tagger's readings (in
+  tiers), BM25, simplified Lesk and optionally embeddings, fused with
+  Reciprocal Rank Fusion; `-k 3` per word, `-budget 2048` tokens.
+  `internal/semantic`: int8 + sign-bit first pass, resumable binary cache.
+  `lnova fixture` (300k synthetic entries), `lnova eval -retrieval`
+  (recall without a model), `-dense`, `-ctx full` refused over 32K
+  tokens, lexicon snapshot in `.cache/`. Fixture 300k: recall 99.2%,
+  33 entries / 7.2K tokens per prompt (was 927 / 28.8K), `loadLLM` 1.6 s
+  (was 7.6 s). SESSION-LOG 2026-10-29.
 - [ ] Stretch: a chat partner that speaks only the conlang.
 
 **Done when:** LLM translations pass your validator most of the time, and you can measure that number.

@@ -3,6 +3,7 @@ package llm
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -47,12 +48,22 @@ func setup(t *testing.T) (*Builder, *Checker) {
 			ids[e.ID] = true
 		}
 		sChecker = &Checker{Glosser: tr.Glosser, Known: func(id string) bool { return ids[id] }, Ref: tr, Lex: lex}
-		sTools = NewToolbox(lex, tr.Rules, tr.Tagger, sChecker)
+		sTools = NewToolbox(lex, tr.Rules, tr.Tagger, sChecker, sBuilder.Retriever)
 	})
 	if setupErr != nil {
 		t.Fatal(setupErr)
 	}
 	return sBuilder, sChecker
+}
+
+// retrieved builds a retrieved context; with no dense channel it can't fail.
+func retrieved(t *testing.T, b *Builder, sentence string) Context {
+	t.Helper()
+	c, err := b.Retrieved(context.Background(), sentence)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return c
 }
 
 func ids(c Context) []string {
@@ -82,7 +93,7 @@ func TestContext(t *testing.T) {
 		{"Didst thou see the woman's dog?", []string{"thou", "see", "woman", "dog"}, []string{"river"}},
 	}
 	for _, tt := range tests {
-		got := ids(b.Retrieved(tt.sentence))
+		got := ids(retrieved(t, b, tt.sentence))
 		for _, id := range tt.want {
 			if !slices.Contains(got, id) {
 				t.Errorf("%q: retrieved %v, missing %s", tt.sentence, got, id)
@@ -94,11 +105,11 @@ func TestContext(t *testing.T) {
 			}
 		}
 	}
-	r := b.Retrieved("The woman sees the river.")
+	r := retrieved(t, b, "The woman sees the river.")
 	if len(r.Entries) >= len(full.Entries)/3 {
 		t.Errorf("retrieved %d of %d entries; retrieval should cut most of them", len(r.Entries), len(full.Entries))
 	}
-	if none := b.Build(None, "The woman sees the river."); len(none.Entries) != 0 || none.Grammar == "" {
+	if none, _ := b.Build(context.Background(), None, "The woman sees the river."); len(none.Entries) != 0 || none.Grammar == "" {
 		t.Errorf("none: %d entries, grammar %d bytes; want no entries, the grammar", len(none.Entries), len(none.Grammar))
 	}
 	if n, m := numCtx(r, false), numCtx(full, false); n%1024 != 0 || m%1024 != 0 || n >= m {
@@ -316,7 +327,7 @@ func TestTools(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.call.String(), func(t *testing.T) {
-			got := sTools.Run(tt.call, x)
+			got := sTools.Run(context.Background(), tt.call, x)
 			if got.Name != tt.call.Name {
 				t.Errorf("result name %q", got.Name)
 			}
@@ -410,7 +421,7 @@ func TestTranslateLoop(t *testing.T) {
 			srv := httptest.NewServer(f)
 			defer srv.Close()
 			tr := &Translator{Client: NewClient(srv.URL), Checker: k}
-			ctx := b.Retrieved("The woman sees the river.")
+			ctx := retrieved(t, b, "The woman sees the river.")
 			res, err := tr.Translate(context.Background(), "The woman sees the river.", ctx, Options{})
 			if tt.err != "" {
 				if err == nil || !strings.Contains(err.Error(), tt.err) {
@@ -462,7 +473,7 @@ func TestSampling(t *testing.T) {
 			defer srv.Close()
 			tr := &Translator{Client: NewClient(srv.URL), Checker: k}
 			en := "The dog eats the bread."
-			if _, err := tr.Translate(context.Background(), en, b.Retrieved(en), tt.opt); err != nil {
+			if _, err := tr.Translate(context.Background(), en, retrieved(t, b, en), tt.opt); err != nil {
 				t.Fatal(err)
 			}
 			if len(f.reqs) < 2 {
@@ -511,7 +522,8 @@ func TestToolLoop(t *testing.T) {
 			defer srv.Close()
 			tr := &Translator{Client: NewClient(srv.URL), Checker: k}
 			opt := Options{Tools: sTools, MaxToolRounds: tt.rounds, MaxAttempts: len(tt.steps)}
-			res, err := tr.Translate(context.Background(), en, b.Build(None, en), opt)
+			none, _ := b.Build(context.Background(), None, en)
+			res, err := tr.Translate(context.Background(), en, none, opt)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -588,5 +600,60 @@ func TestServiceTimeout(t *testing.T) {
 	_, err := (&Translator{Client: c, Checker: k}).Translate(context.Background(), "Hi.", Context{}, Options{})
 	if err == nil || !strings.Contains(err.Error(), "timed out") || strings.Contains(err.Error(), "uv run uvicorn") {
 		t.Fatalf("err = %v, want a timeout, not the start hint", err)
+	}
+}
+
+// A context that needs a bigger window than MaxNumCtx is refused before
+// anything is sent: the full context of a big lexicon would be cut.
+func TestMaxNumCtx(t *testing.T) {
+	b, k := setup(t)
+	tr := &Translator{Client: NewClient("http://127.0.0.1:1"), Checker: k}
+	_, err := tr.Translate(context.Background(), "The dog eats the bread.", b.Full(), Options{MaxNumCtx: 8192})
+	if err == nil || !strings.Contains(err.Error(), "-ctx retrieved") {
+		t.Fatalf("err = %v, want a refusal that suggests -ctx retrieved", err)
+	}
+}
+
+// fakeDense answers search by meaning from a table: lemma → entry ids.
+type fakeDense struct {
+	lex  map[string]*lexicon.Entry
+	hits map[string][]string
+	err  error
+}
+
+func (f fakeDense) SearchMany(_ context.Context, qs []string, _ int) ([][]*lexicon.Entry, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
+	out := make([][]*lexicon.Entry, len(qs))
+	for i, q := range qs {
+		for _, id := range f.hits[q] {
+			out[i] = append(out[i], f.lex[id])
+		}
+	}
+	return out, nil
+}
+
+// The dense channel adds what neither the tagger nor BM25 finds, and a
+// dense failure leaves the lexical entries.
+func TestDenseChannel(t *testing.T) {
+	b, _ := setup(t)
+	byID := map[string]*lexicon.Entry{}
+	for _, e := range b.Lex.Entries {
+		byID[e.ID] = e
+	}
+	saved := *b.Retriever
+	defer func() { *b.Retriever = saved }()
+
+	b.Retriever.Dense = fakeDense{lex: byID, hits: map[string][]string{"river": {"water"}}}
+	c, err := b.Retrieved(context.Background(), "The woman sees the river.")
+	if err != nil || !slices.Contains(ids(c), "water") {
+		t.Errorf("with dense: %v, %v; want water (river's neighbour)", ids(c), err)
+	}
+
+	b.Retriever.Dense = fakeDense{err: errors.New("embed down")}
+	c, err = b.Retrieved(context.Background(), "The woman sees the river.")
+	if err == nil || !slices.Contains(ids(c), "woman") || !slices.Contains(ids(c), "river") {
+		t.Errorf("dense down: %v, %v; want the error and the lexical entries", ids(c), err)
 	}
 }

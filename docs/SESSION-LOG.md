@@ -4,6 +4,122 @@ Newest first. One entry per session: what was done, what was decided and
 why, and where to pick up. The task list itself lives in `ROADMAP.md` →
 "Next up"; this log gives the context behind it.
 
+## 2026-10-29: Retrieval that scales to 300k entries
+
+### Why
+
+The lexicon is meant to grow to ~300k entries (generated, hand-added,
+maybe imported later). `-ctx full` puts every entry in the prompt, and
+`-ctx retrieved` only looked scalable: it took *every* entry linked to
+a word. Decided (the user): pure Go with our own index, hybrid retrieval
+(tagger + BM25 + dense) fused with Reciprocal Rank Fusion, a per-word
+limit and a token budget, `full` kept but refused when it doesn't fit.
+
+### Done
+
+- `lnova fixture [-n 300000] [-senses 0.1] [-homonyms 0.01]`: a copy of
+  `language/` in `.cache/fixture-300k` with 300k synthetic entries
+  (`internal/fixture`): 10% new senses of real words (`water.cold`), 1%
+  exact homonyms (`water` with another meaning), the rest made-up glosses
+  with definitions built from real words. Synthetic files load first, so
+  ties in lexicon order go against the real entries (worst case).
+- `lnova eval -retrieval [-gold language]`: the retriever alone, no model.
+  Gold = the entries of the rule-based reference translation (from the
+  real lexicon with `-gold`, since on the fixture the reference itself
+  uses synthetic senses). Reports recall, entries, tokens, time. A test
+  holds the real lexicon at 100%.
+- `internal/retrieve`: BM25F index (gloss ×3, id, definition; S-stemmer;
+  stopwords), and a `Retriever` that fuses per English word:
+  1. the tagger's readings, ranked in **tiers** (exact gloss, then senses;
+     the tagger's chosen category first), each tier a tied rank;
+  2. BM25 on the lemma (equal scores tied);
+  3. simplified **Lesk**: BM25 of the word + the sentence's other content
+     words, among the word's own entries (sense disambiguation);
+  4. with `-dense`, embeddings.
+  RRF (k=60), ties broken by BM25 score, top `-k 3` per word, `-budget
+  2048` tokens over all words (each word keeps its best entry). Closed
+  classes are always in, as before. `lookup` (tools) uses it too, 5 per word.
+- `internal/semantic`: int8 vectors + sign bits; search = Hamming first
+  pass (≥400 candidates) then int8 rescore. Binary append-only cache
+  `.cache/embeddings-<model>.bin` (every batch of 256 synced: an
+  interrupted 300k build resumes; compacted when records go stale); the
+  old JSON cache is imported once (6 MB → 0.5 MB). `-dims` for Matryoshka
+  truncation, off by default (see below). `lnova llm|eval -dense`.
+- `Translate` refuses a prompt over `MaxNumCtx` (32K): `-ctx full` on a
+  big lexicon errors instead of being silently cut.
+- Startup: `loadLLM` parsed the lexicon twice (`translate.LoadWith`
+  fixes it), and `lexicon.LoadCached` keeps a gob snapshot in `.cache/`
+  keyed by a hash of the files (YAML 3.2 s → gob 0.15 s at 300k).
+  `lnova validate` still parses YAML (field line numbers).
+- Eval results record the retrieval settings (`meta.retrieval`); `-resume`
+  refuses to mix runs of different retrievers.
+
+### Numbers (31 eval sentences)
+
+| | real (631) | fixture 300k | before, fixture |
+|---|---|---|---|
+| recall | 100% | 99.2% | 100% (everything in) |
+| entries per prompt | 29 | 33 | 927 |
+| tokens per prompt | 7154 | 7246 | 28827 |
+| context build | 1 ms | ≤ 43 ms | ≤ 974 ms |
+| `loadLLM` (warm) | 0.1 s | 1.6 s, 450 MB | 7.6 s, 940 MB |
+
+The harsh fixture (`-homonyms 0.45`: ~170 exact "water"s) also gives
+99.2%. ~6.9K of the ~7.2K tokens are the fixed part (grammar,
+morphology, examples, closed classes). Dense at 300k × 768 (random
+vectors): 260 MB, 5.7 ms per query (exact int8 scan: 298 ms).
+
+Offline, on the real 768-d vectors (every entry as a query, recall@10
+vs float32): int8 99.3%; truncation to 512 dims 84%, 256 dims 73%;
+sign bits alone 58%, sign bits (200) + int8 rescore 99.1%.
+
+### The linguistics / AI
+
+- **RRF needs real rankings.** A channel's order must mean something: the
+  tagger's list for "water" was 383 entries in file order, and fusing
+  that as a ranking let file order choose (recall 43–50%). Ranking it in
+  tiers (tied ranks) and letting BM25 break the ties gave 97%; a
+  tie-break on BM25's score and case-blind gloss matching (`God`) 99%.
+- **The fixture can lie.** The first fixture gave ~300 synthetic entries
+  glossed exactly "sleep" (WordNet: ~8 senses). No lexical signal can
+  separate 300 identical glosses, so it measured the fixture, not the
+  retriever. The homonym share is now explicit.
+- **Lesk (1986)**: the sense whose definition shares words with the
+  sentence wins (`love.agape` says "God's love"). BM25 does the
+  counting, so a shared rare word counts more.
+- **Quantization is nearly free, truncation isn't**: int8 keeps 99% of
+  the neighbours; nomic's Matryoshka 256-d prefix only 73% here.
+
+### Not done / found
+
+- **Dense not measured with the real model**: Ollama wasn't running.
+  Without it, `-dense` warns and the contexts stay lexical.
+- The one miss: "We will love the god." → `love_agape`. On the fixture,
+  three synthetic verbs glossed exactly "love" take the 3 slots
+  (tagger tier 0 + BM25 rank 0 beat Lesk's one vote). Not tuned away:
+  weighting channels on 31 sentences would be overfitting.
+- **The rule-based translator doesn't scale yet**: `Checker.Expect` (the
+  meaning check, run for every `lnova llm`) takes 2.8 s per sentence at
+  300k, against 0.15 ms now; it tries every sense combination (time in
+  `Analyzer.Analyze` and GC). It also prefers synthetic senses. Out of
+  scope today.
+
+### Open (for the user)
+
+1. Run with the model: `lnova similar -eval evals/similar.yaml` with
+   `-dims 768/512/256` (real recall, not neighbour agreement), and
+   `lnova eval -retrieval -dense`. Make `-dense` the default?
+2. The unseen eval (2026-10-28) is 22/45 and was made with the old
+   retriever: finish it on commit 66ed39b (`-resume` now refuses to mix),
+   or rerun it with the new one as the baseline.
+3. Scaling the rule-based translator / meaning check (above).
+
+### Start next session here
+
+ROADMAP → Next up.
+
+---
+
 ## 2026-10-27: Eval baseline for the pronoun-after-preposition sentences
 
 ### Done
