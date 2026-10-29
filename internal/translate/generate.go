@@ -19,6 +19,7 @@ type clause struct {
 	verb      *earley.Tree   // V, or Be for the copula
 	compl     *earley.Tree   // what follows the copula: Compl
 	pps       []*earley.Tree // PP nodes, in order
+	dat       *earley.Tree   // the recipient of a double object (gave me bread): Dat
 	comp      *earley.Tree   // that, opening this clause as a subordinate one
 	sub       *earley.Tree   // a subordinate clause after the verb: Sub
 }
@@ -53,6 +54,8 @@ func (c *clause) read(t *earley.Tree) {
 		c.comp = t
 	case "Sub":
 		c.sub = t
+	case "Dat":
+		c.dat = t.Children[0]
 	default:
 		for _, k := range t.Children {
 			c.read(k)
@@ -99,7 +102,9 @@ func (t *Translator) generate(s english.Sentence, tree *earley.Tree, picks []cho
 
 // clause adds a clause in Rifatian order: question word, subject, na,
 // verb, object or copula complement, prepositional phrases (S V O PP),
-// and then a subordinate clause, which always opens with itu.
+// and then a subordinate clause, which always opens with itu. A
+// double object's recipient becomes the first PP, with epe (gave me
+// bread → hibaxe gurna epe mi).
 func (g *gen) clause(c clause) error {
 	if c.verb == nil {
 		return fmt.Errorf("no verb")
@@ -144,6 +149,12 @@ func (g *gen) clause(c clause) error {
 	}
 	if c.compl != nil {
 		if err := g.compl(c.compl); err != nil {
+			return err
+		}
+	}
+	if c.dat != nil {
+		g.add(g.t.Tagger.Entry("to"), "")
+		if err := g.np(c.dat, "OBJ", false); err != nil {
 			return err
 		}
 	}

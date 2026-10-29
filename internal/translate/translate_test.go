@@ -112,6 +112,12 @@ func TestTranslate(t *testing.T) {
 		{"She sleeps with him.", "Hana sile gu honi.", 1},
 		{"The woman gave bread to me.", "Lu mena hibaxe gurna epe mi.", 1},
 		{"The king is with her.", "Lu dauzo iha gu hani.", 1},
+		// A double object becomes O + epe PP (the dative alternation)
+		{"The woman gave me bread.", "Lu mena hibaxe gurna epe mi.", 1},
+		{"The man gave the child water in the house.", "Lu dubro hibaxe exa epe lu orlo bi lu hoida.", 1},
+		{"Who gave us water?", "Ifa hibaxe exa epe mih?", 1},
+		{"The woman gave her bread.", "Lu mena hibaxe hane gurna.", 2}, // her bread, or bread to her
+		{"The woman didn't give him nothing.", "Lu mena na hibaxe zunhu epe honi.", 1},
 		// X of Y is Y's X
 		{"The children of the king sleep in the house.", "Lu dauzos orloh sileh bi lu hoida.", 1},
 		// Subordinate clauses: itu even where English drops "that"

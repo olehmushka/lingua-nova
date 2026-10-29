@@ -9,7 +9,9 @@
 # Tags: present past future · negation yes-no wh-subject wh-object
 # wh-adverb · possessive adjective plural pronoun archaic · copula
 # preposition clause · known-hard (failed in earlier measurements) ·
-# pp-pronoun (the 2 pronoun-after-preposition sentences) ·
+# pp-pronoun (the pronoun-after-preposition sentences) · dative (gave
+# me bread: no "to") · unseen (added 2026-10-28; not in grammar.md, so
+# the model can't copy them from the prompt) ·
 # frame (the 6 copula / preposition sentences; their baseline is
 # evals/results/2026-10-22-frame-*.json).
 
@@ -79,3 +81,13 @@
   tags: [present, pronoun, preposition, pp-pronoun]
 - en: The woman gave bread to me.
   tags: [past, pronoun, preposition, pp-pronoun]
+
+# The same rules on sentences that aren't in grammar.md (2026-10-28):
+# the 2 above are worked examples there, and the whole grammar is in
+# the prompt, so the model could copy them.
+- en: He sleeps with her.
+  tags: [present, pronoun, preposition, pp-pronoun, unseen]
+- en: The man gave water to us.
+  tags: [past, pronoun, preposition, pp-pronoun, unseen]
+- en: The man gave the child water.
+  tags: [past, dative, unseen]

@@ -24,10 +24,13 @@ _Keep this section current: it's where every new session starts._
    ~~Pronouns after prepositions~~: object form, done 2026-10-25.
 4. Open question from the lexicon growth (SESSION-LOG 2026-10-18, later):
    re-seed the generator weights from roots only, not derived words?
-5. Open questions from the 10-27 eval (SESSION-LOG 2026-10-27): both
-   `pp-pronoun` sentences are copied from grammar.md, which is in the
-   prompt; add unseen ones? And "gave me bread" (dative alternation):
-   no English rule for it yet.
+5. **In progress (2026-10-28):** "gave me bread" (dative
+   alternation) is translated (`grammar.cfg` `Dat`, translator, tests),
+   and 3 `unseen` eval sentences are added (not in grammar.md, so the
+   model can't copy them; SESSION-LOG 2026-10-27). Their eval stopped at
+   22/45: finish it with `lnova eval -tag unseen -out
+   evals/results/2026-10-28-unseen.json -resume`, then write the
+   SESSION-LOG entry and commit.
 
 ## Phase 0 — Learn the basics (reading, ~1–2 weeks alongside Phase 1)
 
