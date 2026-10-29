@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"cmp"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -207,7 +208,10 @@ type Meta struct {
 	Commit        string    `json:"commit,omitempty"` // git describe of the code
 	Entries       int       `json:"entries"`          // lexicon size
 	EvalSet       string    `json:"eval_set"`         // hash of the sentences
-	Interrupted   bool      `json:"interrupted,omitempty"`
+	// Retrieval is the retrieved contexts' settings ("k=3 budget=2048
+	// dense=-"); "" in results from before the fused retriever (2026-10-29).
+	Retrieval   string `json:"retrieval,omitempty"`
+	Interrupted bool   `json:"interrupted,omitempty"`
 }
 
 // Mismatch says why results run as old can't be continued as new, or "".
@@ -225,6 +229,7 @@ func Mismatch(old, new Meta) string {
 		{"attempts", old.MaxAttempts, new.MaxAttempts},
 		{"tool rounds", old.MaxToolRounds, new.MaxToolRounds},
 		{"eval set", old.EvalSet, new.EvalSet},
+		{"retrieval", cmp.Or(old.Retrieval, "the old retriever"), cmp.Or(new.Retrieval, "the old retriever")},
 	} {
 		if d.old != d.new {
 			out = append(out, fmt.Sprintf("%s %v ≠ %v", d.what, d.old, d.new))

@@ -2,12 +2,14 @@ package llm
 
 import (
 	"cmp"
+	"context"
 	"fmt"
 	"strings"
 
 	"github.com/olehmushka/lingua-nova/internal/english"
 	"github.com/olehmushka/lingua-nova/internal/lexicon"
 	"github.com/olehmushka/lingua-nova/internal/morph"
+	"github.com/olehmushka/lingua-nova/internal/retrieve"
 )
 
 // Toolbox is the Go functions the model can call: the dictionary, the
@@ -24,14 +26,17 @@ type Toolbox struct {
 	Analyzer *morph.Analyzer
 	Tagger   *english.Tagger
 	Checker  *Checker
+	// Retriever finds lookup's entries, as it finds a retrieved
+	// context's; shared with the Builder, so the indexes exist once.
+	Retriever *retrieve.Retriever
 
 	byID   map[string]*lexicon.Entry
 	byWord map[string][]*lexicon.Entry // citation form → entries (homophones)
 }
 
 // NewToolbox returns the tools over a lexicon and its morphology.
-func NewToolbox(lex *lexicon.Lexicon, r *morph.Rules, t *english.Tagger, k *Checker) *Toolbox {
-	b := &Toolbox{Lex: lex, Rules: r, Analyzer: morph.NewAnalyzer(r, lex), Tagger: t, Checker: k,
+func NewToolbox(lex *lexicon.Lexicon, r *morph.Rules, t *english.Tagger, k *Checker, ret *retrieve.Retriever) *Toolbox {
+	b := &Toolbox{Lex: lex, Rules: r, Analyzer: morph.NewAnalyzer(r, lex), Tagger: t, Checker: k, Retriever: ret,
 		byID: map[string]*lexicon.Entry{}, byWord: map[string][]*lexicon.Entry{}}
 	for _, e := range lex.Entries {
 		b.byID[e.ID] = e
@@ -84,11 +89,11 @@ func (b *Toolbox) Specs() []Tool {
 
 // Run runs one call. x is what the sentence being translated must mean,
 // for check.
-func (b *Toolbox) Run(c ToolCall, x *Expectation) ToolResult {
+func (b *Toolbox) Run(ctx context.Context, c ToolCall, x *Expectation) ToolResult {
 	var out string
 	switch c.Name {
 	case "lookup":
-		out = b.lookup(c.str("english"))
+		out = b.lookup(ctx, c.str("english"))
 	case "inflect":
 		out = b.inflect(c.str("id"), c.list("features"))
 	case "analyze":
@@ -108,30 +113,36 @@ func (b *Toolbox) Run(c ToolCall, x *Expectation) ToolResult {
 // the same call round after round (the "doom loop"); saying so gives it a
 // reason to change course, where a fresh copy of the result doesn't.
 // seen maps String() to the earlier result and is updated.
-func (b *Toolbox) runOnce(c ToolCall, x *Expectation, seen map[string]string) ToolResult {
+func (b *Toolbox) runOnce(ctx context.Context, c ToolCall, x *Expectation, seen map[string]string) ToolResult {
 	key := c.String()
 	if prev, ok := seen[key]; ok {
 		return ToolResult{Name: c.Name, Content: fmt.Sprintf(
 			"repeated call: you already called %s and got:\n%s\nIt will give the same result again. Use it, or call something different.",
 			key, prev)}
 	}
-	r := b.Run(c, x)
+	r := b.Run(ctx, c, x)
 	seen[key] = r.Content
 	return r
 }
 
-// lookup finds entries the way retrieval does (tag, lemmatize, look up
-// by gloss, then the dictionary search), for each word given.
-func (b *Toolbox) lookup(word string) string {
+// lookupK is how many entries lookup returns per word: a few more than
+// a retrieved context has, since the model asked for this word.
+const lookupK = 5
+
+// lookup finds entries the way retrieval does (the tagger's readings, BM25
+// and, if set, search by meaning, fused), up to lookupK per word given.
+// A failed search by meaning still leaves the lexical results.
+func (b *Toolbox) lookup(ctx context.Context, word string) string {
 	if strings.TrimSpace(word) == "" {
 		return "error: give an English word"
 	}
 	var lines []string
 	seen := map[string]bool{}
 	for _, tok := range b.Tagger.Tag(word).Tokens {
-		for _, id := range candidates(b.Lex, tok) {
-			if e := b.byID[id]; e != nil && !seen[id] {
-				seen[id] = true
+		picks, _ := b.Retriever.Word(ctx, tok, lookupK)
+		for _, p := range picks {
+			if e := p.Entry; !seen[e.ID] {
+				seen[e.ID] = true
 				lines = append(lines, fmt.Sprintf("%s | %s | %s | %s | %s | %s",
 					e.ID, cmp.Or(e.Word, e.Modern), e.POS, cmp.Or(e.Gender, "-"), e.Gloss, e.Definition))
 			}

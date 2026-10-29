@@ -2,14 +2,15 @@ package llm
 
 import (
 	"cmp"
+	"context"
 	"os"
 	"path/filepath"
 	"slices"
-	"strings"
 
 	"github.com/olehmushka/lingua-nova/internal/english"
 	"github.com/olehmushka/lingua-nova/internal/gloss"
 	"github.com/olehmushka/lingua-nova/internal/lexicon"
+	"github.com/olehmushka/lingua-nova/internal/retrieve"
 )
 
 // Context is what the model is told about Rifatian.
@@ -50,6 +51,10 @@ func (c Context) Size() int {
 	return n
 }
 
+// Tokens estimates the context's length in tokens: about 3 bytes per
+// token for this mix of English, Rifatian and markup.
+func (c Context) Tokens() int { return c.Size() / 3 }
+
 // Modes of building a context.
 const (
 	Full      = "full"      // every entry
@@ -64,6 +69,9 @@ type Builder struct {
 	Lex        *lexicon.Lexicon
 	Tagger     *english.Tagger
 	Examples   []Example
+	// Retriever picks a retrieved context's open-class entries; its K and
+	// Budget can be changed, and a Dense channel added (package semantic).
+	Retriever *retrieve.Retriever
 }
 
 // closedFiles hold the closed classes (articles, na, pronouns, question
@@ -71,8 +79,13 @@ type Builder struct {
 // don't reliably point to them (do-support, pro-drop, possessive 's).
 var closedFiles = []string{"function.yaml", "pronouns.yaml"}
 
+// closed says whether an entry is in a closed class.
+func closed(e *lexicon.Entry) bool { return slices.Contains(closedFiles, filepath.Base(e.File)) }
+
 // NewBuilder reads grammar.md and morphology.yaml from langDir. The
 // grammar's interlinear examples become the prompt's worked examples.
+// The retriever gets a BM25 index of the lexicon, the default limits and
+// no dense channel.
 func NewBuilder(langDir string, lex *lexicon.Lexicon, t *english.Tagger) (*Builder, error) {
 	g, err := os.ReadFile(filepath.Join(langDir, "grammar.md"))
 	if err != nil {
@@ -82,73 +95,47 @@ func NewBuilder(langDir string, lex *lexicon.Lexicon, t *english.Tagger) (*Build
 	if err != nil {
 		return nil, err
 	}
-	b := &Builder{Grammar: string(g), Morphology: string(m), Lex: lex, Tagger: t}
+	b := &Builder{Grammar: string(g), Morphology: string(m), Lex: lex, Tagger: t,
+		Retriever: &retrieve.Retriever{Tagger: t, BM25: retrieve.NewBM25(lex.Entries), Always: closed, Budget: retrieve.DefaultBudget}}
 	for _, x := range gloss.Examples(b.Grammar) {
 		b.Examples = append(b.Examples, Example{English: x.Translation, Rifatian: x.Sentence(), Gloss: x.Gloss})
 	}
 	return b, nil
 }
 
-// Build returns the context for a sentence in the given mode.
-func (b *Builder) Build(mode, sentence string) Context {
+// Build returns the context for a sentence in the given mode. An error
+// comes only from a retrieved context's dense channel, and the context
+// is still usable then: it has the lexical channels' entries.
+func (b *Builder) Build(ctx context.Context, mode, sentence string) (Context, error) {
 	switch mode {
 	case Retrieved:
-		return b.Retrieved(sentence)
+		return b.Retrieved(ctx, sentence)
 	case None:
-		return b.context(func(*lexicon.Entry) bool { return false })
+		return b.context(func(*lexicon.Entry) bool { return false }), nil
 	}
-	return b.Full()
+	return b.Full(), nil
 }
 
-// Full has every entry: about 16K tokens with the grammar, and identical
-// for every sentence, so the model server can reuse its cached prefix.
+// Full has every entry: about 16K tokens with the grammar for the real
+// lexicon, and identical for every sentence, so the model server can
+// reuse its cached prefix. It grows with the lexicon; the translator
+// refuses one that doesn't fit (Options.MaxNumCtx).
 func (b *Builder) Full() Context {
 	return b.context(func(*lexicon.Entry) bool { return true })
 }
 
-// Retrieved has the closed classes plus the entries the sentence's
-// words point to, found the way the rule-based translator finds them:
-// tag, lemmatize, look up by gloss. A word with no entry falls back to
-// the dictionary search, which also matches definitions (big → large).
-// This is retrieval-augmented generation in miniature: the prompt carries
-// only what the question needs.
-func (b *Builder) Retrieved(sentence string) Context {
-	want := map[string]bool{}
-	for _, tok := range b.Tagger.Tag(sentence).Tokens {
-		for _, id := range candidates(b.Lex, tok) {
-			want[id] = true
-		}
+// Retrieved has the closed classes plus the entries the retriever picks
+// for the sentence's words: a few per word, fused from the tagger's
+// readings, a BM25 search and (if set) search by meaning, within a token
+// budget. This is retrieval-augmented generation: the prompt carries only
+// what the question needs, so its size doesn't grow with the lexicon.
+func (b *Builder) Retrieved(ctx context.Context, sentence string) (Context, error) {
+	picks, err := b.Retriever.Sentence(ctx, sentence)
+	want := map[string]bool{} // by id: the tagger may hold another copy of the lexicon
+	for _, p := range picks {
+		want[p.Entry.ID] = true
 	}
-	return b.context(func(e *lexicon.Entry) bool {
-		return want[e.ID] || slices.Contains(closedFiles, filepath.Base(e.File))
-	})
-}
-
-// candidates are the entries an English token can translate to: its
-// readings' entries, or for a word with none, the top dictionary hits.
-func candidates(lex *lexicon.Lexicon, tok english.Token) []string {
-	var ids []string
-	for _, r := range tok.Readings {
-		for _, e := range r.Entries {
-			if !slices.Contains(ids, e.ID) {
-				ids = append(ids, e.ID)
-			}
-		}
-	}
-	if len(ids) > 0 {
-		return ids
-	}
-	lemma := strings.ToLower(tok.Text)
-	if len(tok.Readings) > 0 {
-		lemma = tok.Readings[0].Lemma
-	}
-	for i, h := range lex.Search(lemma) {
-		if i == 3 || h.Match > lexicon.MatchWord {
-			break
-		}
-		ids = append(ids, h.Entry.ID)
-	}
-	return ids
+	return b.context(func(e *lexicon.Entry) bool { return want[e.ID] || closed(e) }), err
 }
 
 func (b *Builder) context(keep func(*lexicon.Entry) bool) Context {

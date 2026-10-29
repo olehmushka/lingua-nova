@@ -212,5 +212,12 @@ func (t *Tagger) open(cat string, c candidate, ptb string, es []*lexicon.Entry) 
 	return r
 }
 
+// Listed says whether words.yaml lists the word: its readings are then
+// complete as given (function words, irregular forms), not found by gloss.
+func (t *Tagger) Listed(word string) bool {
+	_, ok := t.words.Words[strings.ToLower(word)]
+	return ok
+}
+
 // Entry returns the lexicon entry with an id, or nil.
 func (t *Tagger) Entry(id string) *lexicon.Entry { return t.byID[id] }

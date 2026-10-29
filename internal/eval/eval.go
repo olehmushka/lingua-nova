@@ -218,7 +218,12 @@ func (r *Runner) one(ctx context.Context, c Case, su Setup, run int) (Record, er
 	}
 	defer cancel()
 	start := time.Now()
-	res, err := r.Translator.Translate(tctx, c.English, r.Builder.Build(su.Ctx, c.English), opt)
+	llmCtx, err := r.Builder.Build(tctx, su.Ctx, c.English)
+	if err != nil && r.Progress != nil {
+		// Search by meaning failed; the lexical entries are still there.
+		fmt.Fprintf(r.Progress, "warning: %q: %v\n", c.English, err)
+	}
+	res, err := r.Translator.Translate(tctx, c.English, llmCtx, opt)
 	if ctx.Err() != nil {
 		return rec, ctx.Err()
 	}

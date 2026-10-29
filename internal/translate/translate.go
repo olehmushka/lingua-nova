@@ -262,15 +262,21 @@ func New(g *earley.Grammar, w *english.Words, lex *lexicon.Lexicon, r *morph.Rul
 // Load reads everything a translator needs from a language directory:
 // the Rifatian phonology, morphology and lexicon, and english/.
 func Load(langDir string) (*Translator, error) {
+	lex, err := lexicon.Load(filepath.Join(langDir, "lexicon"))
+	if err != nil {
+		return nil, err
+	}
+	return LoadWith(langDir, lex)
+}
+
+// LoadWith is Load with the lexicon already loaded, so a caller that
+// needs it too parses it once: a big lexicon takes seconds.
+func LoadWith(langDir string, lex *lexicon.Lexicon) (*Translator, error) {
 	inv, err := phon.Load(filepath.Join(langDir, "phonology.yaml"))
 	if err != nil {
 		return nil, err
 	}
 	r, err := morph.Load(filepath.Join(langDir, "morphology.yaml"), inv)
-	if err != nil {
-		return nil, err
-	}
-	lex, err := lexicon.Load(filepath.Join(langDir, "lexicon"))
 	if err != nil {
 		return nil, err
 	}

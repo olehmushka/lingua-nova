@@ -125,7 +125,7 @@ func TestSearch(t *testing.T) {
 }
 
 func TestCache(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "sub", "emb.json")
+	path := filepath.Join(t.TempDir(), "sub", "emb.bin")
 	ctx := context.Background()
 	es := entries()
 
@@ -167,10 +167,10 @@ func TestBuildError(t *testing.T) {
 }
 
 func TestCachePath(t *testing.T) {
-	if got, want := CachePath("language", "nomic-embed-text:latest"), filepath.Join(".cache", "embeddings-nomic-embed-text-latest.json"); got != want {
+	if got, want := CachePath("language", "nomic-embed-text:latest"), filepath.Join(".cache", "embeddings-nomic-embed-text-latest.bin"); got != want {
 		t.Errorf("CachePath = %q, want %q", got, want)
 	}
-	if got, want := CachePath("/x/repo/language/", "m"), "/x/repo/.cache/embeddings-m.json"; got != want {
+	if got, want := CachePath("/x/repo/language/", "m"), "/x/repo/.cache/embeddings-m.bin"; got != want {
 		t.Errorf("CachePath = %q, want %q", got, want)
 	}
 }

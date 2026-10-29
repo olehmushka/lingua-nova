@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strings"
 	"text/tabwriter"
+	"time"
 
 	"github.com/olehmushka/lingua-nova/internal/lexicon"
 	"github.com/olehmushka/lingua-nova/internal/llm"
@@ -17,9 +18,23 @@ import (
 )
 
 // buildIndex embeds the lexicon (or reads the vectors from the cache) and
-// says on stderr when it had to embed anything, since that takes seconds.
-func buildIndex(ctx context.Context, lex *lexicon.Lexicon, url, model, cache string, stderr io.Writer) (*semantic.Index, error) {
-	idx, st, err := semantic.Build(ctx, llm.NewClient(url).Embedder(model), model, lex.Entries, cache)
+// says on stderr when it had to embed anything, since that takes seconds
+// (hours for a big lexicon: then it shows its progress). dims keeps the
+// vectors' first dims numbers; 0 keeps all.
+func buildIndex(ctx context.Context, lex *lexicon.Lexicon, url, model, cache string, dims int, stderr io.Writer) (*semantic.Index, error) {
+	start := time.Now()
+	progress := func(done, total int) {
+		if total > 10*semantic.DefaultBatch {
+			el := time.Since(start)
+			left := time.Duration(float64(el) / float64(done) * float64(total-done))
+			fmt.Fprintf(stderr, "\rembedding with %s: %d/%d, %s left   ", model, done, total, left.Round(time.Second))
+			if done == total {
+				fmt.Fprintln(stderr)
+			}
+		}
+	}
+	idx, st, err := semantic.BuildWith(ctx, llm.NewClient(url).Embedder(model), model, lex.Entries, cache,
+		semantic.Options{Dims: dims, Progress: progress})
 	if err != nil && idx == nil {
 		return nil, err
 	}
@@ -57,10 +72,11 @@ func cmdSimilar(langDir string, args []string, stdout, stderr io.Writer) int {
 	pos := fs.String("pos", "", "only this part of speech")
 	model := fs.String("model", llm.DefaultEmbedModel, "Ollama embedding `model`")
 	url := fs.String("url", llm.DefaultURL, "`URL` of the llm/ service")
-	cache := fs.String("cache", "", "embedding cache `file` (default .cache/embeddings-<model>.json next to the language dir; \"none\" = no cache)")
+	cache := fs.String("cache", "", "embedding cache `file` (default .cache/embeddings-<model>.bin next to the language dir; \"none\" = no cache)")
+	dims := fs.Int("dims", 0, "keep the vectors' first `N` numbers (Matryoshka truncation); 0: all")
 	evalFile := fs.String("eval", "", "run the queries in `file` (evals/similar.yaml) and report recall@k")
 	usage := func() {
-		fmt.Fprintln(stderr, "usage: lnova similar [-k 10] [-pos P] [-model M] [-url U] [-cache F] <english> | -eval evals/similar.yaml")
+		fmt.Fprintln(stderr, "usage: lnova similar [-k 10] [-pos P] [-model M] [-url U] [-cache F] [-dims N] <english> | -eval evals/similar.yaml")
 	}
 	fs.Usage = usage
 	if err := fs.Parse(args); err != nil {
@@ -86,7 +102,7 @@ func cmdSimilar(langDir string, args []string, stdout, stderr io.Writer) int {
 		}
 	}
 	ctx := context.Background()
-	idx, err := buildIndex(ctx, lex, *url, *model, *cache, stderr)
+	idx, err := buildIndex(ctx, lex, *url, *model, *cache, *dims, stderr)
 	if err != nil {
 		fmt.Fprintf(stderr, "lnova: %v\n", err)
 		return 1

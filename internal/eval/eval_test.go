@@ -138,7 +138,7 @@ func setup(t *testing.T) (*llm.Builder, *llm.Toolbox, *llm.Checker) {
 		}
 		sBuilder, setupErr = llm.NewBuilder(langDir, lex, tr.Tagger)
 		sChecker = &llm.Checker{Glosser: tr.Glosser, Ref: tr, Lex: lex}
-		sTools = llm.NewToolbox(lex, tr.Rules, tr.Tagger, sChecker)
+		sTools = llm.NewToolbox(lex, tr.Rules, tr.Tagger, sChecker, sBuilder.Retriever)
 	})
 	if setupErr != nil {
 		t.Fatal(setupErr)
@@ -348,6 +348,12 @@ func TestMismatch(t *testing.T) {
 	other := m
 	other.Temperature, other.EvalSet = 0, "def"
 	if why := Mismatch(m, other); why != "temperature 0.7 ≠ 0, eval set abc ≠ def" {
+		t.Errorf("got %q", why)
+	}
+	// Results from before the fused retriever can't be continued with it.
+	fused := m
+	fused.Retrieval = "k=3 budget=2048 dense=-"
+	if why := Mismatch(m, fused); why != "retrieval the old retriever ≠ k=3 budget=2048 dense=-" {
 		t.Errorf("got %q", why)
 	}
 }
