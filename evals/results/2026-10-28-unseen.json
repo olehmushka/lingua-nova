@@ -1,0 +1,404 @@
+{
+  "meta": {
+    "date": "2026-10-27T23:06:06Z",
+    "model": "qwen2.5:7b-instruct-q4_K_M",
+    "temperature": 0.7,
+    "runs": 5,
+    "max_attempts": 3,
+    "max_tool_rounds": 8,
+    "setups": [
+      "retrieved",
+      "retrieved+tools",
+      "none+tools"
+    ],
+    "tag": "unseen",
+    "commit": "1b14c18-dirty",
+    "entries": 631,
+    "eval_set": "f8707ec8d13f",
+    "interrupted": true
+  },
+  "records": [
+    {
+      "english": "He sleeps with her.",
+      "setup": "retrieved",
+      "run": 1,
+      "seed": 1,
+      "ok": true,
+      "first_ok": true,
+      "attempts": 1,
+      "translation": "Hono sile gu hani.",
+      "duration_ms": 24762,
+      "prompt_tokens": 7101,
+      "eval_tokens": 129,
+      "tool_calls": 0,
+      "repeats": 0
+    },
+    {
+      "english": "The man gave water to us.",
+      "setup": "retrieved",
+      "run": 1,
+      "seed": 1,
+      "ok": false,
+      "first_ok": false,
+      "attempts": 3,
+      "translation": "Lu dubro hibaxeh lu exa epe selah.",
+      "problems": [
+        "dubro (3SG) doesn't agree with hibaxeh (3PL)",
+        "verb: the English needs give-TH-PST-3SG; you have give-TH-PST-3PL",
+        "object: the English needs \"water to 1PL.OBJ\", in this order; you have \"the water to 2PL.POL.OBJ\""
+      ],
+      "duration_ms": 38868,
+      "prompt_tokens": 22399,
+      "eval_tokens": 557,
+      "tool_calls": 0,
+      "repeats": 0
+    },
+    {
+      "english": "The man gave the child water.",
+      "setup": "retrieved",
+      "run": 1,
+      "seed": 1,
+      "ok": false,
+      "first_ok": false,
+      "attempts": 3,
+      "translation": "Lu dubro hibaxe ne exa epe lu orlo.",
+      "problems": [
+        "object: the English needs \"water to the child\", in this order; you have \"a water to the child\""
+      ],
+      "duration_ms": 43923,
+      "prompt_tokens": 22438,
+      "eval_tokens": 622,
+      "tool_calls": 0,
+      "repeats": 0
+    },
+    {
+      "english": "He sleeps with her.",
+      "setup": "retrieved+tools",
+      "run": 1,
+      "seed": 1,
+      "ok": true,
+      "first_ok": true,
+      "attempts": 1,
+      "translation": "Hono sile gu hani.",
+      "duration_ms": 35486,
+      "prompt_tokens": 14973,
+      "eval_tokens": 249,
+      "tool_calls": 0,
+      "repeats": 0
+    },
+    {
+      "english": "The man gave water to us.",
+      "setup": "retrieved+tools",
+      "run": 1,
+      "seed": 1,
+      "ok": false,
+      "first_ok": false,
+      "attempts": 1,
+      "translation": "Dubro hibaxe ne exa epe meuhes.",
+      "problems": [
+        "meuhes: not in the dictionary (it looks like a form of an unknown meu)"
+      ],
+      "duration_ms": 300016,
+      "prompt_tokens": 78210,
+      "eval_tokens": 2359,
+      "tool_calls": 73,
+      "repeats": 48,
+      "error": "timeout after 5m0s"
+    },
+    {
+      "english": "The man gave the child water.",
+      "setup": "retrieved+tools",
+      "run": 1,
+      "seed": 1,
+      "ok": false,
+      "first_ok": false,
+      "attempts": 3,
+      "translation": "Lu dubro hibaxe epe lu exa zuvixe lu orlo.",
+      "problems": [
+        "zuvixe is a second verb in the clause",
+        "object: the English needs \"water to the child\", in this order; you have \"to the water fall-TH-PST-3SG the child\""
+      ],
+      "duration_ms": 228676,
+      "prompt_tokens": 105261,
+      "eval_tokens": 2337,
+      "tool_calls": 19,
+      "repeats": 8
+    },
+    {
+      "english": "He sleeps with her.",
+      "setup": "none+tools",
+      "run": 1,
+      "seed": 1,
+      "ok": true,
+      "first_ok": true,
+      "attempts": 1,
+      "translation": "Hono sile gu hani.",
+      "duration_ms": 24645,
+      "prompt_tokens": 13725,
+      "eval_tokens": 279,
+      "tool_calls": 0,
+      "repeats": 0
+    },
+    {
+      "english": "The man gave water to us.",
+      "setup": "none+tools",
+      "run": 1,
+      "seed": 1,
+      "ok": false,
+      "first_ok": false,
+      "attempts": 3,
+      "translation": "Lu dubro hibaxe lu trubo muh.",
+      "problems": [
+        "muh is SBJ after the verb",
+        "object: the English needs \"water to 1PL.OBJ\", in this order; you have \"the river 1PL\""
+      ],
+      "duration_ms": 135412,
+      "prompt_tokens": 60677,
+      "eval_tokens": 1918,
+      "tool_calls": 5,
+      "repeats": 0
+    },
+    {
+      "english": "The man gave the child water.",
+      "setup": "none+tools",
+      "run": 1,
+      "seed": 1,
+      "ok": false,
+      "first_ok": false,
+      "attempts": 3,
+      "translation": "Lu dubroh hibaxe epe lu orlo exa.",
+      "problems": [
+        "dubroh (3PL) doesn't agree with hibaxe (3SG)",
+        "subject: the English needs \"the man\"; you have \"the man-PL\"",
+        "object: the English needs \"water to the child\", in this order; you have \"to the child water\""
+      ],
+      "duration_ms": 214804,
+      "prompt_tokens": 79346,
+      "eval_tokens": 2847,
+      "tool_calls": 14,
+      "repeats": 2
+    },
+    {
+      "english": "He sleeps with her.",
+      "setup": "retrieved",
+      "run": 2,
+      "seed": 2,
+      "ok": true,
+      "first_ok": true,
+      "attempts": 1,
+      "translation": "Hono sile gu hani.",
+      "duration_ms": 25923,
+      "prompt_tokens": 7101,
+      "eval_tokens": 130,
+      "tool_calls": 0,
+      "repeats": 0
+    },
+    {
+      "english": "The man gave water to us.",
+      "setup": "retrieved",
+      "run": 2,
+      "seed": 2,
+      "ok": false,
+      "first_ok": false,
+      "attempts": 3,
+      "translation": "Lu dubroh hibax gurna ne selahes.",
+      "problems": [
+        "hibax: not a form of any dictionary word"
+      ],
+      "duration_ms": 28839,
+      "prompt_tokens": 22093,
+      "eval_tokens": 415,
+      "tool_calls": 0,
+      "repeats": 0
+    },
+    {
+      "english": "The man gave the child water.",
+      "setup": "retrieved",
+      "run": 2,
+      "seed": 2,
+      "ok": false,
+      "first_ok": false,
+      "attempts": 3,
+      "translation": "Lu dubro hibaxe ne orlo epe lu exa.",
+      "problems": [
+        "object: the English needs \"water to the child\", in this order; you have \"a child to the water\""
+      ],
+      "duration_ms": 37979,
+      "prompt_tokens": 22312,
+      "eval_tokens": 559,
+      "tool_calls": 0,
+      "repeats": 0
+    },
+    {
+      "english": "He sleeps with her.",
+      "setup": "retrieved+tools",
+      "run": 2,
+      "seed": 2,
+      "ok": false,
+      "first_ok": false,
+      "attempts": 3,
+      "translation": "Hono silixe gu hani.",
+      "problems": [
+        "verb: the English needs sleep-TH.3SG; you have sleep-TH-PST-3SG"
+      ],
+      "duration_ms": 148207,
+      "prompt_tokens": 93014,
+      "eval_tokens": 1700,
+      "tool_calls": 11,
+      "repeats": 1
+    },
+    {
+      "english": "The man gave water to us.",
+      "setup": "retrieved+tools",
+      "run": 2,
+      "seed": 2,
+      "ok": false,
+      "first_ok": false,
+      "attempts": 0,
+      "translation": "",
+      "duration_ms": 300016,
+      "prompt_tokens": 0,
+      "eval_tokens": 0,
+      "tool_calls": 0,
+      "repeats": 0,
+      "error": "timeout after 5m0s"
+    },
+    {
+      "english": "The man gave the child water.",
+      "setup": "retrieved+tools",
+      "run": 2,
+      "seed": 2,
+      "ok": false,
+      "first_ok": false,
+      "attempts": 3,
+      "translation": "Lu dubro hibaxe epe lu orlo exa.",
+      "problems": [
+        "object: the English needs \"water to the child\", in this order; you have \"to the child water\""
+      ],
+      "duration_ms": 181998,
+      "prompt_tokens": 123840,
+      "eval_tokens": 1847,
+      "tool_calls": 34,
+      "repeats": 15
+    },
+    {
+      "english": "He sleeps with her.",
+      "setup": "none+tools",
+      "run": 2,
+      "seed": 2,
+      "ok": true,
+      "first_ok": true,
+      "attempts": 1,
+      "translation": "Hono sile gu hani.",
+      "duration_ms": 45724,
+      "prompt_tokens": 28400,
+      "eval_tokens": 604,
+      "tool_calls": 3,
+      "repeats": 1
+    },
+    {
+      "english": "The man gave water to us.",
+      "setup": "none+tools",
+      "run": 2,
+      "seed": 2,
+      "ok": false,
+      "first_ok": false,
+      "attempts": 3,
+      "translation": "Dubroh hibaxe gurna epe exah meh.",
+      "problems": [
+        "dubroh (3PL) doesn't agree with hibaxe (3SG)",
+        "subject: the English needs \"the man\"; you have \"man-PL\"",
+        "object: the English needs \"water to 1PL.OBJ\", in this order; you have \"bread to water-PL 1PL.POSS\""
+      ],
+      "duration_ms": 135829,
+      "prompt_tokens": 119619,
+      "eval_tokens": 1674,
+      "tool_calls": 20,
+      "repeats": 3
+    },
+    {
+      "english": "The man gave the child water.",
+      "setup": "none+tools",
+      "run": 2,
+      "seed": 2,
+      "ok": false,
+      "first_ok": false,
+      "attempts": 3,
+      "translation": "Lu dubro hibaxe lu orlos exa epe lu mena.",
+      "problems": [
+        "object: the English needs \"water to the child\", in this order; you have \"the child-POSS water to the woman\""
+      ],
+      "duration_ms": 165097,
+      "prompt_tokens": 142187,
+      "eval_tokens": 1747,
+      "tool_calls": 13,
+      "repeats": 1
+    },
+    {
+      "english": "He sleeps with her.",
+      "setup": "retrieved",
+      "run": 3,
+      "seed": 3,
+      "ok": true,
+      "first_ok": true,
+      "attempts": 1,
+      "translation": "Hono sile gu hani.",
+      "duration_ms": 24762,
+      "prompt_tokens": 7101,
+      "eval_tokens": 139,
+      "tool_calls": 0,
+      "repeats": 0
+    },
+    {
+      "english": "The man gave water to us.",
+      "setup": "retrieved",
+      "run": 3,
+      "seed": 3,
+      "ok": false,
+      "first_ok": false,
+      "attempts": 3,
+      "translation": "Lu dubro hibaxe ne exa epe selah.",
+      "problems": [
+        "object: the English needs \"water to 1PL.OBJ\", in this order; you have \"a water to 2PL.POL.OBJ\""
+      ],
+      "duration_ms": 24173,
+      "prompt_tokens": 22300,
+      "eval_tokens": 461,
+      "tool_calls": 0,
+      "repeats": 0
+    },
+    {
+      "english": "The man gave the child water.",
+      "setup": "retrieved",
+      "run": 3,
+      "seed": 3,
+      "ok": false,
+      "first_ok": false,
+      "attempts": 3,
+      "translation": "Lu dubro hibaxe ne exa lu orlo.",
+      "problems": [
+        "object: the English needs \"water to the child\", in this order; you have \"a water the child\""
+      ],
+      "duration_ms": 23015,
+      "prompt_tokens": 22224,
+      "eval_tokens": 453,
+      "tool_calls": 0,
+      "repeats": 0
+    },
+    {
+      "english": "He sleeps with her.",
+      "setup": "retrieved+tools",
+      "run": 3,
+      "seed": 3,
+      "ok": true,
+      "first_ok": true,
+      "attempts": 1,
+      "translation": "Hono sile gu hani.",
+      "duration_ms": 30884,
+      "prompt_tokens": 30695,
+      "eval_tokens": 325,
+      "tool_calls": 2,
+      "repeats": 0
+    }
+  ]
+}

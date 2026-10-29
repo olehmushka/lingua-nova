@@ -270,6 +270,9 @@ there are no contractions like Portuguese *em + a = na*.
 An indirect object ("to the child") is a phrase with `epe`.
 A pronoun after a preposition is in the object form (see Pronouns):
 `Lu mena hibaxe gurna epe mi.` = "The woman gave bread to me."
+English can also put the recipient first without "to" ("gave me
+bread", the *dative alternation*). Rifatian has only the frame with
+`epe`, so both English sentences translate the same way.
 
 ## Subordinate clauses (draft)
 
